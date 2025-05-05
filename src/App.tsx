@@ -1,12 +1,13 @@
-import './App.css'
+import Layout from './components/Layout/Layout';
+import HomePage from './pages/HomePage';
+import './App.css';
 
 function App() {
-
   return (
-    <>
-      ISL Manzil project using React and TypeScript
-    </>
-  )
+    <Layout>
+      <HomePage />
+    </Layout>
+  );
 }
 
-export default App
+export default App;
