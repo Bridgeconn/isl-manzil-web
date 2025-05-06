@@ -38,7 +38,7 @@ const Header = () => {
       {/* Header content container */}
       <div className="max-w-6xl mx-auto flex py-1 items-end relative">
         {/* Left Logo */}
-        <div className="absolute left-0 top-0 z-10 mr-4">
+        <div className="absolute left-0 top-0 z-10">
           <img
             src={Logo}
             className="w-auto h-20"
