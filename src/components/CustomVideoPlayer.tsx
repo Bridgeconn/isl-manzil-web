@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, RefreshCw } from "lucide-react";
 
 const bibleVerses = [
   {
@@ -119,10 +119,12 @@ const CustomVideoPlayer = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showYouTubeControls, setShowYouTubeControls] = useState(false);
+  const [isEnded, setIsEnded] = useState(false);
 
   const videoId = "pcaZRtDZtaU";
 
-  const timeToSeconds = (timeStr) => {
+  const timeToSeconds = (timeStr: string) => {
     if (!timeStr) return 0;
 
     const parts = timeStr.split(":");
@@ -143,7 +145,7 @@ const CustomVideoPlayer = () => {
     }
   };
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     if (!seconds || isNaN(seconds)) return "00:00";
 
     const hours = Math.floor(seconds / 3600);
@@ -207,7 +209,7 @@ const CustomVideoPlayer = () => {
         rel: 1, // Show related videos
         showinfo: 1, // Show video info
         fs: 0, // Hide fullscreen button
-        cc_load_policy: 1, // Show closed captions by default (important for deaf users)
+        cc_load_policy: 1, // Show closed captions by default
         iv_load_policy: 1, // Show annotations
         autohide: 0, // Show controls when paused
         playsinline: 1, // Play inline on mobile
@@ -244,13 +246,18 @@ const CustomVideoPlayer = () => {
       // ENDED
       setIsPlaying(false);
       setShowControls(true);
+      setIsEnded(true);
+      setShowYouTubeControls(false);
     } else if (event.data === 1) {
       // PLAYING
       setIsPlaying(true);
+      setIsEnded(false);
+      setShowYouTubeControls(false);
     } else if (event.data === 2) {
       // PAUSED
       setIsPlaying(false);
       setShowControls(true);
+      setShowYouTubeControls(true);
     }
   };
 
@@ -265,8 +272,11 @@ const CustomVideoPlayer = () => {
     const newIsPlaying = !isPlaying;
     if (newIsPlaying) {
       ytPlayerRef.current.playVideo();
+      setShowYouTubeControls(false);
+      setIsEnded(false);
     } else {
       ytPlayerRef.current.pauseVideo();
+      setShowYouTubeControls(true);
     }
 
     setIsPlaying(newIsPlaying);
@@ -275,6 +285,43 @@ const CustomVideoPlayer = () => {
     setShowPlayBezel(true);
     setTimeout(() => setShowPlayBezel(false), 800);
   };
+  
+  // Replay the video
+  const replayVideo = (e) => {
+    e.stopPropagation();
+    if (!ytPlayerRef.current) return;
+    
+    ytPlayerRef.current.seekTo(0, true);
+    ytPlayerRef.current.playVideo();
+    
+    setCurrentTime(0);
+    setIsPlaying(true);
+    setIsEnded(false);
+    setShowYouTubeControls(false);
+    
+    // Show replay bezel effect
+    setShowPlayBezel(true);
+    setTimeout(() => setShowPlayBezel(false), 800);
+  };
+
+  useEffect(() => {
+    if (!ytPlayerRef.current) return;
+    
+    try {
+      // Get all iframes in the player container
+      const iframe = playerContainerRef.current?.querySelector('iframe');
+      if (iframe) {
+        // When showing YouTube controls, we need to make sure our overlay doesn't block interaction
+        if (showYouTubeControls) {
+          iframe.style.zIndex = '30'; // Put iframe above custom controls
+        } else {
+          iframe.style.zIndex = '10'; // Put iframe below custom controls
+        }
+      }
+    } catch (error) {
+      console.error("Error adjusting iframe z-index:", error);
+    }
+  }, [showYouTubeControls]);
 
   // Handle seeking in the video
   const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -288,6 +335,11 @@ const CustomVideoPlayer = () => {
 
     ytPlayerRef.current.seekTo(seekTime, true);
     setCurrentTime(seekTime);
+    
+    // If video was ended, update state
+    if (isEnded) {
+      setIsEnded(false);
+    }
   };
 
   const handleVerseMarkerClick = (verse, event) => {
@@ -298,6 +350,11 @@ const CustomVideoPlayer = () => {
 
     ytPlayerRef.current.seekTo(seekTime, true);
     setCurrentTime(seekTime);
+    
+    // If video was ended, update state
+    if (isEnded) {
+      setIsEnded(false);
+    }
   };
 
   // Calculate progress as percentage
@@ -308,10 +365,9 @@ const CustomVideoPlayer = () => {
       ref={playerContainerRef}
       className="relative w-full bg-black rounded-lg overflow-hidden"
       style={{ aspectRatio: "16/9" }}
-      onMouseMove={() => setShowControls(true)}
-      onMouseLeave={() =>
-        isPlaying && setTimeout(() => setShowControls(false), 2000)
-      }
+      onMouseMove={() => !showYouTubeControls && setShowControls(true)}
+      onMouseLeave={() => isPlaying && !showYouTubeControls && !isEnded && setTimeout(() => setShowControls(false), 2000)}
+      onClick={togglePlay}
     >
       {/* YouTube Player Container */}
       <div className="w-full h-full">
@@ -319,15 +375,13 @@ const CustomVideoPlayer = () => {
         <div ref={playerRef} className="w-full h-full" />
       </div>
 
-      <div className="absolute top-0 right-0 bg-black bg-opacity-50 p-2 text-xs text-white">
-        Playing: youtube.com/watch?v={videoId}
-      </div>
-
-      {/* Play/Pause Bezel Effect */}
+      {/* Play/Pause/Replay Bezel Effect */}
       {showPlayBezel && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
           <div className="bg-black bg-opacity-50 rounded-full p-6">
-            {isPlaying ? (
+            {isEnded ? (
+              <RefreshCw size={48} className="text-white" />
+            ) : isPlaying ? (
               <Pause size={48} className="text-white" />
             ) : (
               <Play size={48} className="text-white" />
@@ -336,18 +390,32 @@ const CustomVideoPlayer = () => {
         </div>
       )}
 
-      {/* Controls Overlay */}
+      {/* Video Ended Overlay */}
+      {isEnded  && !showYouTubeControls && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+          <button
+            onClick={replayVideo}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"
+          >
+            <RefreshCw size={24} />
+            <span>Replay</span>
+          </button>
+        </div>
+      )}
+
+      {/* Controls Overlay - Always show our custom controls */}
       <div
         className={`absolute inset-0 transition-opacity duration-300 ${
-          showControls ? "opacity-100" : "opacity-0"
-        } z-20`}
+          (showControls && !showYouTubeControls) || isEnded ? "opacity-100" : "opacity-0"
+        } ${showYouTubeControls ? "pointer-events-none" : "pointer-events-auto"} z-20`}
+        style={{ display: showYouTubeControls ? "none" : "block" }}
       >
         {/* Bottom Controls */}
         <div
-          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 pointer-events-auto"
+          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Seekbar with chapters */}
+          {/* Seekbar with sections */}
           <div
             ref={seekBarRef}
             className="relative h-3 bg-gray-600 rounded-full mb-4 cursor-pointer"
@@ -390,13 +458,26 @@ const CustomVideoPlayer = () => {
           {/* Control Buttons */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              {/* Play/Pause Button */}
+              {/* Play/Pause/Replay Button */}
               <button
-                onClick={togglePlay}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isEnded) {
+                    replayVideo(e);
+                  } else {
+                    togglePlay();
+                  }
+                }}
                 className="text-white hover:text-blue-400"
-                aria-label={isPlaying ? "Pause" : "Play"}
+                aria-label={isEnded ? "Replay" : isPlaying ? "Pause" : "Play"}
               >
-                {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                {isEnded ? (
+                  <RefreshCw size={24} />
+                ) : isPlaying ? (
+                  <Pause size={24} />
+                ) : (
+                  <Play size={24} />
+                )}
               </button>
 
               {/* Timer */}
