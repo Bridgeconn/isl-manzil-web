@@ -121,6 +121,9 @@ const CustomVideoPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showYouTubeControls, setShowYouTubeControls] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
+  const [lastAction, setLastAction] = useState<
+    "play" | "pause" | "replay" | null
+  >(null);
 
   const videoId = "pcaZRtDZtaU";
 
@@ -225,7 +228,6 @@ const CustomVideoPlayer = () => {
       },
     });
   };
-  
 
   const onPlayerReady = (event: { target: YouTubePlayer }) => {
     setDuration(event.target.getDuration());
@@ -274,9 +276,11 @@ const CustomVideoPlayer = () => {
       ytPlayerRef.current.playVideo();
       setShowYouTubeControls(false);
       setIsEnded(false);
+      setLastAction("play");
     } else {
       ytPlayerRef.current.pauseVideo();
       setShowYouTubeControls(true);
+      setLastAction("pause");
     }
 
     setIsPlaying(newIsPlaying);
@@ -285,20 +289,21 @@ const CustomVideoPlayer = () => {
     setShowPlayBezel(true);
     setTimeout(() => setShowPlayBezel(false), 800);
   };
-  
+
   // Replay the video
   const replayVideo = (e) => {
     e.stopPropagation();
     if (!ytPlayerRef.current) return;
-    
+
     ytPlayerRef.current.seekTo(0, true);
     ytPlayerRef.current.playVideo();
-    
+
     setCurrentTime(0);
     setIsPlaying(true);
     setIsEnded(false);
     setShowYouTubeControls(false);
-    
+    setLastAction("replay");
+
     // Show replay bezel effect
     setShowPlayBezel(true);
     setTimeout(() => setShowPlayBezel(false), 800);
@@ -306,16 +311,16 @@ const CustomVideoPlayer = () => {
 
   useEffect(() => {
     if (!ytPlayerRef.current) return;
-    
+
     try {
       // Get all iframes in the player container
-      const iframe = playerContainerRef.current?.querySelector('iframe');
+      const iframe = playerContainerRef.current?.querySelector("iframe");
       if (iframe) {
         // When showing YouTube controls, we need to make sure our overlay doesn't block interaction
         if (showYouTubeControls) {
-          iframe.style.zIndex = '30'; // Put iframe above custom controls
+          iframe.style.zIndex = "30"; // Put iframe above custom controls
         } else {
-          iframe.style.zIndex = '10'; // Put iframe below custom controls
+          iframe.style.zIndex = "10"; // Put iframe below custom controls
         }
       }
     } catch (error) {
@@ -335,7 +340,7 @@ const CustomVideoPlayer = () => {
 
     ytPlayerRef.current.seekTo(seekTime, true);
     setCurrentTime(seekTime);
-    
+
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
@@ -350,7 +355,7 @@ const CustomVideoPlayer = () => {
 
     ytPlayerRef.current.seekTo(seekTime, true);
     setCurrentTime(seekTime);
-    
+
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
@@ -363,10 +368,15 @@ const CustomVideoPlayer = () => {
   return (
     <div
       ref={playerContainerRef}
-      className="relative w-full bg-black rounded-lg overflow-hidden"
+      className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
       style={{ aspectRatio: "16/9" }}
       onMouseMove={() => !showYouTubeControls && setShowControls(true)}
-      onMouseLeave={() => isPlaying && !showYouTubeControls && !isEnded && setTimeout(() => setShowControls(false), 2000)}
+      onMouseLeave={() =>
+        isPlaying &&
+        !showYouTubeControls &&
+        !isEnded &&
+        setTimeout(() => setShowControls(false), 2000)
+      }
       onClick={togglePlay}
     >
       {/* YouTube Player Container */}
@@ -379,9 +389,9 @@ const CustomVideoPlayer = () => {
       {showPlayBezel && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
           <div className="bg-black bg-opacity-50 rounded-full p-6">
-            {isEnded ? (
+            {lastAction === "replay" || isEnded ? (
               <RefreshCw size={48} className="text-white" />
-            ) : isPlaying ? (
+            ) : lastAction === "pause" ? (
               <Pause size={48} className="text-white" />
             ) : (
               <Play size={48} className="text-white" />
@@ -391,7 +401,7 @@ const CustomVideoPlayer = () => {
       )}
 
       {/* Video Ended Overlay */}
-      {isEnded  && !showYouTubeControls && (
+      {isEnded && !showYouTubeControls && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <button
             onClick={replayVideo}
@@ -406,8 +416,12 @@ const CustomVideoPlayer = () => {
       {/* Controls Overlay - Always show our custom controls */}
       <div
         className={`absolute inset-0 transition-opacity duration-300 ${
-          (showControls && !showYouTubeControls) || isEnded ? "opacity-100" : "opacity-0"
-        } ${showYouTubeControls ? "pointer-events-none" : "pointer-events-auto"} z-20`}
+          (showControls && !showYouTubeControls) || isEnded
+            ? "opacity-100"
+            : "opacity-0"
+        } ${
+          showYouTubeControls ? "pointer-events-none" : "pointer-events-auto"
+        } z-20`}
         style={{ display: showYouTubeControls ? "none" : "block" }}
       >
         {/* Bottom Controls */}
@@ -430,11 +444,13 @@ const CustomVideoPlayer = () => {
             {bibleVerses.map((verse) => {
               const verseTimeInSeconds = timeToSeconds(verse.time);
               const versePosition = (verseTimeInSeconds / duration) * 100;
-
+              const isPassed = currentTime >= verseTimeInSeconds;
               return (
                 <div
                   key={verse.id}
-                  className="absolute top-0 w-3 h-3 bg-yellow-400 border border-white rounded-full cursor-pointer z-10"
+                  className={`absolute top-0 w-3 h-3 ${
+                    isPassed ? "bg-yellow-400" : "bg-white"
+                  } border border-white rounded-full cursor-pointer z-10 transition-colors duration-200`}
                   style={{
                     left: `${versePosition}%`,
                     transform: "translateX(-50%)",
