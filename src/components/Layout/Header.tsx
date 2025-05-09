@@ -41,14 +41,14 @@ const Header = () => {
         <div className="absolute left-0 top-0 z-10">
           <img
             src={Logo}
-            className="w-auto h-20"
+            className="w-auto h-18"
             aria-placeholder="logo"
             alt="logo"
           />
         </div>
 
         {/* Menu Bar */}
-        <div className="flex-grow flex flex-col pl-20 mt-2"> 
+        <div className="flex-grow flex flex-col pl-20"> 
           <div className="w-full flex justify-between px-4 text-xs">
             <p>Bridge Connectivity Solution</p>
             <p>Indian Sign Language</p>

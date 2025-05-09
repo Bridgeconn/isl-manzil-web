@@ -1,111 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, RefreshCw } from "lucide-react";
-
-const bibleVerses = [
-  {
-    id: 0,
-    time: "0:00",
-    title: "Titus Chapter 01",
-    description: "Paul explains Titus's Responsibility in Crete Island",
-  },
-  {
-    id: 1,
-    time: "0:17",
-    title: "Verse 01",
-    description:
-      "Greetings from Paul, a servant belonging to God and an apostle sent out by Jesus Christ...",
-  },
-  {
-    id: 2,
-    time: "1:14",
-    title: "Verse 02",
-    description: "And then they can expect to live with God forever...",
-  },
-  {
-    id: 3,
-    time: "1:46",
-    title: "Verse 03",
-    description: "At the right time, he made that Good News known...",
-  },
-  {
-    id: 4,
-    time: "2:06",
-    title: "Verse 04",
-    description: "I write to you, Titus...",
-  },
-  {
-    id: 5,
-    time: "2:37",
-    title: "Verse 05",
-    description: "I left you there in Crete...",
-  },
-  {
-    id: 6,
-    time: "3:19",
-    title: "Verse 06",
-    description: "Look for someone who is not known for doing wrong...",
-  },
-  {
-    id: 7,
-    time: "3:53",
-    title: "Verse 07",
-    description: "Every elder has the duty of taking care of God's work...",
-  },
-  {
-    id: 8,
-    time: "4:35",
-    title: "Verse 08",
-    description: "An elder must be a person who welcomes people...",
-  },
-  {
-    id: 9,
-    time: "5:14",
-    title: "Verse 09",
-    description: "He must be faithful to the same true message...",
-  },
-  {
-    id: 10,
-    time: "5:55",
-    title: "Verse 10",
-    description: "That kind of teaching is important...",
-  },
-  {
-    id: 11,
-    time: "6:23",
-    title: "Verse 11",
-    description: "You must stop these people...",
-  },
-  {
-    id: 12,
-    time: "6:49",
-    title: "Verse 12",
-    description: "Even one of their own people...",
-  },
-  {
-    id: 13,
-    time: "7:19",
-    title: "Verse 13",
-    description: "And every word he said is true...",
-  },
-  {
-    id: 14,
-    time: "7:47",
-    title: "Verse 14",
-    description: "Then they will stop paying attention...",
-  },
-  {
-    id: 15,
-    time: "8:19",
-    title: "Verse 15",
-    description: "To people whose thinking is pure...",
-  },
-  {
-    id: 16,
-    time: "8:52",
-    title: "Verse 16",
-    description: "They say they know God...",
-  },
-];
+import { bibleVerses, VerseData } from "../assets/data/bibleVersesSample";
 
 const CustomVideoPlayer = () => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -124,48 +19,6 @@ const CustomVideoPlayer = () => {
   const [lastAction, setLastAction] = useState<
     "play" | "pause" | "replay" | null
   >(null);
-
-  const videoId = "pcaZRtDZtaU";
-
-  const timeToSeconds = (timeStr: string) => {
-    if (!timeStr) return 0;
-
-    const parts = timeStr.split(":");
-
-    // Handle hours:minutes:seconds format (hh:mm:ss)
-    if (parts.length === 3) {
-      return (
-        parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2])
-      );
-    }
-    // Handle minutes:seconds format (mm:ss)
-    else if (parts.length === 2) {
-      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-    }
-    // Handle seconds only
-    else {
-      return parseInt(parts[0]);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    if (!seconds || isNaN(seconds)) return "00:00";
-
-    const hours = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-
-    // Include hours only if needed
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, "0")}:${mins
-        .toString()
-        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    } else {
-      return `${mins.toString().padStart(2, "0")}:${secs
-        .toString()
-        .padStart(2, "0")}`;
-    }
-  };
 
   // Load YouTube API and create player
   useEffect(() => {
@@ -195,6 +48,28 @@ const CustomVideoPlayer = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!ytPlayerRef.current) return;
+
+    try {
+      // Get all iframes in the player container
+      const iframe = playerContainerRef.current?.querySelector("iframe");
+      if (iframe) {
+        // When showing YouTube controls, we need to make sure our overlay doesn't block interaction
+        if (showYouTubeControls) {
+          iframe.style.zIndex = "30"; // Put iframe above custom controls
+        } else {
+          iframe.style.zIndex = "10"; // Put iframe below custom controls
+        }
+      }
+    } catch (error) {
+      console.error("Error adjusting iframe z-index:", error);
+    }
+  }, [showYouTubeControls]);
+
+  const videoId = "pcaZRtDZtaU";
+
+  // Intiialize Youtube player with videoId and player options
   const initializeYouTubePlayer = () => {
     if (!playerRef.current || ytPlayerRef.current) return;
 
@@ -229,6 +104,7 @@ const CustomVideoPlayer = () => {
     });
   };
 
+  // Handle player ready event
   const onPlayerReady = (event: { target: YouTubePlayer }) => {
     setDuration(event.target.getDuration());
 
@@ -242,6 +118,7 @@ const CustomVideoPlayer = () => {
     }, 500);
   };
 
+  // Handle youtube player state changes along with custom controls state changes
   const onPlayerStateChange = (event: { data: number }) => {
     // YT.PlayerState values: UNSTARTED (-1), ENDED (0), PLAYING (1), PAUSED (2)
     if (event.data === 0) {
@@ -265,6 +142,46 @@ const CustomVideoPlayer = () => {
 
   const onPlayerError = (event: { data: number }) => {
     console.error("YouTube Player Error:", event.data);
+  };
+
+  const timeToSeconds = (timeStr: string) => {
+    if (!timeStr) return 0;
+
+    const parts = timeStr.split(":");
+
+    // Handle hours:minutes:seconds format (hh:mm:ss)
+    if (parts.length === 3) {
+      return (
+        parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2])
+      );
+    }
+    // Handle minutes:seconds format (mm:ss)
+    else if (parts.length === 2) {
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    }
+    // Handle seconds only
+    else {
+      return parseInt(parts[0]);
+    }
+  };
+
+  const padTime = (time: number) => {
+    return time.toString().padStart(2, "0");
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "00:00";
+
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    // Include hours only if needed
+    if (hours > 0) {
+      return `${padTime(hours)}:${padTime(mins)}:${padTime(secs)}`;
+    } else {
+      return `${padTime(mins)}:${padTime(secs)}`;
+    }
   };
 
   // Toggle play/pause
@@ -291,7 +208,7 @@ const CustomVideoPlayer = () => {
   };
 
   // Replay the video
-  const replayVideo = (e) => {
+  const replayVideo = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!ytPlayerRef.current) return;
 
@@ -308,25 +225,6 @@ const CustomVideoPlayer = () => {
     setShowPlayBezel(true);
     setTimeout(() => setShowPlayBezel(false), 800);
   };
-
-  useEffect(() => {
-    if (!ytPlayerRef.current) return;
-
-    try {
-      // Get all iframes in the player container
-      const iframe = playerContainerRef.current?.querySelector("iframe");
-      if (iframe) {
-        // When showing YouTube controls, we need to make sure our overlay doesn't block interaction
-        if (showYouTubeControls) {
-          iframe.style.zIndex = "30"; // Put iframe above custom controls
-        } else {
-          iframe.style.zIndex = "10"; // Put iframe below custom controls
-        }
-      }
-    } catch (error) {
-      console.error("Error adjusting iframe z-index:", error);
-    }
-  }, [showYouTubeControls]);
 
   // Handle seeking in the video
   const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -347,7 +245,11 @@ const CustomVideoPlayer = () => {
     }
   };
 
-  const handleVerseMarkerClick = (verse, event) => {
+  // Handle verse marker click
+  const handleVerseMarkerClick = (
+    verse: VerseData,
+    event: React.MouseEvent
+  ) => {
     event.stopPropagation();
     if (!ytPlayerRef.current) return;
 
@@ -441,7 +343,7 @@ const CustomVideoPlayer = () => {
               style={{ width: `${progressPercent}%` }}
             ></div>
 
-            {bibleVerses.map((verse) => {
+            {bibleVerses.map((verse: VerseData) => {
               const verseTimeInSeconds = timeToSeconds(verse.time);
               const versePosition = (verseTimeInSeconds / duration) * 100;
               const isPassed = currentTime >= verseTimeInSeconds;

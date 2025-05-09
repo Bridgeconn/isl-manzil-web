@@ -1,6 +1,6 @@
 import React from "react";
 import { NavbarItem } from "../types/Navigation";
-import SettingGif from "../assets/images/settings-1.gif";
+import SettingGif from "../assets/images/settings.gif";
 
 interface NavbarProps {
   items: NavbarItem[];
@@ -20,7 +20,7 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
             </div>
           ))}
         </div>
-        <div className="mr-4 h-12 flex-shrink-0">
+        <div className="mr-4 h-10 flex-shrink-0">
           <img
             src={SettingGif}
             alt="Settings"
