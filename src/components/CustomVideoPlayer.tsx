@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, RefreshCw } from "lucide-react";
+import { Play, Pause, RefreshCw, Maximize, Minimize } from "lucide-react";
 import { bibleVerses, VerseData } from "../assets/data/bibleVersesSample";
 
 const CustomVideoPlayer = () => {
@@ -19,6 +19,7 @@ const CustomVideoPlayer = () => {
   const [lastAction, setLastAction] = useState<
     "play" | "pause" | "replay" | null
   >(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Load YouTube API and create player
   useEffect(() => {
@@ -67,6 +68,36 @@ const CustomVideoPlayer = () => {
     }
   }, [showYouTubeControls]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement !== null);
+    }
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    }
+  }, []);
+
+  useEffect(() => {
+   
+    const handleKeyDown = (event: KeyboardEvent) => {
+      switch (event.key) {
+      case ' ':
+        togglePlay();
+        event.preventDefault();
+        break;
+      case 'f':
+        toggleFullscreen();
+        break;
+      default:
+        break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+}, [isPlaying, isFullscreen]);
+
   const videoId = "pcaZRtDZtaU";
 
   // Intiialize Youtube player with videoId and player options
@@ -83,13 +114,10 @@ const CustomVideoPlayer = () => {
       videoId: videoId,
       playerVars: {
         controls: 0, // Hide YouTube controls - important!
-        modestbranding: 1, // Minimal YouTube branding
-        rel: 1, // Show related videos
-        showinfo: 1, // Show video info
+        rel: 0, // Show related videos
         fs: 0, // Hide fullscreen button
         cc_load_policy: 1, // Show closed captions by default
         iv_load_policy: 1, // Show annotations
-        autohide: 0, // Show controls when paused
         playsinline: 1, // Play inline on mobile
         origin: window.location.origin,
         widget_referrer: window.location.href,
@@ -264,6 +292,20 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  const toggleFullscreen = () => {
+    if (!playerContainerRef.current) return;
+    if (isFullscreen) {
+      if (document?.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    } else {
+      if (playerContainerRef.current.requestFullscreen) {
+        playerContainerRef.current.requestFullscreen();
+      }
+    }
+    setIsFullscreen(!isFullscreen);
+  };
+
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -334,12 +376,12 @@ const CustomVideoPlayer = () => {
           {/* Seekbar with sections */}
           <div
             ref={seekBarRef}
-            className="relative h-3 bg-gray-600 rounded-full mb-4 cursor-pointer"
+            className="relative h-2 bg-gray-600 rounded-full mb-4 cursor-pointer"
             onClick={handleSeek}
           >
             {/* Progress Bar */}
             <div
-              className="absolute top-0 left-0 h-3 bg-blue-500 rounded-full"
+              className="absolute top-0 left-0 h-2 bg-blue-500 rounded-full"
               style={{ width: `${progressPercent}%` }}
             ></div>
 
@@ -350,7 +392,7 @@ const CustomVideoPlayer = () => {
               return (
                 <div
                   key={verse.id}
-                  className={`absolute top-0 w-3 h-3 ${
+                  className={`absolute top-0 w-2 h-2 ${
                     isPassed ? "bg-yellow-400" : "bg-white"
                   } border border-white rounded-full cursor-pointer z-10 transition-colors duration-200`}
                   style={{
@@ -365,7 +407,7 @@ const CustomVideoPlayer = () => {
 
             {/* Current Time Indicator */}
             <div
-              className="absolute top-0 w-3 h-3 bg-white rounded-full cursor-grab z-20"
+              className="absolute top-0 w-2 h-2 bg-white rounded-full cursor-grab z-20"
               style={{
                 left: `${progressPercent}%`,
                 transform: "translateX(-50%)",
@@ -402,6 +444,21 @@ const CustomVideoPlayer = () => {
               <div className="text-white text-sm">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFullscreen();
+                }}
+                className="text-white hover:text-blue-400"
+                aria-label={
+                  isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                }
+                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              >
+                {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+              </button>
             </div>
           </div>
         </div>
