@@ -23,7 +23,7 @@ const SelectBoxContainer = () => {
       value: book.bookCode,
       label: book.book,
       bookId: book.bookId,
-      image: book?.filename ? "src/assets/images/" + book?.filename : "",
+      image: book?.filename ? "/books/" + book?.filename : "",
     }));
 
     setBookOptions(formattedBooks);
