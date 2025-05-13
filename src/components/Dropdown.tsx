@@ -6,7 +6,6 @@ const Dropdown = ({
   value,
   onChange,
   placeholder,
-  isDisabled = false,
   formatOptionLabel,
   zIndex = "z-10"
 }: DropdownProps) => {
@@ -19,7 +18,6 @@ const Dropdown = ({
       formatOptionLabel={formatOptionLabel}
       onChange={onChange}
       placeholder={placeholder}
-      isDisabled={isDisabled}
     />
     </div>
   );

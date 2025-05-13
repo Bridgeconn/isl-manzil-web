@@ -29,7 +29,6 @@ export interface DropdownProps {
   value?: OptionType | null;
   onChange?: (selected: OptionType | null) => void;
   placeholder?: string;
-  isDisabled?: boolean;
   formatOptionLabel?: (option: OptionType, meta: any) => React.ReactNode;
   zIndex?: string;
 }

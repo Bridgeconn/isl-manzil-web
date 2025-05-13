@@ -27,6 +27,9 @@ const SelectBoxContainer = () => {
     }));
 
     setBookOptions(formattedBooks);
+    if (formattedBooks.length > 0) {
+      setSelectedBook(formattedBooks[0]);
+    }
   }, []);
 
   useEffect(() => {
@@ -43,8 +46,9 @@ const SelectBoxContainer = () => {
       );
 
       setChapterOptions(chapters);
-      setSelectedChapter(null);
-      setSelectedVerse(null);
+      if (chapters.length > 0) {
+        setSelectedChapter(chapters[0]);
+      }
     } else {
       setChapterOptions([]);
     }
@@ -66,7 +70,9 @@ const SelectBoxContainer = () => {
       );
 
       setVerseOptions(verses);
-      setSelectedVerse(null);
+      if (verses.length > 0) {
+        setSelectedVerse(verses[0]);
+      }
     } else {
       setVerseOptions([]);
     }
@@ -144,7 +150,6 @@ const SelectBoxContainer = () => {
           formatOptionLabel={formattedOptionLabel}
           onChange={handleChapterChange}
           placeholder="Chapter"
-          isDisabled={!selectedBook}
           zIndex="z-40"
         />
       </div>
@@ -156,7 +161,6 @@ const SelectBoxContainer = () => {
           formatOptionLabel={formattedOptionLabel}
           onChange={handleVerseChange}
           placeholder="Verse"
-          isDisabled={!selectedChapter}
           zIndex="z-30"
         />
       </div>
