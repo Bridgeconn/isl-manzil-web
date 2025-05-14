@@ -24,6 +24,10 @@ export interface VerseOption extends BaseOption {
 
 export type OptionType = BookOption | ChapterOption | VerseOption;
 
+export interface SelectBoxContainerProps {
+  onSelectionChange?: (book: BookOption | null, chapter: ChapterOption | null, verse: VerseOption | null) => void;
+}
+
 export interface DropdownProps {
   options: OptionType[];
   value?: OptionType | null;

@@ -3,9 +3,9 @@ import Dropdown from "./Dropdown";
 import bookCodesData from "../assets/data/book_codes.json";
 import versificationData from "../assets/data/versification.json";
 import { VersificationData } from "../types/bible";
-import { BookOption, ChapterOption, VerseOption, OptionType } from "../types/Navigation"
+import { BookOption, ChapterOption, VerseOption, OptionType, SelectBoxContainerProps } from "../types/Navigation"
 
-const SelectBoxContainer = () => {
+const SelectBoxContainer = ({ onSelectionChange }: SelectBoxContainerProps) => {
   const [selectedBook, setSelectedBook] = useState<BookOption | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<ChapterOption | null>(
     null
@@ -77,6 +77,12 @@ const SelectBoxContainer = () => {
       setVerseOptions([]);
     }
   }, [selectedBook, selectedChapter]);
+
+  useEffect(() => {
+    if (onSelectionChange && selectedBook && selectedChapter && selectedVerse) {
+      onSelectionChange(selectedBook, selectedChapter, selectedVerse);
+    }
+  }, [selectedBook, selectedChapter, selectedVerse, onSelectionChange]);
 
   const handleBookChange = (option: OptionType | null) => {
     if (option === null || "bookId" in option) {
