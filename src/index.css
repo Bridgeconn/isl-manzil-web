@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -118,5 +119,11 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .font-roboto {
+    font-family: 'Roboto', sans-serif;
   }
 }
