@@ -204,7 +204,7 @@ const SelectViewContainer = () => {
 
           <div className="border max-w-2xl border-gray-300 p-4 h-[45vh]">
             {activeView === "book" && (
-              <div className="flex gap-4 overflow-y-auto h-full">
+              <div className="flex gap-4 overflow-y-auto max-h-full h-fit">
                 <div className="flex-1">
                   <div className="mb-2">
                     <h3 className="font-bold text-lg text-center">
@@ -287,13 +287,13 @@ const SelectViewContainer = () => {
             )}
 
             {activeView === "chapter" && (
-              <div className="grid grid-cols-9 gap-2 overflow-y-auto h-fit">
+              <div className="grid grid-cols-9 gap-2 overflow-y-auto max-h-full h-fit">
                 {renderChapters()}
               </div>
             )}
 
             {activeView === "verse" && (
-              <div className="grid grid-cols-9 gap-2 overflow-y-auto h-fit">
+              <div className="grid grid-cols-9 gap-2 overflow-y-auto max-h-full h-fit">
                 {renderVerses()}
               </div>
             )}
