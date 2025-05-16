@@ -10,8 +10,7 @@ const HomePage: React.FC = () => {
         <SelectBoxContainer />
         <div></div>
       </div>
-
-      <div className="px-4">
+      <div>
         <CustomVideoPlayer />
       </div>
       <Middlebar />
