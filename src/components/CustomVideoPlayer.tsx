@@ -1,175 +1,275 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, RefreshCw, Maximize, Minimize } from "lucide-react";
 import { bibleVerses, VerseData } from "../assets/data/bibleVersesSample";
+import { Options as VimeoPlayerOptions } from "@vimeo/player";
+import Player from "@vimeo/player";
+import useBibleStore from "@/store/useBibleStore";
 
 const CustomVideoPlayer = () => {
+  const {
+    currentVideoId,
+  } = useBibleStore();
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
-  const ytPlayerRef = useRef<YouTubePlayer | null>(null);
+  const vimeoPlayerRef = useRef<Player | null>(null);
   const updateIntervalRef = useRef<number | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showYouTubeControls, setShowYouTubeControls] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [lastAction, setLastAction] = useState<
     "play" | "pause" | "replay" | null
   >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-  // Load YouTube API and create player
+  // Initialize Vimeo player
   useEffect(() => {
-    // Only load the API once
-    if (window.YT) {
-      initializeYouTubePlayer();
-      return;
-    }
+    const loadVimeo = () => {
+      if (window.Vimeo) {
+        initializeVimeoPlayer();
+        return;
+      }
 
-    // Create script tag for YouTube API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    if (firstScriptTag && firstScriptTag.parentNode) {
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    }
+      const script = document.createElement("script");
+      script.src = "https://player.vimeo.com/api/player.js";
+      script.async = true;
+      script.onload = initializeVimeoPlayer;
+      document.body.appendChild(script);
+    };
 
-    // Define the callback function that YouTube API will call when ready
-    window.onYouTubeIframeAPIReady = initializeYouTubePlayer;
+    if (playerRef.current) {
+      loadVimeo();
+    }
 
     return () => {
       if (updateIntervalRef.current !== null) {
         clearInterval(updateIntervalRef.current);
       }
-      // Reset callback to an empty function instead of null to avoid type errors
-      window.onYouTubeIframeAPIReady = () => {};
+
+      if (vimeoPlayerRef.current) {
+        vimeoPlayerRef.current.destroy();
+        vimeoPlayerRef.current = null;
+        setIsPlayerReady(false);
+      }
     };
   }, []);
 
+  // Handle video ID changes
   useEffect(() => {
-    if (!ytPlayerRef.current) return;
+    if (!currentVideoId || !playerRef.current) return;
 
-    try {
-      // Get all iframes in the player container
-      const iframe = playerContainerRef.current?.querySelector("iframe");
-      if (iframe) {
-        // When showing YouTube controls, we need to make sure our overlay doesn't block interaction
-        if (showYouTubeControls) {
-          iframe.style.zIndex = "30"; // Put iframe above custom controls
-        } else {
-          iframe.style.zIndex = "10"; // Put iframe below custom controls
+    const loadNewVideo = async () => {
+      try {
+        // Clear previous player if it exists
+        if (vimeoPlayerRef.current) {
+          if (updateIntervalRef.current !== null) {
+            clearInterval(updateIntervalRef.current);
+            updateIntervalRef.current = null;
+          }
+
+          // Destroy old player
+          await vimeoPlayerRef.current.destroy();
+          vimeoPlayerRef.current = null;
         }
-      }
-    } catch (error) {
-      console.error("Error adjusting iframe z-index:", error);
-    }
-  }, [showYouTubeControls]);
 
+        // Reset states
+        setIsPlaying(false);
+        setCurrentTime(0);
+        setDuration(0);
+        setIsEnded(false);
+        setIsPlayerReady(false);
+
+        // Create new player
+        const options: VimeoPlayerOptions = {
+          id: currentVideoId,
+          controls: false,
+          responsive: true,
+          title: false,
+          byline: false,
+          portrait: false,
+          autopause: false,
+        };
+        // Ensure the DOM element is ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Create player again
+        vimeoPlayerRef.current = new Player(playerRef.current!, options);
+
+        // Wait for player to be ready
+        await new Promise((resolve) => {
+          vimeoPlayerRef.current!.ready().then(() => {
+            console.log("Player ready!");
+            resolve(true);
+          });
+        });
+        // Set up events after player is ready
+        setupEventListeners();
+
+        // Get and set video duration
+        const newDuration = await vimeoPlayerRef.current.getDuration();
+        setDuration(newDuration);
+
+        setIsPlayerReady(true);
+
+        // Set up interval for time updates
+        updateIntervalRef.current = window.setInterval(() => {
+          if (vimeoPlayerRef.current) {
+            vimeoPlayerRef.current.getCurrentTime().then(setCurrentTime);
+          }
+        }, 500);
+      } catch (error) {
+        console.error("Error loading new video:", error);
+      }
+    };
+    loadNewVideo();
+
+    return () => {
+      if (updateIntervalRef.current !== null) {
+        clearInterval(updateIntervalRef.current);
+      }
+    };
+  }, [currentVideoId]);
+
+  // Handle fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(document.fullscreenElement !== null);
-    }
+    };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    }
+    };
   }, []);
 
+  // Handle keyboard controls
   useEffect(() => {
-   
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = async (event: KeyboardEvent) => {
+      if (!isPlayerReady) return;
       switch (event.key) {
-      case ' ':
-        togglePlay();
-        event.preventDefault();
-        break;
-      case 'f':
-        toggleFullscreen();
-        break;
-      default:
-        break;
+        case " ":
+          togglePlay();
+          event.preventDefault();
+          break;
+        case "f":
+          toggleFullscreen();
+          break;
+        case "ArrowLeft": {
+          const currentTime =
+            (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
+          const newTime = Math.max(0, currentTime - 10);
+          await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          break;
+        }
+        case "ArrowRight": {
+          const currentTime =
+            (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
+          const newTime = Math.min(duration, currentTime + 10);
+          await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          break;
+        }
+        default:
+          break;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-}, [isPlaying, isFullscreen]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPlaying, isFullscreen, isPlayerReady, duration]);
 
-  const videoId = "pcaZRtDZtaU";
-
-  // Intiialize Youtube player with videoId and player options
-  const initializeYouTubePlayer = () => {
-    if (!playerRef.current || ytPlayerRef.current) return;
-
-    // Make sure YT API is loaded
-    if (!window.YT || !window.YT.Player) {
-      console.error("YouTube API not loaded");
-      return;
-    }
-
-    ytPlayerRef.current = new window.YT.Player(playerRef.current, {
-      videoId: videoId,
-      playerVars: {
-        controls: 0, // Hide YouTube controls - important!
-        rel: 0, // Show related videos
-        fs: 0, // Hide fullscreen button
-        cc_load_policy: 1, // Show closed captions by default
-        iv_load_policy: 1, // Show annotations
-        playsinline: 1, // Play inline on mobile
-        origin: window.location.origin,
-        widget_referrer: window.location.href,
-        enablejsapi: 1, // Enable JS API
-        disablekb: 0, // Enable keyboard controls
-      },
-      events: {
-        onReady: onPlayerReady,
-        onStateChange: onPlayerStateChange,
-        onError: onPlayerError,
-      },
-    });
-  };
-
-  // Handle player ready event
-  const onPlayerReady = (event: { target: YouTubePlayer }) => {
-    setDuration(event.target.getDuration());
-
-    event.target.mute();
-
-    // Start interval to update current time
-    updateIntervalRef.current = window.setInterval(() => {
-      if (ytPlayerRef.current) {
-        setCurrentTime(ytPlayerRef.current.getCurrentTime());
+  // Setup global mouse events for seek bar dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingRef.current && seekBarRef.current) {
+        handleSeekPosition(e.clientX);
       }
-    }, 500);
-  };
+    };
 
-  // Handle youtube player state changes along with custom controls state changes
-  const onPlayerStateChange = (event: { data: number }) => {
-    // YT.PlayerState values: UNSTARTED (-1), ENDED (0), PLAYING (1), PAUSED (2)
-    if (event.data === 0) {
-      // ENDED
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [duration]);
+
+  // Set up event listeners for Vimeo player
+  const setupEventListeners = () => {
+    if (!vimeoPlayerRef.current) return;
+
+    vimeoPlayerRef.current.off("play");
+    vimeoPlayerRef.current.off("pause");
+    vimeoPlayerRef.current.off("ended");
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+      setIsEnded(false);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+      setShowControls(true);
+    };
+
+    const handleEnded = () => {
+      console.log("Video ended event triggered");
       setIsPlaying(false);
       setShowControls(true);
       setIsEnded(true);
-      setShowYouTubeControls(false);
-    } else if (event.data === 1) {
-      // PLAYING
-      setIsPlaying(true);
-      setIsEnded(false);
-      setShowYouTubeControls(false);
-    } else if (event.data === 2) {
-      // PAUSED
-      setIsPlaying(false);
-      setShowControls(true);
-      setShowYouTubeControls(true);
-    }
+    };
+    // Add listeners
+    vimeoPlayerRef.current.on("play", handlePlay);
+    vimeoPlayerRef.current.on("pause", handlePause);
+    vimeoPlayerRef.current.on("ended", handleEnded);
   };
+  // Initialize Vimeo player
+  const initializeVimeoPlayer = () => {
+    if (
+      !playerRef.current ||
+      vimeoPlayerRef.current ||
+      !window.Vimeo ||
+      !currentVideoId
+    )
+      return;
+    try {
+      const options: VimeoPlayerOptions = {
+        id: currentVideoId,
+        controls: false,
+        responsive: true,
+        title: false,
+        byline: false,
+        portrait: false,
+        autopause: false,
+      };
 
-  const onPlayerError = (event: { data: number }) => {
-    console.error("YouTube Player Error:", event.data);
+      vimeoPlayerRef.current = new Player(playerRef.current, options);
+
+      // Get video metadata
+      vimeoPlayerRef.current.ready().then(() => {
+        vimeoPlayerRef.current?.getDuration().then(setDuration);
+        setupEventListeners();
+        setIsPlayerReady(true);
+      });
+
+      // Start interval to update current time
+      updateIntervalRef.current = window.setInterval(() => {
+        if (vimeoPlayerRef.current) {
+          vimeoPlayerRef.current.getCurrentTime().then(setCurrentTime);
+        }
+      }, 500);
+    } catch (error) {
+      console.error("Error initializing Vimeo player:", error);
+    }
   };
 
   const timeToSeconds = (timeStr: string) => {
@@ -177,8 +277,8 @@ const CustomVideoPlayer = () => {
 
     const parts = timeStr.split(":");
 
-    // Handle hours:minutes:seconds format (hh:mm:ss)
-    if (parts.length === 3) {
+    // Handle hours:minutes:seconds format (hh:mm:ss or hh:mm:ss:ff)
+    if (parts.length === 3 || parts.length == 4) {
       return (
         parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2])
       );
@@ -204,7 +304,6 @@ const CustomVideoPlayer = () => {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
 
-    // Include hours only if needed
     if (hours > 0) {
       return `${padTime(hours)}:${padTime(mins)}:${padTime(secs)}`;
     } else {
@@ -214,17 +313,15 @@ const CustomVideoPlayer = () => {
 
   // Toggle play/pause
   const togglePlay = () => {
-    if (!ytPlayerRef.current) return;
+    if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
     const newIsPlaying = !isPlaying;
     if (newIsPlaying) {
-      ytPlayerRef.current.playVideo();
-      setShowYouTubeControls(false);
+      vimeoPlayerRef.current.play();
       setIsEnded(false);
       setLastAction("play");
     } else {
-      ytPlayerRef.current.pauseVideo();
-      setShowYouTubeControls(true);
+      vimeoPlayerRef.current.pause();
       setLastAction("pause");
     }
 
@@ -238,39 +335,49 @@ const CustomVideoPlayer = () => {
   // Replay the video
   const replayVideo = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!ytPlayerRef.current) return;
+    if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
-    ytPlayerRef.current.seekTo(0, true);
-    ytPlayerRef.current.playVideo();
+    vimeoPlayerRef.current.setCurrentTime(0);
+    vimeoPlayerRef.current.play();
 
     setCurrentTime(0);
     setIsPlaying(true);
     setIsEnded(false);
-    setShowYouTubeControls(false);
     setLastAction("replay");
-
     // Show replay bezel effect
     setShowPlayBezel(true);
     setTimeout(() => setShowPlayBezel(false), 800);
   };
 
   // Handle seeking in the video
-  const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!ytPlayerRef.current || !seekBarRef.current) return;
-    event.stopPropagation();
+  const handleSeekPosition = (clientX: number) => {
+    if (!vimeoPlayerRef.current || !seekBarRef.current || !isPlayerReady)
+      return;
 
     const rect = seekBarRef.current.getBoundingClientRect();
-    const offsetX = event.clientX - rect.left;
-    const seekPos = offsetX / rect.width;
+    const offsetX = clientX - rect.left;
+    const seekPos = Math.max(0, Math.min(1, offsetX / rect.width));
     const seekTime = seekPos * duration;
 
-    ytPlayerRef.current.seekTo(seekTime, true);
+    vimeoPlayerRef.current.setCurrentTime(seekTime);
     setCurrentTime(seekTime);
 
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
     }
+  };
+
+  // Handle click on seek bar
+  const handleSeekClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    handleSeekPosition(event.clientX);
+  };
+
+  // For dragging
+  const handleSeekMouseDown = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    isDraggingRef.current = true;
   };
 
   // Handle verse marker click
@@ -279,11 +386,11 @@ const CustomVideoPlayer = () => {
     event: React.MouseEvent
   ) => {
     event.stopPropagation();
-    if (!ytPlayerRef.current) return;
+    if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
     const seekTime = timeToSeconds(verse.time);
 
-    ytPlayerRef.current.seekTo(seekTime, true);
+    vimeoPlayerRef.current.setCurrentTime(seekTime);
     setCurrentTime(seekTime);
 
     // If video was ended, update state
@@ -292,6 +399,7 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!playerContainerRef.current) return;
     if (isFullscreen) {
@@ -314,18 +422,20 @@ const CustomVideoPlayer = () => {
       ref={playerContainerRef}
       className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
       style={{ aspectRatio: "16/9" }}
-      onMouseMove={() => !showYouTubeControls && setShowControls(true)}
+      onMouseMove={() => setShowControls(true)}
       onMouseLeave={() =>
-        isPlaying &&
-        !showYouTubeControls &&
-        !isEnded &&
-        setTimeout(() => setShowControls(false), 2000)
+        isPlaying && !isEnded && setTimeout(() => setShowControls(false), 2000)
       }
       onClick={togglePlay}
     >
-      {/* YouTube Player Container */}
+      {!isPlayerReady && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black z-40">
+          <div className="text-white text-lg">Loading video...</div>
+        </div>
+      )}
+
+      {/* Vimeo Player Container */}
       <div className="w-full h-full">
-        {/* This div will be replaced by the YouTube iframe */}
         <div ref={playerRef} className="w-full h-full" />
       </div>
 
@@ -343,9 +453,8 @@ const CustomVideoPlayer = () => {
           </div>
         </div>
       )}
-
       {/* Video Ended Overlay */}
-      {isEnded && !showYouTubeControls && (
+      {isEnded && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <button
             onClick={replayVideo}
@@ -356,17 +465,15 @@ const CustomVideoPlayer = () => {
           </button>
         </div>
       )}
-
-      {/* Controls Overlay - Always show our custom controls */}
+      {/* Controls Overlay */}
       <div
         className={`absolute inset-0 transition-opacity duration-300 ${
-          (showControls && !showYouTubeControls) || isEnded
-            ? "opacity-100"
-            : "opacity-0"
-        } ${
-          showYouTubeControls ? "pointer-events-none" : "pointer-events-auto"
-        } z-20`}
-        style={{ display: showYouTubeControls ? "none" : "block" }}
+          showControls || isEnded ? "opacity-100" : "opacity-0"
+        } pointer-events-auto z-20`}
+        style={{
+          backgroundColor: "rgba(0,0,0,0)",
+          pointerEvents: showControls ? "auto" : "none",
+        }}
       >
         {/* Bottom Controls */}
         <div
@@ -377,14 +484,14 @@ const CustomVideoPlayer = () => {
           <div
             ref={seekBarRef}
             className="relative h-2 bg-gray-600 rounded-full mb-4 cursor-pointer"
-            onClick={handleSeek}
+            onClick={handleSeekClick}
           >
             {/* Progress Bar */}
             <div
               className="absolute top-0 left-0 h-2 bg-blue-500 rounded-full"
               style={{ width: `${progressPercent}%` }}
             ></div>
-
+            {/* Verse markers */}
             {bibleVerses.map((verse: VerseData) => {
               const verseTimeInSeconds = timeToSeconds(verse.time);
               const versePosition = (verseTimeInSeconds / duration) * 100;
@@ -404,17 +511,16 @@ const CustomVideoPlayer = () => {
                 ></div>
               );
             })}
-
             {/* Current Time Indicator */}
             <div
-              className="absolute top-0 w-2 h-2 bg-white rounded-full cursor-grab z-20"
+              className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1"
               style={{
                 left: `${progressPercent}%`,
                 transform: "translateX(-50%)",
               }}
+              onMouseDown={handleSeekMouseDown}
             ></div>
           </div>
-
           {/* Control Buttons */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -430,6 +536,7 @@ const CustomVideoPlayer = () => {
                 }}
                 className="text-white hover:text-blue-400"
                 aria-label={isEnded ? "Replay" : isPlaying ? "Pause" : "Play"}
+                disabled={!isPlayerReady}
               >
                 {isEnded ? (
                   <RefreshCw size={24} />
@@ -439,7 +546,6 @@ const CustomVideoPlayer = () => {
                   <Play size={24} />
                 )}
               </button>
-
               {/* Timer */}
               <div className="text-white text-sm">
                 {formatTime(currentTime)} / {formatTime(duration)}
@@ -456,6 +562,7 @@ const CustomVideoPlayer = () => {
                   isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
                 }
                 title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                disabled={!isPlayerReady}
               >
                 {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
               </button>
