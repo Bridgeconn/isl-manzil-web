@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
-import { BibleVerseDisplayProps, VerseData } from "@/types/bible";
+import { VerseData } from "@/types/bible";
+import useBibleStore from "@/store/useBibleStore";
 
-const BibleVerseDisplay = ({
-  selectedBook,
-  selectedChapter,
-  selectedVerse,
-}: BibleVerseDisplayProps) => {
+const BibleVerseDisplay = () => {
+  const { selectedBook, selectedChapter, selectedVerse } = useBibleStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -80,7 +78,7 @@ const BibleVerseDisplay = ({
               <span className="font-semibold text-gray-500 mr-2 text-sm">
                 {verseItem.verse}
               </span>
-              <span className="antialiased tracking-wide font-normal">{verseItem.text}</span>
+              <span className="antialiased tracking-wide font-normal font-roboto">{verseItem.text}</span>
             </div>
           );
         })}

@@ -3,14 +3,18 @@ import Dropdown from "./Dropdown";
 import bookCodesData from "../assets/data/book_codes.json";
 import versificationData from "../assets/data/versification.json";
 import { VersificationData } from "../types/bible";
-import { BookOption, ChapterOption, VerseOption, OptionType, SelectBoxContainerProps } from "../types/Navigation"
+import { BookOption, ChapterOption, VerseOption, OptionType } from "../types/Navigation"
+import useBibleStore from "@/store/useBibleStore";
 
-const SelectBoxContainer = ({ onSelectionChange }: SelectBoxContainerProps) => {
-  const [selectedBook, setSelectedBook] = useState<BookOption | null>(null);
-  const [selectedChapter, setSelectedChapter] = useState<ChapterOption | null>(
-    null
-  );
-  const [selectedVerse, setSelectedVerse] = useState<VerseOption | null>(null);
+const SelectBoxContainer = () => {
+  const {
+    selectedBook,
+    selectedChapter,
+    selectedVerse,
+    setBook,
+    setChapter,
+    setVerse
+  } = useBibleStore();
 
   const [bookOptions, setBookOptions] = useState<BookOption[]>([]);
   const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
@@ -28,7 +32,7 @@ const SelectBoxContainer = ({ onSelectionChange }: SelectBoxContainerProps) => {
 
     setBookOptions(formattedBooks);
     if (formattedBooks.length > 0) {
-      setSelectedBook(formattedBooks[0]);
+      setBook(formattedBooks[0]);
     }
   }, []);
 
@@ -47,7 +51,7 @@ const SelectBoxContainer = ({ onSelectionChange }: SelectBoxContainerProps) => {
 
       setChapterOptions(chapters);
       if (chapters.length > 0) {
-        setSelectedChapter(chapters[0]);
+        setChapter(chapters[0]);
       }
     } else {
       setChapterOptions([]);
@@ -71,34 +75,28 @@ const SelectBoxContainer = ({ onSelectionChange }: SelectBoxContainerProps) => {
 
       setVerseOptions(verses);
       if (verses.length > 0) {
-        setSelectedVerse(verses[0]);
+        setVerse(verses[0]);
       }
     } else {
       setVerseOptions([]);
     }
   }, [selectedBook, selectedChapter]);
 
-  useEffect(() => {
-    if (onSelectionChange && selectedBook && selectedChapter && selectedVerse) {
-      onSelectionChange(selectedBook, selectedChapter, selectedVerse);
-    }
-  }, [selectedBook, selectedChapter, selectedVerse, onSelectionChange]);
-
   const handleBookChange = (option: OptionType | null) => {
     if (option === null || "bookId" in option) {
-    setSelectedBook(option as BookOption | null);
+    setBook(option as BookOption | null);
   }
   };
 
   const handleChapterChange = (option: OptionType | null) => {
     if (option === null || (typeof option.value === 'number')) {
-      setSelectedChapter(option as ChapterOption | null);
+      setChapter(option as ChapterOption | null);
     }
   };
 
   const handleVerseChange = (option: OptionType | null) => {
     if (option === null || (typeof option.value === 'number')) {
-      setSelectedVerse(option as VerseOption | null);
+      setVerse(option as VerseOption | null);
     }
   };
 
