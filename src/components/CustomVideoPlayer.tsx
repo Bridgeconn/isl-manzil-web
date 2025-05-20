@@ -6,9 +6,7 @@ import Player from "@vimeo/player";
 import useBibleStore from "@/store/useBibleStore";
 
 const CustomVideoPlayer = () => {
-  const {
-    currentVideoId,
-  } = useBibleStore();
+  const { currentVideoId } = useBibleStore();
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
@@ -499,9 +497,9 @@ const CustomVideoPlayer = () => {
               return (
                 <div
                   key={verse.id}
-                  className={`absolute top-0 w-2 h-2 ${
-                    isPassed ? "bg-yellow-400" : "bg-white"
-                  } border border-white rounded-full cursor-pointer z-10 transition-colors duration-200`}
+                  className={`absolute top-0 w-0.5 h-2 ${
+                    isPassed ? "bg-yellow-400" : "bg-black"
+                  }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
                   style={{
                     left: `${versePosition}%`,
                     transform: "translateX(-50%)",
