@@ -1,11 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import bookCodesData from "../assets/data/book_codes.json";
 import versificationData from "../assets/data/versification.json";
 import { VersificationData, Book } from "../types/bible";
-
 import useBibleStore from "@/store/useBibleStore";
-import { List } from "lucide-react";
-import { LayoutGrid } from "lucide-react";
+
+import { List, LayoutGrid } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+} from "@/components/ui/dialog";
 
 type ViewType = "book" | "chapter" | "verse";
 type DropdownType = "list" | "grid";
@@ -20,51 +24,16 @@ const SelectViewContainer = () => {
     setVerse,
   } = useBibleStore();
 
-  const [activeDropdown, setActiveDropdown] = useState<DropdownType | null>(
-    null
-  );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeView, setActiveView] = useState<ViewType>("book");
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const listButtonRef = useRef<HTMLButtonElement>(null);
-  const gridButtonRef = useRef<HTMLButtonElement>(null);
+  const [viewMode, setViewMode] = useState<DropdownType>("grid");
 
   const typedVersificationData = versificationData as VersificationData;
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        activeDropdown &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        listButtonRef.current &&
-        !listButtonRef.current.contains(event.target as Node) &&
-        gridButtonRef.current &&
-        !gridButtonRef.current.contains(event.target as Node)
-      ) {
-        setActiveDropdown(null);
-      }
-    };
-
-    if (activeDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [activeDropdown]);
-
-  const toggleDropdown = (type: DropdownType) => {
-    if (activeDropdown === type) {
-      setActiveDropdown(null);
-    } else {
-      setActiveDropdown(type);
-      setActiveView("book");
-    }
-  };
-
-  const selectView = (view: ViewType) => {
-    setActiveView(view);
+  const openDialog = (type: DropdownType) => {
+    setViewMode(type);
+    setIsDialogOpen(true);
+    setActiveView("book");
   };
 
   const handleBookSelect = (
@@ -101,7 +70,7 @@ const SelectViewContainer = () => {
     };
 
     setVerse(verseOption);
-    setActiveDropdown(null);
+    setIsDialogOpen(false);
   };
 
   const oldTestamentBooks = bookCodesData.filter((book) => book.bookId <= 39);
@@ -123,7 +92,7 @@ const SelectViewContainer = () => {
         {chapters.map((chapter) => (
           <div
             key={`chapter-${chapter}`}
-            className={`bg-gray-200 p-2 sm:p-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-gray-300 ${
+            className={`bg-gray-200 h-14 flex items-center justify-center flex-wrap cursor-pointer hover:bg-gray-300 ${
               selectedChapter?.value === chapter
                 ? "bg-gray-300 border-2 border-gray-400"
                 : ""
@@ -152,7 +121,7 @@ const SelectViewContainer = () => {
         {verses.map((verse) => (
           <div
             key={`verse-${verse}`}
-            className={`bg-gray-200 p-2 sm:p-4 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-300 ${
+            className={`bg-gray-200 h-14 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-300 ${
               selectedVerse?.value === verse
                 ? "bg-gray-300 border-2 border-gray-400"
                 : ""
@@ -170,9 +139,9 @@ const SelectViewContainer = () => {
     return (
       <div
         className={`grid ${
-          activeDropdown === "list"
-            ? "grid-cols-1 sm:grid-cols-3"
-            : "grid-cols-3 sm:grid-cols-6"
+          viewMode === "list"
+            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            : "grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
         } gap-1 w-full`}
       >
         {books.map((book: Book) => (
@@ -201,7 +170,9 @@ const SelectViewContainer = () => {
             ) : (
               <div className="w-10 h-10"></div>
             )}
-            <span className="text-sm sm:text-lg sm:text-center">{book.book}</span>
+            <span className="text-sm sm:text-lg sm:text-center">
+              {book.book}
+            </span>
           </div>
         ))}
       </div>
@@ -209,7 +180,7 @@ const SelectViewContainer = () => {
   };
 
   const renderListView = () => (
-    <div className="flex overflow-y-auto max-h-full h-fit gap-4 p-2">
+    <div className="flex overflow-y-auto max-h-full h-fit gap-4">
       <div className="flex-1">
         <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
         {renderBookGrid(oldTestamentBooks)}
@@ -223,7 +194,7 @@ const SelectViewContainer = () => {
   );
 
   const renderGridView = () => (
-    <div className="flex flex-col overflow-y-auto max-h-full h-fit p-2">
+    <div className="flex flex-col overflow-y-auto max-h-full h-fit">
       <div className="w-full mb-4">
         <h3 className={`font-bold text-lg mb-2`}>OLD TESTAMENT</h3>
         {renderBookGrid(oldTestamentBooks)}
@@ -240,81 +211,75 @@ const SelectViewContainer = () => {
     <div className="relative">
       <div className="flex gap-2">
         <button
-          className={`border border-gray-300 p-2 rounded cursor-pointer ${
-            activeDropdown === "grid" ? "bg-gray-600 text-gray-200" : ""
-          }`}
-          onClick={() => toggleDropdown("grid")}
-          ref={gridButtonRef}
+          className={`border border-gray-300 p-2 rounded cursor-pointer hover:bg-gray-100`}
+          onClick={() => openDialog("grid")}
         >
           <LayoutGrid size={24} />
         </button>
         <button
-          className={`border border-gray-300 p-2 rounded cursor-pointer ${
-            activeDropdown === "list" ? "bg-gray-600 text-gray-200" : ""
-          }`}
-          onClick={() => toggleDropdown("list")}
-          ref={listButtonRef}
+          className={`border border-gray-300 p-2 rounded cursor-pointer hover:bg-gray-100`}
+          onClick={() => openDialog("list")}
         >
           <List size={24} />
         </button>
       </div>
 
-      {activeDropdown && (
-        <div
-          className="absolute -right-2 mt-2 mx-auto max-w-6xl h-[calc(100vh-164px)] overflow-y-auto w-screen border border-gray-300 bg-white shadow-lg z-50"
-          ref={dropdownRef}
-        >
-          <div className="flex flex-col sm:flex-row justify-center mb-2 border-1">
-            <button
-              className={`px-18 py-2 border-2 font-semibold cursor-pointer ${
-                activeView === "book"
-                  ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
-                  : "bg-white text-[var(--indigo-color)]"
-              }`}
-              onClick={() => selectView("book")}
-            >
-              Book
-            </button>
-            <button
-              className={`px-18 py-2 border-2 font-semibold cursor-pointer ${
-                activeView === "chapter"
-                  ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
-                  : "bg-white text-[var(--indigo-color)]"
-              }`}
-              onClick={() => selectView("chapter")}
-            >
-              Chapter
-            </button>
-            <button
-              className={`px-18 py-2 border-2 font-semibold cursor-pointer ${
-                activeView === "verse"
-                  ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
-                  : "bg-white text-[var(--indigo-color)]"
-              }`}
-              onClick={() => selectView("verse")}
-            >
-              Verse
-            </button>
-          </div>
-
-          <div>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-6xl h-[calc(100vh-60px)] flex flex-col">
+          <DialogHeader className="pt-6">
+            <div className=" max-w-2xl w-full mx-auto flex flex-col sm:flex-row justify-center gap-1">
+              <button
+                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 ${
+                  activeView === "book"
+                    ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
+                    : "bg-white text-[var(--indigo-color)]"
+                }`}
+                onClick={() => setActiveView("book")}
+              >
+                Book
+              </button>
+              <button
+                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 ${
+                  activeView === "chapter"
+                    ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
+                    : "bg-white text-[var(--indigo-color)]"
+                }`}
+                onClick={() => selectedBook && setActiveView("chapter")}
+              >
+                Chapter
+              </button>
+              <button
+                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 ${
+                  activeView === "verse"
+                    ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
+                    : "bg-white text-[var(--indigo-color)]"
+                }`}
+                onClick={() =>
+                  selectedBook && selectedChapter && setActiveView("verse")
+                }
+              >
+                Verse
+              </button>
+            </div>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-grow">
             {activeView === "book" &&
-              (activeDropdown === "list" ? renderListView() : renderGridView())}
+              (viewMode === "list" ? renderListView() : renderGridView())}
 
             {activeView === "chapter" && (
-              <div className="grid grid-cols-10 gap-1 overflow-y-auto max-h-full h-fit">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
                 {renderChapters()}
               </div>
             )}
 
             {activeView === "verse" && (
-              <div className="grid grid-cols-10 gap-1 overflow-y-auto max-h-full h-fit">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
                 {renderVerses()}
               </div>
             )}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
