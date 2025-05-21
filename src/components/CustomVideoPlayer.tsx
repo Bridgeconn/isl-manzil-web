@@ -427,7 +427,7 @@ const CustomVideoPlayer = () => {
       onClick={togglePlay}
     >
       {!isPlayerReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black z-40">
+        <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
           <div className="text-white text-lg">Loading video...</div>
         </div>
       )}
