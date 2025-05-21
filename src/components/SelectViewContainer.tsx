@@ -20,7 +20,9 @@ const SelectViewContainer = () => {
     setVerse,
   } = useBibleStore();
 
-  const [activeDropdown, setActiveDropdown] = useState<DropdownType | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<DropdownType | null>(
+    null
+  );
   const [activeView, setActiveView] = useState<ViewType>("book");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const listButtonRef = useRef<HTMLButtonElement>(null);
@@ -42,7 +44,7 @@ const SelectViewContainer = () => {
         setActiveDropdown(null);
       }
     };
-    
+
     if (activeDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
     }
@@ -104,7 +106,7 @@ const SelectViewContainer = () => {
 
   const oldTestamentBooks = bookCodesData.filter((book) => book.bookId <= 39);
   const newTestamentBooks = bookCodesData.filter((book) => book.bookId >= 40);
-  
+
   oldTestamentBooks.sort((a, b) => a.bookId - b.bookId);
   newTestamentBooks.sort((a, b) => a.bookId - b.bookId);
 
@@ -166,7 +168,13 @@ const SelectViewContainer = () => {
 
   const renderBookGrid = (books: Book[]) => {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 w-full">
+      <div
+        className={`grid ${
+          activeDropdown === "list"
+            ? "grid-cols-1 sm:grid-cols-3"
+            : "grid-cols-3 sm:grid-cols-6"
+        } gap-1 w-full`}
+      >
         {books.map((book: Book) => (
           <div
             key={book.bookCode}
@@ -193,12 +201,40 @@ const SelectViewContainer = () => {
             ) : (
               <div className="w-10 h-10"></div>
             )}
-            <span className="text-sm sm:text-lg text-center">{book.book}</span>
+            <span className="text-sm sm:text-lg sm:text-center">{book.book}</span>
           </div>
         ))}
       </div>
     );
   };
+
+  const renderListView = () => (
+    <div className="flex overflow-y-auto max-h-full h-fit gap-4 p-2">
+      <div className="flex-1">
+        <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
+        {renderBookGrid(oldTestamentBooks)}
+      </div>
+
+      <div className="flex-1">
+        <h3 className="font-bold text-lg text-center mb-2">NEW TESTAMENT</h3>
+        {renderBookGrid(newTestamentBooks)}
+      </div>
+    </div>
+  );
+
+  const renderGridView = () => (
+    <div className="flex flex-col overflow-y-auto max-h-full h-fit p-2">
+      <div className="w-full mb-4">
+        <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
+        {renderBookGrid(oldTestamentBooks)}
+      </div>
+
+      <div className="w-full">
+        <h3 className="font-bold text-lg text-center mb-2">NEW TESTAMENT</h3>
+        {renderBookGrid(newTestamentBooks)}
+      </div>
+    </div>
+  );
 
   return (
     <div className="relative">
@@ -262,23 +298,8 @@ const SelectViewContainer = () => {
           </div>
 
           <div>
-            {activeView === "book" && (
-              <div className="flex overflow-y-auto max-h-full h-fit gap-4 p-2">
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg text-center mb-2">
-                    OLD TESTAMENT
-                  </h3>
-                  {renderBookGrid(oldTestamentBooks)}
-                </div>
-                
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg text-center mb-2">
-                    NEW TESTAMENT
-                  </h3>
-                  {renderBookGrid(newTestamentBooks)}
-                </div>
-              </div>
-            )}
+            {activeView === "book" &&
+              (activeDropdown === "list" ? renderListView() : renderGridView())}
 
             {activeView === "chapter" && (
               <div className="grid grid-cols-10 gap-1 overflow-y-auto max-h-full h-fit">
