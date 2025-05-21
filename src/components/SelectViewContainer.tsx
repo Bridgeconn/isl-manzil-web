@@ -225,12 +225,12 @@ const SelectViewContainer = () => {
   const renderGridView = () => (
     <div className="flex flex-col overflow-y-auto max-h-full h-fit p-2">
       <div className="w-full mb-4">
-        <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
+        <h3 className={`font-bold text-lg mb-2`}>OLD TESTAMENT</h3>
         {renderBookGrid(oldTestamentBooks)}
       </div>
 
       <div className="w-full">
-        <h3 className="font-bold text-lg text-center mb-2">NEW TESTAMENT</h3>
+        <h3 className="font-bold text-lg mb-2">NEW TESTAMENT</h3>
         {renderBookGrid(newTestamentBooks)}
       </div>
     </div>
