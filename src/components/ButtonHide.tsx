@@ -13,10 +13,10 @@ const ButtonHide: React.FC<ButtonHideProps> = ({ isVisible, toggle }) => {
     <div>
       <button
         onClick={toggle}
-        className="flex items-center gap-2 px-4  border-4 text-black rounded-md "
+        className="flex items-center gap-2 px-4 border-2 text-black rounded-md cursor-pointer"
       >
         {buttonImage ? (
-          <img src={buttonImage} alt="show/Hide" className="w-10 h-10 " />
+          <img src={buttonImage} alt="show/hide" className="w-10 h-10" />
         ) : (
           <div className="w-10 h-10"></div>
         )}
