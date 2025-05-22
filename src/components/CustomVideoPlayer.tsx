@@ -6,11 +6,11 @@ import Player from "@vimeo/player";
 import useBibleStore from "@/store/useBibleStore";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="currentColor" 
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
     className={className}
   >
     <polygon points="5,3 19,12 5,21" />
@@ -18,11 +18,11 @@ const FilledPlayIcon = ({ size = 24, className = "" }) => (
 );
 
 const FilledPauseIcon = ({ size = 24, className = "" }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="currentColor" 
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
     className={className}
   >
     <rect x="6" y="4" width="4" height="16" />
@@ -47,9 +47,7 @@ const CustomVideoPlayer = () => {
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
-  const [lastAction, setLastAction] = useState<
-    "play" | "pause" | null
-  >(null);
+  const [lastAction, setLastAction] = useState<"play" | "pause" | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
@@ -494,7 +492,7 @@ const CustomVideoPlayer = () => {
       {showPlayBezel && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
           <div className="bg-black bg-opacity-50 rounded-full p-6">
-            {isEnded ? (
+            {isEnded && !(currentTime < duration) ? (
               <RefreshCw size={48} className="text-white" />
             ) : lastAction === "pause" ? (
               <FilledPauseIcon size={48} className="text-white" />
@@ -503,9 +501,9 @@ const CustomVideoPlayer = () => {
             )}
           </div>
         </div>
-      )}   
+      )}
       {/* Video Ended Overlay */}
-      {isEnded && (
+      {isEnded && !(currentTime < duration) && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <button
             onClick={replayVideo}
@@ -520,7 +518,7 @@ const CustomVideoPlayer = () => {
       <div
         className={`absolute inset-0 transition-opacity duration-300 ${
           showControls || isEnded ? "opacity-100" : "opacity-0"
-        } pointer-events-none z-20`}
+        } z-20`}
       >
         {/* Bottom Controls */}
         <div
@@ -578,17 +576,23 @@ const CustomVideoPlayer = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (isEnded) {
+                  if (isEnded && !(currentTime < duration)) {
                     replayVideo(e);
                   } else {
                     togglePlay();
                   }
                 }}
                 className="text-white hover:text-blue-400"
-                aria-label={isEnded ? "Replay" : isPlaying ? "Pause" : "Play"}
+                aria-label={
+                  isEnded && !(currentTime < duration)
+                    ? "Replay"
+                    : isPlaying
+                    ? "Pause"
+                    : "Play"
+                }
                 disabled={!isPlayerReady}
               >
-                {isEnded ? (
+                {isEnded && !(currentTime < duration) ? (
                   <RefreshCw size={24} />
                 ) : isPlaying ? (
                   <FilledPauseIcon size={24} />
