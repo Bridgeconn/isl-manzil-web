@@ -35,9 +35,11 @@ const CustomVideoPlayer = () => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
   const vimeoPlayerRef = useRef<Player | null>(null);
   const updateIntervalRef = useRef<number | null>(null);
   const isDraggingRef = useRef<boolean>(false);
+  const controlsTimeoutRef = useRef<number | null>(null);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
@@ -71,6 +73,8 @@ const CustomVideoPlayer = () => {
     }
 
     return () => {
+      clearControlsTimeout();
+
       if (updateIntervalRef.current !== null) {
         clearInterval(updateIntervalRef.current);
       }
@@ -153,6 +157,8 @@ const CustomVideoPlayer = () => {
     loadNewVideo();
 
     return () => {
+      clearControlsTimeout();
+
       if (updateIntervalRef.current !== null) {
         clearInterval(updateIntervalRef.current);
       }
@@ -242,6 +248,7 @@ const CustomVideoPlayer = () => {
     const handlePause = () => {
       setIsPlaying(false);
       setShowControls(true);
+      clearControlsTimeout();
     };
 
     const handleEnded = () => {
@@ -249,6 +256,7 @@ const CustomVideoPlayer = () => {
       setIsPlaying(false);
       setShowControls(true);
       setIsEnded(true);
+      clearControlsTimeout();
     };
     // Add listeners
     vimeoPlayerRef.current.on("play", handlePlay);
@@ -293,6 +301,20 @@ const CustomVideoPlayer = () => {
     } catch (error) {
       console.error("Error initializing Vimeo player:", error);
     }
+  };
+
+  const clearControlsTimeout = () => {
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+      controlsTimeoutRef.current = null;
+    }
+  };
+
+  const setControlsHideTimeout = () => {
+    clearControlsTimeout();
+    controlsTimeoutRef.current = window.setTimeout(() => {
+      setShowControls(false);
+    }, 2000);
   };
 
   const timeToSeconds = (timeStr: string) => {
@@ -435,6 +457,18 @@ const CustomVideoPlayer = () => {
     setIsFullscreen(!isFullscreen);
   };
 
+  // Handle controls area mouse events
+  const handleControlsMouseEnter = () => {
+    setShowControls(true);
+    clearControlsTimeout();
+  };
+
+  const handleControlsMouseLeave = () => {
+    if (!isEnded && !isDraggingRef.current) {
+      setControlsHideTimeout();
+    }
+  };
+
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -443,10 +477,6 @@ const CustomVideoPlayer = () => {
       ref={playerContainerRef}
       className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
       style={{ aspectRatio: "16/9" }}
-      onMouseMove={() => setShowControls(true)}
-      onMouseLeave={() =>
-        isPlaying && !isEnded && setTimeout(() => setShowControls(false), 2000)
-      }
       onClick={togglePlay}
     >
       {!isPlayerReady && (
@@ -473,7 +503,7 @@ const CustomVideoPlayer = () => {
             )}
           </div>
         </div>
-      )}
+      )}   
       {/* Video Ended Overlay */}
       {isEnded && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
@@ -490,16 +520,15 @@ const CustomVideoPlayer = () => {
       <div
         className={`absolute inset-0 transition-opacity duration-300 ${
           showControls || isEnded ? "opacity-100" : "opacity-0"
-        } pointer-events-auto z-20`}
-        style={{
-          backgroundColor: "rgba(0,0,0,0)",
-          pointerEvents: showControls ? "auto" : "none",
-        }}
+        } pointer-events-none z-20`}
       >
         {/* Bottom Controls */}
         <div
-          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4"
+          ref={controlsRef}
+          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
+          onMouseEnter={handleControlsMouseEnter}
+          onMouseLeave={handleControlsMouseLeave}
         >
           {/* Seekbar with sections */}
           <div
