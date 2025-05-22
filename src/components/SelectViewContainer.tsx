@@ -4,9 +4,10 @@ import versificationData from "../assets/data/versification.json";
 import { VersificationData, Book } from "../types/bible";
 import useBibleStore from "@/store/useBibleStore";
 
-import { List, LayoutGrid } from "lucide-react";
+import { List, LayoutGrid, X } from "lucide-react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
 } from "@/components/ui/dialog";
@@ -92,7 +93,7 @@ const SelectViewContainer = () => {
         {chapters.map((chapter) => (
           <div
             key={`chapter-${chapter}`}
-            className={`bg-gray-200 h-14 flex items-center justify-center flex-wrap cursor-pointer hover:bg-gray-300 ${
+            className={`bg-gray-200 h-12 flex items-center justify-center flex-wrap cursor-pointer hover:bg-gray-300 ${
               selectedChapter?.value === chapter
                 ? "bg-gray-300 border-2 border-gray-400"
                 : ""
@@ -121,7 +122,7 @@ const SelectViewContainer = () => {
         {verses.map((verse) => (
           <div
             key={`verse-${verse}`}
-            className={`bg-gray-200 h-14 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-300 ${
+            className={`bg-gray-200 h-12 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-300 ${
               selectedVerse?.value === verse
                 ? "bg-gray-300 border-2 border-gray-400"
                 : ""
@@ -225,11 +226,11 @@ const SelectViewContainer = () => {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-6xl h-[calc(100vh-60px)] flex flex-col">
-          <DialogHeader className="pt-6">
+        <DialogContent className="sm:max-w-6xl h-[calc(100vh-110px)] flex flex-col [&>button]:hidden mt-5">
+          <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 border-b-2">
             <div className=" max-w-2xl w-full mx-auto flex flex-col sm:flex-row justify-center gap-1">
               <button
-                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 ${
+                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 sm:rounded-tr-lg sm:rounded-tl-lg ${
                   activeView === "book"
                     ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
                     : "bg-white text-[var(--indigo-color)]"
@@ -239,7 +240,7 @@ const SelectViewContainer = () => {
                 Book
               </button>
               <button
-                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 ${
+                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 sm:rounded-tr-lg sm:rounded-tl-lg ${
                   activeView === "chapter"
                     ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
                     : "bg-white text-[var(--indigo-color)]"
@@ -249,7 +250,7 @@ const SelectViewContainer = () => {
                 Chapter
               </button>
               <button
-                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 ${
+                className={`px-4 py-2 font-semibold cursor-pointer flex-1 border-2 sm:rounded-tr-lg sm:rounded-tl-lg ${
                   activeView === "verse"
                     ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
                     : "bg-white text-[var(--indigo-color)]"
@@ -261,6 +262,9 @@ const SelectViewContainer = () => {
                 Verse
               </button>
             </div>
+            <DialogClose className="h-6 w-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100">
+              <X className="h-4 w-4" />
+            </DialogClose>
           </DialogHeader>
           <div className="overflow-y-auto flex-grow">
             {activeView === "book" &&
