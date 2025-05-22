@@ -1,5 +1,6 @@
 import React from "react";
-import HideImage from "../assets/images/Hide verse .gif";
+import HideImage from "../assets/images/Hide_Verse.gif";
+import ShowImage from "../assets/images/Show_Verse.gif";
 
 interface ButtonHideProps {
   isVisible: boolean;
@@ -8,7 +9,7 @@ interface ButtonHideProps {
 
 const ButtonHide: React.FC<ButtonHideProps> = ({ isVisible, toggle }) => {
   const buttonText = isVisible ? "Hide Text" : "Show Text";
-  const buttonImage = isVisible ? HideImage : "";
+  const buttonImage = isVisible ? HideImage : ShowImage;
   return (
     <div>
       <button
