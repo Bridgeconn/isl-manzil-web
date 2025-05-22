@@ -1,5 +1,6 @@
 import React from "react";
-import HideImage from "../assets/images/Hide verse .gif";
+import HideImage from "../assets/images/Hide_Verse_cropped.gif";
+import ShowImage from "../assets/images/Show_Verse_cropped.gif";
 
 interface ButtonHideProps {
   isVisible: boolean;
@@ -8,17 +9,15 @@ interface ButtonHideProps {
 
 const ButtonHide: React.FC<ButtonHideProps> = ({ isVisible, toggle }) => {
   const buttonText = isVisible ? "Hide Text" : "Show Text";
-  const buttonImage = isVisible ? HideImage : "";
+  const buttonImage = isVisible ? HideImage : ShowImage;
   return (
     <div>
       <button
         onClick={toggle}
-        className="flex items-center gap-2 px-4 border-2 text-black rounded-md cursor-pointer"
+        className="flex items-center gap-2 px-2 py-1 border-2 text-black rounded-md cursor-pointer"
       >
-        {buttonImage ? (
-          <img src={buttonImage} alt="show/hide" className="w-10 h-10" />
-        ) : (
-          <div className="w-10 h-10"></div>
+        {buttonImage && (
+          <img src={buttonImage} alt="show/hide" className="w-9 h-9" />
         )}
         <span>{buttonText}</span>
       </button>
