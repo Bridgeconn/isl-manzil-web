@@ -3,7 +3,12 @@ import Dropdown from "./Dropdown";
 import bookCodesData from "../assets/data/book_codes.json";
 import versificationData from "../assets/data/versification.json";
 import { VersificationData } from "../types/bible";
-import { BookOption, ChapterOption, VerseOption, OptionType } from "../types/Navigation"
+import {
+  BookOption,
+  ChapterOption,
+  VerseOption,
+  OptionType,
+} from "../types/Navigation";
 import useBibleStore from "@/store/useBibleStore";
 
 const SelectBoxContainer = () => {
@@ -13,7 +18,7 @@ const SelectBoxContainer = () => {
     selectedVerse,
     setBook,
     setChapter,
-    setVerse
+    setVerse,
   } = useBibleStore();
 
   const [bookOptions, setBookOptions] = useState<BookOption[]>([]);
@@ -84,18 +89,46 @@ const SelectBoxContainer = () => {
 
   const handleBookChange = (option: OptionType | null) => {
     if (option === null || "bookId" in option) {
-    setBook(option as BookOption | null);
-  }
+      const newBook = option as BookOption | null;
+
+      setBook(newBook);
+      if (newBook) {
+        const bookCode = newBook.value.toUpperCase();
+        const maxChapters =
+          typedVersificationData.maxVerses[bookCode]?.length || 0;
+
+        if (maxChapters > 0) {
+          const firstChapter: ChapterOption = {
+            value: 1,
+            label: "1",
+          };
+          setChapter(firstChapter);
+
+          const maxVerses =
+            typedVersificationData.maxVerses[bookCode]?.[0] || "0";
+          if (parseInt(maxVerses) > 0) {
+            const firstVerse: VerseOption = {
+              value: 1,
+              label: "1",
+            };
+            setVerse(firstVerse);
+          }
+        }
+      } else {
+        setChapter(null);
+        setVerse(null);
+      }
+    }
   };
 
   const handleChapterChange = (option: OptionType | null) => {
-    if (option === null || (typeof option.value === 'number')) {
+    if (option === null || typeof option.value === "number") {
       setChapter(option as ChapterOption | null);
     }
   };
 
   const handleVerseChange = (option: OptionType | null) => {
-    if (option === null || (typeof option.value === 'number')) {
+    if (option === null || typeof option.value === "number") {
       setVerse(option as VerseOption | null);
     }
   };
@@ -105,7 +138,7 @@ const SelectBoxContainer = () => {
     { context }: { context: string }
   ) => {
     const isBookOption = "bookId" in option;
-  
+
     if (context === "menu" && isBookOption) {
       return (
         <div className="flex items-center gap-2">
@@ -122,7 +155,7 @@ const SelectBoxContainer = () => {
         </div>
       );
     }
-  
+
     if (context === "value") {
       return (
         <span className="text-[var(--indigo-color)] font-semibold">
@@ -130,10 +163,10 @@ const SelectBoxContainer = () => {
         </span>
       );
     }
-  
+
     return <span className="block text-center">{option.label}</span>;
   };
-  
+
   return (
     <div className="w-full flex flex-col md:flex-row gap-4">
       <div className="flex-2 max-w-[220px]">

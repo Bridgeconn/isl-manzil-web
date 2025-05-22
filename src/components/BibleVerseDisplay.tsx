@@ -10,37 +10,39 @@ const BibleVerseDisplay = () => {
   const [isFetching, setIsFetching] = useState(false);
   const chapterCache = useRef<Record<string, VerseData[]>>({});
 
-  const csvFiles = import.meta.glob("/src/assets/data/books/**/*.csv", { 
-    query: '?raw',
-    import: 'default'
+  const csvFiles = import.meta.glob("/src/assets/data/books/**/*.csv", {
+    query: "?raw",
+    import: "default",
   });
 
   useEffect(() => {
     if (!selectedBook || !selectedChapter) return;
-    
+
     const bookCode = selectedBook.value.toLowerCase();
     const chapterNum = selectedChapter.value;
-    
+
     const cacheKey = `${bookCode}-${chapterNum}`;
-    
+
     if (chapterCache.current[cacheKey]) {
       setVerseData(chapterCache.current[cacheKey]);
       return;
     }
-    
+
     const fetchData = async () => {
       setIsFetching(true);
       setError(null);
-      
+
       try {
         const filePath = `/src/assets/data/books/${bookCode}/${chapterNum}.csv`;
-        
+
         if (!csvFiles[filePath]) {
-          throw new Error(`CSV file not found for ${bookCode} chapter ${chapterNum}`);
+          throw new Error(
+            `CSV file not found for ${bookCode} chapter ${chapterNum}`
+          );
         }
-        
-        const csvText = await csvFiles[filePath]() as string;
-        
+
+        const csvText = (await csvFiles[filePath]()) as string;
+
         Papa.parse(csvText, {
           header: true,
           skipEmptyLines: true,
@@ -56,45 +58,63 @@ const BibleVerseDisplay = () => {
           },
         });
       } catch (err) {
-        setError(`Error fetching verse data: ${err instanceof Error ? err.message : String(err)}`);
+        setError(
+          `Error fetching verse data: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
         setIsFetching(false);
       }
     };
-    
+
     fetchData();
   }, [selectedBook, selectedChapter, selectedVerse, csvFiles]);
 
-  const renderVerseContent = () => {
-    if (isFetching) return <p className="text-center py-4">Loading verses...</p>;
+  const renderLoadingOrError = () => {
+    if (isFetching)
+      return <p className="text-center py-4">Loading verses...</p>;
     if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
     if (!verseData.length)
       return <p className="text-center py-4">No verses available</p>;
-
-    return (
-      <div className="space-y-2 py-2">
-        {verseData.map((verseItem, index) => {
-          return (
-            <div key={index} >
-              <span className="font-semibold text-gray-500 mr-2 text-sm">
-                {verseItem.verse}
-              </span>
-              <span className="antialiased tracking-wide font-normal font-roboto">{verseItem.text}</span>
-            </div>
-          );
-        })}
-      </div>
-    );
+    return null;
   };
 
   return (
     <>
       {selectedBook && selectedChapter && (
-        <div className="flex">
-          <span className="text-5xl font-bold text-gray-800 mr-2">
-            {selectedChapter.value}
-          </span>
-          {renderVerseContent()}
-        </div>
+        <>
+          {renderLoadingOrError()}
+
+          {!isFetching && !error && verseData.length > 0 && (
+            <div className="flex flex-col">
+              <div className="mb-2">
+                <span className="text-4xl font-bold text-gray-800">
+                  {selectedChapter.value}
+                </span>
+                <span className="antialiased tracking-wide font-normal font-roboto ml-2">
+                  {verseData[0]?.text}
+                </span>
+              </div>
+
+              {verseData.length > 1 && (
+                <div className="space-y-2 ml-1">
+                  {verseData.slice(1).map((verseItem, index) => {
+                    return (
+                      <div key={index + 1} id={`verse-${verseItem.verse}`}>
+                        <span className="font-semibold text-gray-500 text-sm mr-2">
+                          {verseItem.verse}
+                        </span>
+                        <span className="antialiased tracking-wide font-normal font-roboto">
+                          {verseItem.text}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </>
   );
