@@ -21,7 +21,7 @@ const CustomVideoPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [lastAction, setLastAction] = useState<
-    "play" | "pause" | "replay" | null
+    "play" | "pause" | null
   >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
@@ -341,8 +341,6 @@ const CustomVideoPlayer = () => {
     setCurrentTime(0);
     setIsPlaying(true);
     setIsEnded(false);
-    setLastAction("replay");
-    // Show replay bezel effect
     setShowPlayBezel(true);
     setTimeout(() => setShowPlayBezel(false), 800);
   };
@@ -427,7 +425,7 @@ const CustomVideoPlayer = () => {
       onClick={togglePlay}
     >
       {!isPlayerReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black z-40">
+        <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
           <div className="text-white text-lg">Loading video...</div>
         </div>
       )}
@@ -441,7 +439,7 @@ const CustomVideoPlayer = () => {
       {showPlayBezel && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
           <div className="bg-black bg-opacity-50 rounded-full p-6">
-            {lastAction === "replay" || isEnded ? (
+            {isEnded ? (
               <RefreshCw size={48} className="text-white" />
             ) : lastAction === "pause" ? (
               <Pause size={48} className="text-white" />
