@@ -1,9 +1,34 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, RefreshCw, Maximize, Minimize } from "lucide-react";
+import { RefreshCw, Maximize, Minimize } from "lucide-react";
 import { bibleVerses, VerseData } from "../assets/data/bibleVersesSample";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Player from "@vimeo/player";
 import useBibleStore from "@/store/useBibleStore";
+
+const FilledPlayIcon = ({ size = 24, className = "" }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={className}
+  >
+    <polygon points="5,3 19,12 5,21" />
+  </svg>
+);
+
+const FilledPauseIcon = ({ size = 24, className = "" }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={className}
+  >
+    <rect x="6" y="4" width="4" height="16" />
+    <rect x="14" y="4" width="4" height="16" />
+  </svg>
+);
 
 const CustomVideoPlayer = () => {
   const { currentVideoId } = useBibleStore();
@@ -442,9 +467,9 @@ const CustomVideoPlayer = () => {
             {isEnded ? (
               <RefreshCw size={48} className="text-white" />
             ) : lastAction === "pause" ? (
-              <Pause size={48} className="text-white" />
+              <FilledPauseIcon size={48} className="text-white" />
             ) : (
-              <Play size={48} className="text-white" />
+              <FilledPlayIcon size={48} className="text-white pl-1" />
             )}
           </div>
         </div>
@@ -479,12 +504,12 @@ const CustomVideoPlayer = () => {
           {/* Seekbar with sections */}
           <div
             ref={seekBarRef}
-            className="relative h-2 bg-gray-600 rounded-full mb-4 cursor-pointer"
+            className="relative h-1 bg-gray-600 rounded-full mb-4 cursor-pointer"
             onClick={handleSeekClick}
           >
             {/* Progress Bar */}
             <div
-              className="absolute top-0 left-0 h-2 bg-blue-500 rounded-full"
+              className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full"
               style={{ width: `${progressPercent}%` }}
             ></div>
             {/* Verse markers */}
@@ -495,7 +520,7 @@ const CustomVideoPlayer = () => {
               return (
                 <div
                   key={verse.id}
-                  className={`absolute top-0 w-0.5 h-2 ${
+                  className={`absolute top-0 w-0.5 h-1 ${
                     isPassed ? "bg-yellow-400" : "bg-black"
                   }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
                   style={{
@@ -509,7 +534,7 @@ const CustomVideoPlayer = () => {
             })}
             {/* Current Time Indicator */}
             <div
-              className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1"
+              className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
               style={{
                 left: `${progressPercent}%`,
                 transform: "translateX(-50%)",
@@ -537,9 +562,9 @@ const CustomVideoPlayer = () => {
                 {isEnded ? (
                   <RefreshCw size={24} />
                 ) : isPlaying ? (
-                  <Pause size={24} />
+                  <FilledPauseIcon size={24} />
                 ) : (
-                  <Play size={24} />
+                  <FilledPlayIcon size={24} />
                 )}
               </button>
               {/* Timer */}
