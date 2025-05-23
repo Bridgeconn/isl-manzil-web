@@ -1,11 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import {
-  RefreshCw,
-  Maximize,
-  Minimize,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { RefreshCw, Maximize, Minimize } from "lucide-react";
+// import { ChevronLeft, ChevronRight } from "lucide-react";
 import Next from "../assets/images/Next.gif";
 import Previous from "../assets/images/Previous.gif";
 import { bibleVerses, VerseData } from "../assets/data/bibleVersesSample";
@@ -486,7 +481,7 @@ const CustomVideoPlayer = () => {
     <div className="w-full max-w-6xl mx-auto px-2">
       <div className="flex items-center justify-center w-full">
         {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
-          {/* <button
+        {/* <button
             onClick={() => navigateToChapter("previous")}
             disabled={!canGoPrevious}
             className={`p-1 rounded-full transition-all duration-200 ${
@@ -498,23 +493,23 @@ const CustomVideoPlayer = () => {
           >
             <ChevronLeft size={24} />
           </button> */}
-          <button
-            onClick={() => navigateToChapter("previous")}
-            disabled={!canGoPrevious}
-            className={`transition-all duration-200 rounded-full p-1 ${
-              canGoPrevious
-                ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
-                : "cursor-not-allowed opacity-50"
-            }`}
-            title="Previous Chapter"
-          >
-            <LoopingGif
-              src={Previous}
-              alt="Previous chapter"
-              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-              duration={2000}
-            />
-          </button>
+        <button
+          onClick={() => navigateToChapter("previous")}
+          disabled={!canGoPrevious}
+          className={`transition-all duration-200 rounded-full p-1 ${
+            canGoPrevious
+              ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
+              : "cursor-not-allowed opacity-50"
+          }`}
+          title="Previous Chapter"
+        >
+          <LoopingGif
+            src={Previous}
+            alt="Previous chapter"
+            className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+            duration={2000}
+          />
+        </button>
         {/* </div> */}
 
         <div
@@ -678,7 +673,7 @@ const CustomVideoPlayer = () => {
           </div>
         </div>
         {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
-          {/* <button
+        {/* <button
             onClick={() => navigateToChapter("next")}
             disabled={!canGoNext}
             className={`p-1 rounded-full transition-all duration-200 ${
@@ -690,21 +685,23 @@ const CustomVideoPlayer = () => {
           >
             <ChevronRight size={24} />
           </button> */}
-          <button
-            onClick={() => navigateToChapter("next")}
-            disabled={!canGoNext}
-            className={`transition-all duration-200 rounded-full p-1 ${
-              canGoNext ? "cursor-pointer hover:scale-110 hover:bg-gray-100" : "cursor-not-allowed opacity-50"
-            }`}
-            title="Next Chapter"
-          >
-            <LoopingGif
-              src={Next}
-              alt="Next chapter"
-              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-              duration={2000}
-            />
-          </button>
+        <button
+          onClick={() => navigateToChapter("next")}
+          disabled={!canGoNext}
+          className={`transition-all duration-200 rounded-full p-1 ${
+            canGoNext
+              ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
+              : "cursor-not-allowed opacity-50"
+          }`}
+          title="Next Chapter"
+        >
+          <LoopingGif
+            src={Next}
+            alt="Next chapter"
+            className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+            duration={2000}
+          />
+        </button>
         {/* </div> */}
       </div>
     </div>
