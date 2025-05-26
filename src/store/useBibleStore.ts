@@ -34,6 +34,7 @@ interface BibleStore {
   currentVideoId: number | null;
   availableData: AvailableData;
   bibleVerseMarker: VerseMarkerType[] | null;
+  currentPlayingVerse: string | null;
   isLoading: boolean;
   isInitialized: boolean;
 
@@ -41,6 +42,8 @@ interface BibleStore {
   setChapter: (chapter: ChapterOption | null) => void;
   setVerse: (verse: VerseOption | null) => void;
   setCurrentVideoId: (videoId: number) => void;
+  setCurrentPlayingVerse: (verse: string | null) => void;
+  getCurrentVerseFromTime: (currentTime: number) => string | null;
   getVideoUrlData: () => Promise<VideoLinkRowData[] | null>;
   initializeAvailableData: () => Promise<void>;
   getAvailableChaptersForBook: (bookCode: string) => ChapterOption[];
@@ -63,6 +66,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   selectedChapter: null,
   selectedVerse: null,
   currentVideoId: null,
+  currentPlayingVerse: null,
   isLoading: false,
   isInitialized: false,
   availableData: {
@@ -73,7 +77,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   bibleVerseMarker: [],
 
   setBook: (book: BookOption | null) => {
-    set({ selectedBook: book });
+    set({ selectedBook: book, currentPlayingVerse: null });
 
     // Auto-set first available chapter when book changes
     if (book) {
@@ -89,7 +93,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
 
   setChapter: (chapter: ChapterOption | null) => {
-    set({ selectedChapter: chapter });
+    set({ selectedChapter: chapter, currentPlayingVerse: null });
 
     // Auto-set first verse when chapter changes
     if (chapter && get().selectedBook) {
@@ -109,6 +113,58 @@ const useBibleStore = create<BibleStore>((set, get) => ({
 
   setVerse: (verse: VerseOption | null) => set({ selectedVerse: verse }),
   setCurrentVideoId: (videoId: number) => set({ currentVideoId: videoId }),
+  setCurrentPlayingVerse: (verse: string | null) =>
+    set({ currentPlayingVerse: verse }),
+
+  getCurrentVerseFromTime: (currentTime: number): string | null => {
+    const { bibleVerseMarker } = get();
+
+    if (!bibleVerseMarker || bibleVerseMarker.length === 0) {
+      return null;
+    }
+
+    const timeToSeconds = (timeStr: string): number => {
+      if (!timeStr) return 0;
+      const parts = timeStr.split(":");
+
+      if (parts.length === 3 || parts.length === 4) {
+        return (
+          parseInt(parts[0]) * 3600 +
+          parseInt(parts[1]) * 60 +
+          parseInt(parts[2])
+        );
+      } else if (parts.length === 2) {
+        return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      } else {
+        return parseInt(parts[0]);
+      }
+    };
+
+    // Convert verse markers to seconds and sort by time
+    const sortedMarkers = bibleVerseMarker
+      .map((marker) => ({
+        ...marker,
+        timeInSeconds: timeToSeconds(marker.time),
+      }))
+      .sort((a, b) => a.timeInSeconds - b.timeInSeconds);
+
+    let currentVerse = null;
+
+    for (let i = 0; i < sortedMarkers.length; i++) {
+      const currentMarker = sortedMarkers[i];
+      const nextMarker = sortedMarkers[i + 1];
+
+      if (currentTime >= currentMarker.timeInSeconds) {
+        // If there's no next marker, or current time is before next marker
+        if (!nextMarker || currentTime < nextMarker.timeInSeconds) {
+          currentVerse = currentMarker.verse;
+          break;
+        }
+      }
+    }
+
+    return currentVerse;
+  },
 
   getVideoUrlData: async (): Promise<VideoLinkRowData[] | null> => {
     try {
@@ -279,6 +335,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       if (videoId) {
         set({
           currentVideoId: videoId,
+          currentPlayingVerse: null,
         });
       }
     }
@@ -300,7 +357,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       const filePath = `/src/assets/data/verse_markers/${selectedBook.label}_${selectedChapter.label}.csv`;
       console.log("file path", filePath);
       if (!csvFiles[filePath]) {
-        set({ bibleVerseMarker: [] });
+        set({ bibleVerseMarker: [], currentPlayingVerse: null });
         console.warn(
           `Verse marker file not found: ${selectedBook.label}_${selectedChapter.label}.csv`
         );
@@ -320,11 +377,14 @@ const useBibleStore = create<BibleStore>((set, get) => ({
           };
         }
       );
-      set({ bibleVerseMarker: formattedVerseMarkerData });
+      set({
+        bibleVerseMarker: formattedVerseMarkerData,
+        currentPlayingVerse: null,
+      });
       return formattedVerseMarkerData;
     } catch (err) {
       console.error(`Failed to load verse markers:`, err);
-      set({ bibleVerseMarker: [] });
+      set({ bibleVerseMarker: [], currentPlayingVerse: null });
       return null;
     }
   },

@@ -4,7 +4,8 @@ import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 
 const BibleVerseDisplay = () => {
-  const { selectedBook, selectedChapter, selectedVerse } = useBibleStore();
+  const { selectedBook, selectedChapter, selectedVerse, currentPlayingVerse } =
+    useBibleStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -79,6 +80,10 @@ const BibleVerseDisplay = () => {
     return null;
   };
 
+  const isCurrentVerse = (verseNumber: string | number): boolean => {
+    return currentPlayingVerse === verseNumber.toString();
+  };
+
   return (
     <>
       {selectedBook && selectedChapter && (
@@ -91,7 +96,11 @@ const BibleVerseDisplay = () => {
                 <span className="text-4xl font-bold text-gray-800">
                   {selectedChapter.value}
                 </span>
-                <span className="antialiased tracking-wide font-normal font-roboto ml-2">
+                <span className={`antialiased tracking-wide font-normal font-roboto ml-2 rounded transition-colors duration-300 ${
+                    isCurrentVerse(verseData[0]?.verse)
+                      ? "bg-blue-200"
+                      : ""
+                  }`}>
                   {verseData[0]?.text}
                 </span>
               </div>
@@ -99,12 +108,21 @@ const BibleVerseDisplay = () => {
               {verseData.length > 1 && (
                 <div className="space-y-2 ml-1">
                   {verseData.slice(1).map((verseItem, index) => {
+                    const isPlaying = isCurrentVerse(verseItem.verse);
                     return (
                       <div key={index + 1} id={`verse-${verseItem.verse}`}>
-                        <span className="font-semibold text-gray-500 text-sm mr-2">
+                        <span
+                          className={`font-semibold text-gray-500 text-sm mr-2 rounded transition-colors duration-300 ${
+                            isPlaying ? "bg-blue-200" : ""
+                          }`}
+                        >
                           {verseItem.verse}
                         </span>
-                        <span className="antialiased tracking-wide font-normal font-roboto">
+                        <span
+                          className={`antialiased tracking-wide font-normal font-roboto rounded transition-colors duration-300 ${
+                            isPlaying ? "bg-blue-200" : ""
+                          }`}
+                        >
                           {verseItem.text}
                         </span>
                       </div>

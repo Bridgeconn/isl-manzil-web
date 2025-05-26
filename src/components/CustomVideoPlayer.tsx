@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { RefreshCw, Maximize, Minimize } from "lucide-react";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Player from "@vimeo/player";
@@ -37,13 +37,18 @@ const CustomVideoPlayer = () => {
     loadVideoForCurrentSelection,
     bibleVerseMarker,
     getBibleVerseMarker,
+    getCurrentVerseFromTime,
+    setCurrentPlayingVerse,
+    currentPlayingVerse,
   } = useBibleStore();
+
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const vimeoPlayerRef = useRef<Player | null>(null);
   const updateIntervalRef = useRef<number | null>(null);
+  const verseTrackingIntervalRef = useRef<number | null>(null);
   const isDraggingRef = useRef<boolean>(false);
   const controlsTimeoutRef = useRef<number | null>(null);
 
@@ -69,6 +74,66 @@ const CustomVideoPlayer = () => {
     getBibleVerseMarker,
   ]);
 
+  // Helper function to clear all intervals
+  const clearIntervals = useCallback(() => {
+    if (updateIntervalRef.current !== null) {
+      clearInterval(updateIntervalRef.current);
+      updateIntervalRef.current = null;
+    }
+    if (verseTrackingIntervalRef.current !== null) {
+      clearInterval(verseTrackingIntervalRef.current);
+      verseTrackingIntervalRef.current = null;
+    }
+  }, []);
+
+  const setupIntervals = useCallback(() => {
+    clearIntervals();
+
+    // Set up interval for time updates
+    updateIntervalRef.current = window.setInterval(async () => {
+      if (vimeoPlayerRef.current && isPlayerReady) {
+        try {
+          const time = await vimeoPlayerRef.current.getCurrentTime();
+          setCurrentTime(time);
+        } catch (error) {
+          console.error("Error getting current time:", error);
+        }
+      }
+    }, 500);
+
+    // Set up interval for verse tracking
+    verseTrackingIntervalRef.current = window.setInterval(async () => {
+      if (
+        vimeoPlayerRef.current &&
+        isPlayerReady &&
+        isPlaying &&
+        !isEnded &&
+        bibleVerseMarker &&
+        bibleVerseMarker?.length > 0
+      ) {
+        try {
+          const time = await vimeoPlayerRef.current.getCurrentTime();
+          const currentVerse = getCurrentVerseFromTime(time);
+
+          if (currentVerse && currentVerse !== currentPlayingVerse) {
+            setCurrentPlayingVerse(currentVerse);
+          }
+        } catch (error) {
+          console.error("Error tracking verse:", error);
+        }
+      }
+    }, 500);
+  }, [
+    isPlayerReady,
+    isPlaying,
+    isEnded,
+    bibleVerseMarker,
+    getCurrentVerseFromTime,
+    currentPlayingVerse,
+    setCurrentPlayingVerse,
+    clearIntervals,
+  ]);
+
   // Initialize Vimeo player
   useEffect(() => {
     const loadVimeo = () => {
@@ -90,10 +155,7 @@ const CustomVideoPlayer = () => {
 
     return () => {
       clearControlsTimeout();
-
-      if (updateIntervalRef.current !== null) {
-        clearInterval(updateIntervalRef.current);
-      }
+      clearIntervals();
 
       if (vimeoPlayerRef.current) {
         vimeoPlayerRef.current.destroy();
@@ -101,7 +163,7 @@ const CustomVideoPlayer = () => {
         setIsPlayerReady(false);
       }
     };
-  }, []);
+  }, [clearIntervals]);
 
   // Handle video ID changes
   useEffect(() => {
@@ -111,10 +173,7 @@ const CustomVideoPlayer = () => {
       try {
         // Clear previous player if it exists
         if (vimeoPlayerRef.current) {
-          if (updateIntervalRef.current !== null) {
-            clearInterval(updateIntervalRef.current);
-            updateIntervalRef.current = null;
-          }
+          clearIntervals();
 
           // Destroy old player
           await vimeoPlayerRef.current.destroy();
@@ -127,6 +186,7 @@ const CustomVideoPlayer = () => {
         setDuration(0);
         setIsEnded(false);
         setIsPlayerReady(false);
+        setCurrentPlayingVerse(null);
 
         // Create new player
         const options: VimeoPlayerOptions = {
@@ -159,27 +219,42 @@ const CustomVideoPlayer = () => {
         setDuration(newDuration);
 
         setIsPlayerReady(true);
-
-        // Set up interval for time updates
-        updateIntervalRef.current = window.setInterval(() => {
-          if (vimeoPlayerRef.current) {
-            vimeoPlayerRef.current.getCurrentTime().then(setCurrentTime);
-          }
-        }, 500);
       } catch (error) {
         console.error("Error loading new video:", error);
       }
     };
+
     loadNewVideo();
 
     return () => {
       clearControlsTimeout();
-
-      if (updateIntervalRef.current !== null) {
-        clearInterval(updateIntervalRef.current);
-      }
+      clearIntervals();
     };
-  }, [currentVideoId]);
+  }, [currentVideoId, clearIntervals]);
+
+  // Update intervals when play state changes
+  useEffect(() => {
+    if (
+      isPlayerReady &&
+      isPlaying &&
+      !isEnded &&
+      bibleVerseMarker &&
+      bibleVerseMarker?.length > 0
+    ) {
+      setupIntervals();
+    }
+
+    return () => {
+      clearIntervals();
+    };
+  }, [
+    isPlaying,
+    isPlayerReady,
+    isEnded,
+    bibleVerseMarker,
+    setupIntervals,
+    clearIntervals,
+  ]);
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -209,6 +284,12 @@ const CustomVideoPlayer = () => {
             (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
           const newTime = Math.max(0, currentTime - 10);
           await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          setCurrentTime(newTime);
+          if (isEnded) {
+            setIsEnded(false);
+          }
+          const newCurrentVerse = getCurrentVerseFromTime(newTime);
+          setCurrentPlayingVerse(newCurrentVerse);
           break;
         }
         case "ArrowRight": {
@@ -216,6 +297,12 @@ const CustomVideoPlayer = () => {
             (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
           const newTime = Math.min(duration, currentTime + 10);
           await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          setCurrentTime(newTime);
+          if (isEnded) {
+            setIsEnded(false);
+          }
+          const newCurrentVerse = getCurrentVerseFromTime(newTime);
+          setCurrentPlayingVerse(newCurrentVerse);
           break;
         }
         default:
@@ -225,7 +312,7 @@ const CustomVideoPlayer = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPlaying, isFullscreen, isPlayerReady, duration]);
+  }, [isPlaying, isFullscreen, isPlayerReady, duration, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
 
   // Setup global mouse events for seek bar dragging
   useEffect(() => {
@@ -272,7 +359,9 @@ const CustomVideoPlayer = () => {
       setIsPlaying(false);
       setShowControls(true);
       setIsEnded(true);
+      setCurrentPlayingVerse(null);
       clearControlsTimeout();
+      clearIntervals();
     };
     // Add listeners
     vimeoPlayerRef.current.on("play", handlePlay);
@@ -307,13 +396,6 @@ const CustomVideoPlayer = () => {
         setupEventListeners();
         setIsPlayerReady(true);
       });
-
-      // Start interval to update current time
-      updateIntervalRef.current = window.setInterval(() => {
-        if (vimeoPlayerRef.current) {
-          vimeoPlayerRef.current.getCurrentTime().then(setCurrentTime);
-        }
-      }, 500);
     } catch (error) {
       console.error("Error initializing Vimeo player:", error);
     }
@@ -404,6 +486,7 @@ const CustomVideoPlayer = () => {
     setCurrentTime(0);
     setIsPlaying(true);
     setIsEnded(false);
+    setCurrentPlayingVerse(null);
     setShowPlayBezel(true);
     setTimeout(() => setShowPlayBezel(false), 800);
   };
@@ -420,6 +503,10 @@ const CustomVideoPlayer = () => {
 
     vimeoPlayerRef.current.setCurrentTime(seekTime);
     setCurrentTime(seekTime);
+
+    // Update current verse based on seek position
+    const newCurrentVerse = getCurrentVerseFromTime(seekTime);
+    setCurrentPlayingVerse(newCurrentVerse);
 
     // If video was ended, update state
     if (isEnded) {
@@ -451,6 +538,9 @@ const CustomVideoPlayer = () => {
 
     vimeoPlayerRef.current.setCurrentTime(seekTime);
     setCurrentTime(seekTime);
+
+    // Update current verse based on clicked marker
+    setCurrentPlayingVerse(verse.verse);
 
     // If video was ended, update state
     if (isEnded) {
