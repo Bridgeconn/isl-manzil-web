@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { RefreshCw, Maximize, Minimize } from "lucide-react";
-import { bibleVerses, VerseData } from "../assets/data/bibleVersesSample";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Player from "@vimeo/player";
-import useBibleStore from "@/store/useBibleStore";
+import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -36,6 +35,8 @@ const CustomVideoPlayer = () => {
     selectedBook,
     selectedChapter,
     loadVideoForCurrentSelection,
+    bibleVerseMarker,
+    getBibleVerseMarker,
   } = useBibleStore();
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -59,8 +60,14 @@ const CustomVideoPlayer = () => {
   useEffect(() => {
     if (selectedBook && selectedChapter) {
       loadVideoForCurrentSelection();
+      getBibleVerseMarker();
     }
-  }, [selectedBook, selectedChapter, loadVideoForCurrentSelection]);
+  }, [
+    selectedBook,
+    selectedChapter,
+    loadVideoForCurrentSelection,
+    getBibleVerseMarker,
+  ]);
 
   // Initialize Vimeo player
   useEffect(() => {
@@ -434,7 +441,7 @@ const CustomVideoPlayer = () => {
 
   // Handle verse marker click
   const handleVerseMarkerClick = (
-    verse: VerseData,
+    verse: VerseMarkerType,
     event: React.MouseEvent
   ) => {
     event.stopPropagation();
@@ -551,25 +558,27 @@ const CustomVideoPlayer = () => {
               style={{ width: `${progressPercent}%` }}
             ></div>
             {/* Verse markers */}
-            {bibleVerses.map((verse: VerseData) => {
-              const verseTimeInSeconds = timeToSeconds(verse.time);
-              const versePosition = (verseTimeInSeconds / duration) * 100;
-              const isPassed = currentTime >= verseTimeInSeconds;
-              return (
-                <div
-                  key={verse.id}
-                  className={`absolute top-0 w-0.5 h-1 ${
-                    isPassed ? "bg-yellow-400" : "bg-black"
-                  }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
-                  style={{
-                    left: `${versePosition}%`,
-                    transform: "translateX(-50%)",
-                  }}
-                  onClick={(e) => handleVerseMarkerClick(verse, e)}
-                  title={`${verse.title} (${verse.time})`}
-                ></div>
-              );
-            })}
+            {bibleVerseMarker &&
+              bibleVerseMarker.length > 0 &&
+              bibleVerseMarker.map((verse: VerseMarkerType) => {
+                const verseTimeInSeconds = timeToSeconds(verse.time);
+                const versePosition = (verseTimeInSeconds / duration) * 100;
+                const isPassed = currentTime >= verseTimeInSeconds;
+                return (
+                  <div
+                    key={verse.id}
+                    className={`absolute top-0 w-0.5 h-1 ${
+                      isPassed ? "bg-yellow-400" : "bg-black"
+                    }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
+                    style={{
+                      left: `${versePosition}%`,
+                      transform: "translateX(-50%)",
+                    }}
+                    onClick={(e) => handleVerseMarkerClick(verse, e)}
+                    title={`Verse:${verse.verse} (${verse.time})`}
+                  ></div>
+                );
+              })}
             {/* Current Time Indicator */}
             <div
               className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
