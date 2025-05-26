@@ -36,9 +36,13 @@ const FilledPauseIcon = ({ size = 24, className = "" }) => (
 );
 
 const CustomVideoPlayer = () => {
-  const { currentVideoId } = useBibleStore();
-  const { canGoPrevious, canGoNext, navigateToChapter } =
-    useChapterNavigation();
+  const { canGoPrevious, canGoNext, navigateToChapter } = useChapterNavigation();
+  const {
+    currentVideoId,
+    selectedBook,
+    selectedChapter,
+    loadVideoForCurrentSelection,
+  } = useBibleStore();
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
@@ -57,6 +61,12 @@ const CustomVideoPlayer = () => {
   const [lastAction, setLastAction] = useState<"play" | "pause" | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+
+  useEffect(() => {
+    if (selectedBook && selectedChapter) {
+      loadVideoForCurrentSelection();
+    }
+  }, [selectedBook, selectedChapter, loadVideoForCurrentSelection]);
 
   // Initialize Vimeo player
   useEffect(() => {

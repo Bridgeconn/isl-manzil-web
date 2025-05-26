@@ -7,18 +7,20 @@ const Dropdown = ({
   onChange,
   placeholder,
   formatOptionLabel,
-  zIndex = "z-10"
+  zIndex = "z-10",
 }: DropdownProps) => {
-
   return (
     <div className={`relative ${zIndex}`}>
-    <Select
-      options={options}
-      value={value}
-      formatOptionLabel={formatOptionLabel}
-      onChange={onChange}
-      placeholder={placeholder}
-    />
+      <Select
+        options={options}
+        value={value}
+        formatOptionLabel={formatOptionLabel}
+        onChange={onChange}
+        placeholder={placeholder}
+        isOptionDisabled={(option) =>
+          ("isDisabled" in option && option.isDisabled) ?? false
+        }
+      />
     </div>
   );
 };
