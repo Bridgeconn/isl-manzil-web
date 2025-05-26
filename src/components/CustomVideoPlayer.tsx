@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { RefreshCw, Maximize, Minimize } from "lucide-react";
+import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
 // import { ChevronLeft, ChevronRight } from "lucide-react";
 import Next from "../assets/images/Next.gif";
 import Previous from "../assets/images/Previous.gif";
@@ -39,9 +39,11 @@ const CustomVideoPlayer = () => {
   const { canGoPrevious, canGoNext, navigateToChapter } = useChapterNavigation();
   const {
     currentVideoId,
+    setCurrentVideoId,
     selectedBook,
     selectedChapter,
     loadVideoForCurrentSelection,
+    isVideoLoading
   } = useBibleStore();
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -62,11 +64,15 @@ const CustomVideoPlayer = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
+  const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
+  const showComingSoon = !isVideoLoading && currentVideoId === null && selectedBook && selectedChapter;
+
   useEffect(() => {
     if (selectedBook && selectedChapter) {
+      setCurrentVideoId(null);
       loadVideoForCurrentSelection();
     }
-  }, [selectedBook, selectedChapter, loadVideoForCurrentSelection]);
+  }, [selectedBook, selectedChapter, setCurrentVideoId,loadVideoForCurrentSelection]);
 
   // Initialize Vimeo player
   useEffect(() => {
@@ -83,7 +89,7 @@ const CustomVideoPlayer = () => {
       document.body.appendChild(script);
     };
 
-    if (playerRef.current) {
+    if (playerRef.current && isVideoAvailable) {
       loadVimeo();
     }
 
@@ -100,11 +106,11 @@ const CustomVideoPlayer = () => {
         setIsPlayerReady(false);
       }
     };
-  }, []);
+  }, [isVideoAvailable]);
 
   // Handle video ID changes
   useEffect(() => {
-    if (!currentVideoId || !playerRef.current) return;
+    if (!currentVideoId || !playerRef.current || isVideoLoading) return;
 
     const loadNewVideo = async () => {
       try {
@@ -194,7 +200,7 @@ const CustomVideoPlayer = () => {
   // Handle keyboard controls
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
-      if (!isPlayerReady) return;
+      if (!isPlayerReady || !isVideoAvailable) return;
       switch (event.key) {
         case " ":
           togglePlay();
@@ -224,12 +230,12 @@ const CustomVideoPlayer = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPlaying, isFullscreen, isPlayerReady, duration]);
+  }, [isPlaying, isFullscreen, isPlayerReady, duration, isVideoAvailable]);
 
   // Setup global mouse events for seek bar dragging
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDraggingRef.current && seekBarRef.current) {
+      if (isDraggingRef.current && seekBarRef.current && isVideoAvailable) {
         handleSeekPosition(e.clientX);
       }
     };
@@ -245,7 +251,7 @@ const CustomVideoPlayer = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [duration]);
+  }, [duration, isVideoAvailable]);
 
   // Set up event listeners for Vimeo player
   const setupEventListeners = () => {
@@ -429,13 +435,17 @@ const CustomVideoPlayer = () => {
   // Handle click on seek bar
   const handleSeekClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    handleSeekPosition(event.clientX);
+    if (isVideoAvailable) {
+      handleSeekPosition(event.clientX);
+    }
   };
 
   // For dragging
   const handleSeekMouseDown = (event: React.MouseEvent) => {
     event.stopPropagation();
-    isDraggingRef.current = true;
+    if (isVideoAvailable) {
+      isDraggingRef.current = true;
+    }
   };
 
   // Handle verse marker click
@@ -444,7 +454,7 @@ const CustomVideoPlayer = () => {
     event: React.MouseEvent
   ) => {
     event.stopPropagation();
-    if (!vimeoPlayerRef.current || !isPlayerReady) return;
+    if (!vimeoPlayerRef.current || !isPlayerReady || !isVideoAvailable) return;
 
     const seekTime = timeToSeconds(verse.time);
 
@@ -479,7 +489,7 @@ const CustomVideoPlayer = () => {
   };
 
   const handleControlsMouseLeave = () => {
-    if (!isEnded && !isDraggingRef.current) {
+    if (!isEnded && !isDraggingRef.current && isVideoAvailable) {
       setControlsHideTimeout();
     }
   };
@@ -526,14 +536,28 @@ const CustomVideoPlayer = () => {
           ref={playerContainerRef}
           className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
           style={{ aspectRatio: "16/9" }}
-          onClick={togglePlay}
+          onClick={isVideoAvailable ? togglePlay : undefined}
         >
-          {!isPlayerReady && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
+          {(isVideoLoading || !isPlayerReady) && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
+              <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
               <div className="text-white text-lg">Loading video...</div>
             </div>
           )}
-
+          {showComingSoon && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 z-10">
+              <Clock className="w-16 h-16 text-blue-400 mb-6" />
+              <div className="text-white text-2xl font-bold mb-2">Video Coming Soon</div>
+              <div className="text-gray-300 text-lg text-center px-4">
+                {selectedBook?.label} Chapter {selectedChapter?.label}
+              </div>
+              <div className="text-gray-400 text-sm mt-4 text-center px-4">
+                This video is currently being prepared and will be available soon.
+              </div>
+            </div>
+          )}
+          {isVideoAvailable && (
+          <>
           {/* Vimeo Player Container */}
           <div className="w-full h-full">
             <div ref={playerRef} className="w-full h-full" />
@@ -681,6 +705,8 @@ const CustomVideoPlayer = () => {
               </div>
             </div>
           </div>
+          </>
+          )}
         </div>
         {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
         {/* <button

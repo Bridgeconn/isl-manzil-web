@@ -19,8 +19,7 @@ interface VideoLinkRowData {
 interface AvailableData {
   books: BookOption[];
   chapters: { [bookCode: string]: ChapterOption[] };
-
-  }
+}
 
 interface BibleStore {
   selectedBook: BookOption | null;
@@ -30,11 +29,14 @@ interface BibleStore {
   availableData: AvailableData;
   isLoading: boolean;
   isInitialized: boolean;
+  isVideoLoading: boolean;
+  // Add request tracking
+  currentLoadingRequest: string | null;
 
   setBook: (book: BookOption | null) => void;
   setChapter: (chapter: ChapterOption | null) => void;
   setVerse: (verse: VerseOption | null) => void;
-  setCurrentVideoId: (videoId: number) => void;
+  setCurrentVideoId: (videoId: number | null) => void;
   getVideoUrlData: () => Promise<VideoLinkRowData[] | null>;
   initializeAvailableData: () => Promise<void>;
   getAvailableChaptersForBook: (bookCode: string) => ChapterOption[];
@@ -58,11 +60,12 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   currentVideoId: null,
   isLoading: false,
   isInitialized: false,
+  isVideoLoading: false,
   availableData: {
     books: [],
     chapters: {},
-    
   },
+  currentLoadingRequest: null,
 
   setBook: (book: BookOption | null) => {
     set({ selectedBook: book });
@@ -100,7 +103,8 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
 
   setVerse: (verse: VerseOption | null) => set({ selectedVerse: verse }),
-  setCurrentVideoId: (videoId: number) => set({ currentVideoId: videoId }),
+  setCurrentVideoId: (videoId: number | null) =>
+    set({ currentVideoId: videoId }),
 
   getVideoUrlData: async (): Promise<VideoLinkRowData[] | null> => {
     try {
@@ -176,7 +180,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
         availableData: {
           books,
           chapters,
-          
         },
         isLoading: false,
         isInitialized: true,
@@ -254,7 +257,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
             row.BookCode.toLowerCase() === book.toLowerCase() &&
             Number(row.Chapter) === chapter
         );
-        // console.log("video match found", book, chapter);
         return match && match.VideoId ? Number(match.VideoId) : null;
       }
     } catch (err) {
@@ -265,13 +267,53 @@ const useBibleStore = create<BibleStore>((set, get) => ({
 
   loadVideoForCurrentSelection: async () => {
     const { selectedBook, selectedChapter } = get();
-    if (selectedBook && selectedChapter) {
+    if (!selectedBook || !selectedChapter) {
+      set({
+        isVideoLoading: false,
+        currentVideoId: null,
+        currentLoadingRequest: null,
+      });
+      return;
+    }
+
+    // Create unique request ID to track this specific request
+    const requestId = `${selectedBook.value}-${selectedChapter.value}-${Date.now()}`;
+    
+    set({
+      isVideoLoading: true,
+      currentLoadingRequest: requestId,
+    });
+
+    try {
       const bookName = selectedBook.value;
       const chapter = parseInt(selectedChapter.label);
+      
       const videoId = await get().getVideoIdByBookAndChapter(bookName, chapter);
-      if (videoId) {
+      
+      // Check if this is still the current request (no newer request has started)
+      const currentRequest = get().currentLoadingRequest;
+      if (currentRequest !== requestId) {
+        console.log('Request outdated, ignoring result:', requestId);
+        return; // This request is outdated, ignore the result
+      }
+
+      // Update state only if this is still the current request
+      set({
+        currentVideoId: videoId,
+        isVideoLoading: false,
+        currentLoadingRequest: null,
+      });
+      
+    } catch (error) {
+      console.error('Error loading video:', error);
+      
+      // Only update error state if this is still the current request
+      const currentRequest = get().currentLoadingRequest;
+      if (currentRequest === requestId) {
         set({
-          currentVideoId: videoId,
+          currentVideoId: null,
+          isVideoLoading: false,
+          currentLoadingRequest: null,
         });
       }
     }
