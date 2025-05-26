@@ -34,6 +34,7 @@ const CustomVideoPlayer = () => {
     currentVideoId,
     selectedBook,
     selectedChapter,
+    selectedVerse,
     loadVideoForCurrentSelection,
     bibleVerseMarker,
     getBibleVerseMarker,
@@ -51,6 +52,10 @@ const CustomVideoPlayer = () => {
   const verseTrackingIntervalRef = useRef<number | null>(null);
   const isDraggingRef = useRef<boolean>(false);
   const controlsTimeoutRef = useRef<number | null>(null);
+  
+  // Track previous selectedVerse to detect changes
+  const prevSelectedVerseRef = useRef<number | null>(null);
+  const userInteractedRef = useRef<boolean>(false);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
@@ -134,6 +139,64 @@ const CustomVideoPlayer = () => {
     clearIntervals,
   ]);
 
+  // Helper function to find verse marker by verse number
+  const findVerseMarker = useCallback((verseNumber: number): VerseMarkerType | null => {
+    if (!bibleVerseMarker || bibleVerseMarker.length === 0) return null;
+    return bibleVerseMarker.find(marker => marker.verse === verseNumber.toString()) || null;
+  }, [bibleVerseMarker]);
+
+  // Helper function to jump to a specific verse
+  const jumpToVerse = useCallback(async (verseNumber: number) => {
+    if (!vimeoPlayerRef.current || !isPlayerReady) return;
+
+    const verseMarker = findVerseMarker(verseNumber);
+    if (!verseMarker) {
+      console.warn(`Verse ${verseNumber} marker not found`);
+      return;
+    }
+
+    try {
+      const seekTime = timeToSeconds(verseMarker.time);
+      await vimeoPlayerRef.current.setCurrentTime(seekTime);
+      setCurrentTime(seekTime);
+      setCurrentPlayingVerse(verseNumber.toString());
+      
+      // If video was ended, update state
+      if (isEnded) {
+        setIsEnded(false);
+      }
+      
+      console.log(`Jumped to verse ${verseNumber} at time ${verseMarker.time}`);
+    } catch (error) {
+      console.error(`Error jumping to verse ${verseNumber}:`, error);
+    }
+  }, [isPlayerReady, findVerseMarker, isEnded]);
+
+  // Effect to handle selectedVerse changes
+  useEffect(() => {
+    const handleVerseChange = async () => {
+      if (!selectedVerse || !isPlayerReady || !bibleVerseMarker || bibleVerseMarker.length === 0) {
+        return;
+      }
+      // Check if selectedVerse changed
+      const hasVerseChanged = prevSelectedVerseRef.current !== selectedVerse.value;
+      if (hasVerseChanged) {
+        // Reset user interaction flag when verse changes via dropdown
+        userInteractedRef.current = false;
+        await jumpToVerse(selectedVerse.value);
+        prevSelectedVerseRef.current = selectedVerse.value;
+      }
+    };
+
+    handleVerseChange();
+  }, [selectedVerse, isPlayerReady, bibleVerseMarker, jumpToVerse]);
+
+  useEffect(() => {
+    // Reset previous verse tracking when book or chapter changes
+    prevSelectedVerseRef.current = null;
+    userInteractedRef.current = false;
+  }, [selectedBook, selectedChapter]);
+
   // Initialize Vimeo player
   useEffect(() => {
     const loadVimeo = () => {
@@ -187,6 +250,10 @@ const CustomVideoPlayer = () => {
         setIsEnded(false);
         setIsPlayerReady(false);
         setCurrentPlayingVerse(null);
+        
+        // Reset tracking references
+        prevSelectedVerseRef.current = null;
+        userInteractedRef.current = false;
 
         // Create new player
         const options: VimeoPlayerOptions = {
@@ -271,6 +338,12 @@ const CustomVideoPlayer = () => {
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
       if (!isPlayerReady) return;
+      
+      // Mark user interaction for seek operations
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        userInteractedRef.current = true;
+      }
+      
       switch (event.key) {
         case " ":
           togglePlay();
@@ -480,6 +553,9 @@ const CustomVideoPlayer = () => {
     e.stopPropagation();
     if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
+    // Mark as user interaction
+    userInteractedRef.current = true;
+
     vimeoPlayerRef.current.setCurrentTime(0);
     vimeoPlayerRef.current.play();
 
@@ -495,6 +571,9 @@ const CustomVideoPlayer = () => {
   const handleSeekPosition = (clientX: number) => {
     if (!vimeoPlayerRef.current || !seekBarRef.current || !isPlayerReady)
       return;
+
+    // Mark as user interaction
+    userInteractedRef.current = true;
 
     const rect = seekBarRef.current.getBoundingClientRect();
     const offsetX = clientX - rect.left;
@@ -533,6 +612,9 @@ const CustomVideoPlayer = () => {
   ) => {
     event.stopPropagation();
     if (!vimeoPlayerRef.current || !isPlayerReady) return;
+
+    // Mark as user interaction
+    userInteractedRef.current = true;
 
     const seekTime = timeToSeconds(verse.time);
 
