@@ -12,10 +12,12 @@ export interface BookOption extends BaseOption {
   value: string;
   bookId: number;
   image?: string;
+  isDisabled?: boolean;
 }
 
 export interface ChapterOption extends BaseOption {
   value: number;
+  isDisabled?: boolean;
 }
 
 export interface VerseOption extends BaseOption {
@@ -29,6 +31,9 @@ export interface DropdownProps {
   value?: OptionType | null;
   onChange?: (selected: OptionType | null) => void;
   placeholder?: string;
-  formatOptionLabel?: (option: OptionType, meta: any) => React.ReactNode;
+  formatOptionLabel?: (
+    option: OptionType,
+    context: { context: string }
+  ) => React.ReactNode;
   zIndex?: string;
 }
