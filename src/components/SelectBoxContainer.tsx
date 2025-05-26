@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 import Dropdown from "./Dropdown";
-import bookCodesData from "../assets/data/book_codes.json";
-import versificationData from "../assets/data/versification.json";
-import { VersificationData } from "../types/bible";
 import {
   BookOption,
   ChapterOption,
@@ -19,111 +16,58 @@ const SelectBoxContainer = () => {
     setBook,
     setChapter,
     setVerse,
+    availableData,
+    isLoading,
+    isInitialized,
+    initializeAvailableData,
+    getAvailableChaptersForBook,
+    getAvailableVersesForBookAndChapter,
   } = useBibleStore();
 
-  const [bookOptions, setBookOptions] = useState<BookOption[]>([]);
   const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
   const [verseOptions, setVerseOptions] = useState<VerseOption[]>([]);
 
-  const typedVersificationData = versificationData as VersificationData;
-
+  // Initialize data
   useEffect(() => {
-    const formattedBooks = bookCodesData.map((book) => ({
-      value: book.bookCode,
-      label: book.book,
-      bookId: book.bookId,
-      image: book?.filename ? "/books/" + book?.filename : "",
-    }));
-
-    setBookOptions(formattedBooks);
-    if (formattedBooks.length > 0) {
-      setBook(formattedBooks[0]);
+    if (!isInitialized && !isLoading) {
+      initializeAvailableData();
     }
-  }, []);
+  }, [isInitialized, isLoading, initializeAvailableData]);
 
+  // Update chapter options when selected book changes
   useEffect(() => {
     if (selectedBook) {
-      const maxChapters =
-        typedVersificationData.maxVerses[selectedBook.value.toUpperCase()]
-          ?.length || 0;
-      const chapters: ChapterOption[] = Array.from(
-        { length: maxChapters },
-        (_, i) => ({
-          value: i + 1,
-          label: `${i + 1}`,
-        })
-      );
-
+      const chapters = getAvailableChaptersForBook(selectedBook.value);
       setChapterOptions(chapters);
-      if (chapters.length > 0) {
-        setChapter(chapters[0]);
-      }
     } else {
       setChapterOptions([]);
     }
-  }, [selectedBook]);
+  }, [selectedBook, getAvailableChaptersForBook]);
 
+  // Update verse options when selected book or chapter changes
   useEffect(() => {
     if (selectedBook && selectedChapter) {
-      const bookCode = selectedBook.value.toUpperCase();
-      const chapterIndex = selectedChapter.value - 1;
-
-      const maxVerses =
-        typedVersificationData.maxVerses[bookCode]?.[chapterIndex] || "0";
-      const verses: VerseOption[] = Array.from(
-        { length: parseInt(maxVerses) },
-        (_, i) => ({
-          value: i + 1,
-          label: `${i + 1}`,
-        })
+      const verses = getAvailableVersesForBookAndChapter(
+        selectedBook.value,
+        selectedChapter.value
       );
-
       setVerseOptions(verses);
-      if (verses.length > 0) {
-        setVerse(verses[0]);
-      }
     } else {
       setVerseOptions([]);
     }
-  }, [selectedBook, selectedChapter]);
+  }, [selectedBook, selectedChapter, getAvailableVersesForBookAndChapter]);
 
   const handleBookChange = (option: OptionType | null) => {
     if (option === null || "bookId" in option) {
       const newBook = option as BookOption | null;
-
       setBook(newBook);
-      if (newBook) {
-        const bookCode = newBook.value.toUpperCase();
-        const maxChapters =
-          typedVersificationData.maxVerses[bookCode]?.length || 0;
-
-        if (maxChapters > 0) {
-          const firstChapter: ChapterOption = {
-            value: 1,
-            label: "1",
-          };
-          setChapter(firstChapter);
-
-          const maxVerses =
-            typedVersificationData.maxVerses[bookCode]?.[0] || "0";
-          if (parseInt(maxVerses) > 0) {
-            const firstVerse: VerseOption = {
-              value: 1,
-              label: "1",
-            };
-            setVerse(firstVerse);
-          }
-        }
-      } else {
-        setChapter(null);
-        setVerse(null);
-      }
     }
   };
 
   const handleChapterChange = (option: OptionType | null) => {
     if (option === null || typeof option.value === "number") {
-      setChapter(option as ChapterOption | null);
+      const newChapter = option as ChapterOption | null;
+      setChapter(newChapter);
     }
   };
 
@@ -138,10 +82,14 @@ const SelectBoxContainer = () => {
     { context }: { context: string }
   ) => {
     const isBookOption = "bookId" in option;
+    const isDisabled = "isDisabled" in option && option.isDisabled;
 
     if (context === "menu" && isBookOption) {
       return (
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2"
+          title={isDisabled ? "This book is not available" : ""}
+        >
           {option.image ? (
             <img
               src={option.image}
@@ -151,8 +99,25 @@ const SelectBoxContainer = () => {
           ) : (
             <div className="w-12 h-12" />
           )}
-          <span>{option.label}</span>
+          <span
+            className={isDisabled ? "text-gray-400 cursor-not-allowed" : ""}
+          >
+            {option.label}
+          </span>
         </div>
+      );
+    }
+
+    if (context === "menu" && !isBookOption) {
+      return (
+        <span
+          className={`block text-center ${
+            isDisabled ? "text-gray-400 cursor-not-allowed" : ""
+          }`}
+          title={isDisabled ? "This chapter is not available" : ""}
+        >
+          {option.label}
+        </span>
       );
     }
 
@@ -171,11 +136,11 @@ const SelectBoxContainer = () => {
     <div className="w-full flex flex-col md:flex-row gap-4">
       <div className="flex-2 max-w-[220px]">
         <Dropdown
-          options={bookOptions}
+          options={availableData.books}
           value={selectedBook}
           formatOptionLabel={formattedOptionLabel}
           onChange={handleBookChange}
-          placeholder="Select Book"
+          placeholder={isLoading ? "Loading books..." : "Select Book"}
           zIndex="z-50"
         />
       </div>

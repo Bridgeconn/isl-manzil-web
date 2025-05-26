@@ -1,7 +1,4 @@
-import { useState } from "react";
-import bookCodesData from "../assets/data/book_codes.json";
-import versificationData from "../assets/data/versification.json";
-import { VersificationData, Book } from "../types/bible";
+import { useState, useEffect } from "react";
 import useBibleStore from "@/store/useBibleStore";
 
 import { List, LayoutGrid, X } from "lucide-react";
@@ -11,6 +8,9 @@ import {
   DialogContent,
   DialogHeader,
 } from "@/components/ui/dialog";
+import { BookOption } from "@/types/Navigation";
+import { ChapterOption } from "@/types/Navigation";
+import { VerseOption } from "@/types/Navigation";
 
 type ViewType = "book" | "chapter" | "verse";
 type DropdownType = "list" | "grid";
@@ -23,13 +23,48 @@ const SelectViewContainer = () => {
     setBook,
     setChapter,
     setVerse,
+    availableData,
+    isLoading,
+    isInitialized,
+    initializeAvailableData,
+    getAvailableChaptersForBook,
+    getAvailableVersesForBookAndChapter,
   } = useBibleStore();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeView, setActiveView] = useState<ViewType>("book");
   const [viewMode, setViewMode] = useState<DropdownType>("grid");
+  const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
+  const [verseOptions, setVerseOptions] = useState<VerseOption[]>([]);
 
-  const typedVersificationData = versificationData as VersificationData;
+  useEffect(() => {
+    if (!isInitialized && !isLoading) {
+      initializeAvailableData();
+    }
+  }, [isInitialized, isLoading, initializeAvailableData]);
+
+  // Update chapter options when selected book changes
+  useEffect(() => {
+    if (selectedBook) {
+      const chapters = getAvailableChaptersForBook(selectedBook.value);
+      setChapterOptions(chapters);
+    } else {
+      setChapterOptions([]);
+    }
+  }, [selectedBook, getAvailableChaptersForBook]);
+
+  // Update verse options when selected book or chapter changes
+  useEffect(() => {
+    if (selectedBook && selectedChapter) {
+      const verses = getAvailableVersesForBookAndChapter(
+        selectedBook.value,
+        selectedChapter.value
+      );
+      setVerseOptions(verses);
+    } else {
+      setVerseOptions([]);
+    }
+  }, [selectedBook, selectedChapter, getAvailableVersesForBookAndChapter]);
 
   const openDialog = (type: DropdownType) => {
     setViewMode(type);
@@ -37,30 +72,28 @@ const SelectViewContainer = () => {
     setActiveView("book");
   };
 
-  const handleBookSelect = (
-    bookCode: string,
-    bookName: string,
-    bookId: number,
-    filename?: string
-  ) => {
-    const bookOption = {
-      value: bookCode,
-      label: bookName,
-      bookId: bookId,
-      image: filename ? "/books/" + filename : "",
-    };
+  const handleBookSelect = (bookOption: BookOption) => {
+    // Only allow selection if book is available
+    if (bookOption.isDisabled) {
+      return;
+    }
 
     setBook(bookOption);
     setActiveView("chapter");
   };
 
   const handleChapterSelect = (chapterNum: number) => {
-    const chapterOption = {
+    const chapterOption = chapterOptions.find((ch) => ch.value === chapterNum);
+    if (!chapterOption || chapterOption.isDisabled) {
+      return;
+    }
+
+    const newChapter = {
       value: chapterNum,
       label: `${chapterNum}`,
     };
 
-    setChapter(chapterOption);
+    setChapter(newChapter);
     setActiveView("verse");
   };
 
@@ -74,8 +107,12 @@ const SelectViewContainer = () => {
     setIsDialogOpen(false);
   };
 
-  const oldTestamentBooks = bookCodesData.filter((book) => book.bookId <= 39);
-  const newTestamentBooks = bookCodesData.filter((book) => book.bookId >= 40);
+  const oldTestamentBooks = availableData.books.filter(
+    (book) => book.bookId <= 39
+  );
+  const newTestamentBooks = availableData.books.filter(
+    (book) => book.bookId >= 40
+  );
 
   oldTestamentBooks.sort((a, b) => a.bookId - b.bookId);
   newTestamentBooks.sort((a, b) => a.bookId - b.bookId);
@@ -83,24 +120,30 @@ const SelectViewContainer = () => {
   const renderChapters = () => {
     if (!selectedBook) return null;
 
-    const maxChapters =
-      typedVersificationData.maxVerses[selectedBook.value.toUpperCase()]
-        ?.length || 0;
-    const chapters = Array.from({ length: maxChapters }, (_, i) => i + 1);
-
     return (
       <>
-        {chapters.map((chapter) => (
+        {chapterOptions.map((chapter) => (
           <div
-            key={`chapter-${chapter}`}
-            className={`bg-gray-200 h-12 flex items-center justify-center flex-wrap cursor-pointer hover:bg-gray-300 ${
-              selectedChapter?.value === chapter
+            key={`chapter-${chapter.value}`}
+            className={`h-12  flex items-center justify-center flex-wrap cursor-pointer transition-colors ${
+              chapter.isDisabled
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 hover:bg-gray-300"
+            } ${
+              selectedChapter?.value === chapter.value && !chapter.isDisabled
                 ? "bg-gray-300 border-2 border-gray-400"
                 : ""
             }`}
-            onClick={() => handleChapterSelect(chapter)}
+            onClick={() =>
+              !chapter.isDisabled && handleChapterSelect(chapter.value)
+            }
+            title={
+              chapter.isDisabled
+                ? "This chapter is not available"
+                : `Chapter ${chapter.value}`
+            }
           >
-            {chapter}
+            {chapter.value}
           </div>
         ))}
       </>
@@ -110,33 +153,27 @@ const SelectViewContainer = () => {
   const renderVerses = () => {
     if (!selectedBook || !selectedChapter) return null;
 
-    const bookCode = selectedBook.value.toUpperCase();
-    const chapterIndex = selectedChapter.value - 1;
-    const maxVerses = parseInt(
-      typedVersificationData.maxVerses[bookCode]?.[chapterIndex] || "0"
-    );
-    const verses = Array.from({ length: maxVerses }, (_, i) => i + 1);
-
     return (
       <>
-        {verses.map((verse) => (
+        {verseOptions.map((verse) => (
           <div
-            key={`verse-${verse}`}
-            className={`bg-gray-200 h-12 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-300 ${
-              selectedVerse?.value === verse
-                ? "bg-gray-300 border-2 border-gray-400"
-                : ""
-            }`}
-            onClick={() => handleVerseSelect(verse)}
+            key={`verse-${verse.value}`}
+            className={`h-12 bg-gray-200 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-300 
+             ${
+               selectedVerse?.value === verse.value
+                 ? "bg-gray-300 border-2 border-gray-400"
+                 : ""
+             }`}
+            onClick={() => handleVerseSelect(verse.value)}
           >
-            {verse}
+            {verse.value}
           </div>
         ))}
       </>
     );
   };
 
-  const renderBookGrid = (books: Book[]) => {
+  const renderBookGrid = (books: BookOption[]) => {
     return (
       <div
         className={`grid ${
@@ -145,34 +182,33 @@ const SelectViewContainer = () => {
             : "grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
         } gap-1 w-full`}
       >
-        {books.map((book: Book) => (
+        {books.map((book) => (
           <div
-            key={book.bookCode}
-            className={`bg-gray-200 h-14 flex items-center sm:justify-center gap-2 cursor-pointer hover:bg-gray-300 ${
-              selectedBook?.value.toLowerCase() === book.bookCode.toLowerCase()
+            key={book.value}
+            className={`h-14 flex items-center sm:justify-center gap-2 cursor-pointer transition-colors ${
+              book.isDisabled
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 hover:bg-gray-300"
+            } ${
+              selectedBook?.value.toLowerCase() === book.value.toLowerCase() &&
+              !book.isDisabled
                 ? "bg-gray-300 border-2 border-gray-400"
                 : ""
             }`}
-            onClick={() =>
-              handleBookSelect(
-                book.bookCode,
-                book.book,
-                book.bookId,
-                book.filename
-              )
-            }
+            onClick={() => handleBookSelect(book)}
+            title={book.isDisabled ? "This book is not available" : book.label}
           >
-            {book.filename ? (
+            {book.image ? (
               <img
-                src={`/books/${book.filename}`}
-                alt={book.book}
+                src={book.image}
+                alt={book.label}
                 className="w-10 h-10 object-contain"
               />
             ) : (
               <div className="w-10 h-10"></div>
             )}
             <span className="text-sm sm:text-lg sm:text-center">
-              {book.book}
+              {book.label}
             </span>
           </div>
         ))}
@@ -244,8 +280,9 @@ const SelectViewContainer = () => {
                   activeView === "chapter"
                     ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
                     : "bg-white text-[var(--indigo-color)]"
-                }`}
+                } ${!selectedBook ? "opacity-50 cursor-not-allowed" : ""}`}
                 onClick={() => selectedBook && setActiveView("chapter")}
+                disabled={!selectedBook}
               >
                 Chapter
               </button>
@@ -254,10 +291,15 @@ const SelectViewContainer = () => {
                   activeView === "verse"
                     ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
                     : "bg-white text-[var(--indigo-color)]"
+                } ${
+                  !selectedBook || !selectedChapter
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
                 onClick={() =>
                   selectedBook && selectedChapter && setActiveView("verse")
                 }
+                disabled={!selectedBook || !selectedChapter}
               >
                 Verse
               </button>
