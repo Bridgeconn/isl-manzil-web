@@ -526,23 +526,25 @@ const CustomVideoPlayer = () => {
           >
             <ChevronLeft size={24} />
           </button> */}
-        <button
-          onClick={() => navigateToChapter("previous")}
-          disabled={!canGoPrevious}
-          className={`transition-all duration-200 rounded-full p-1 ${
-            canGoPrevious
-              ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
-              : "cursor-not-allowed opacity-50"
-          }`}
-          title="Previous Chapter"
-        >
-          <LoopingGif
-            src={Previous}
-            alt="Previous chapter"
-            className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-            duration={2000}
-          />
-        </button>
+        {canGoPrevious ? (
+          <button
+            onClick={() => navigateToChapter("previous")}
+            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            title="Previous Chapter"
+          >
+            <LoopingGif
+              src={Previous}
+              alt="Previous chapter"
+              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+              duration={2000}
+            />
+          </button>
+        ) : (
+          <button className="p-1">
+            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
+          </button>
+        )}
+
         {/* </div> */}
 
         <div
@@ -559,14 +561,14 @@ const CustomVideoPlayer = () => {
           )}
           {showComingSoon && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 z-10">
-              <Clock className="w-16 h-16 text-blue-400 mb-6" />
-              <div className="text-white text-2xl font-bold mb-2">
+              <Clock className="w-16 h-16 text-blue-400 mb-2 sm:mb-6" />
+              <div className="text-white text-xl sm:text-2xl font-bold mb-2">
                 Video Coming Soon
               </div>
-              <div className="text-gray-300 text-lg text-center px-4">
+              <div className="text-gray-300 sm:text-lg text-center px-4">
                 {selectedBook?.label} Chapter {selectedChapter?.label}
               </div>
-              <div className="text-gray-400 text-sm mt-4 text-center px-4">
+              <div className="text-gray-400 text-sm mt-2 sm:mt-4 text-center px-4">
                 This video is currently being prepared and will be available
                 soon.
               </div>
@@ -740,23 +742,24 @@ const CustomVideoPlayer = () => {
           >
             <ChevronRight size={24} />
           </button> */}
-        <button
-          onClick={() => navigateToChapter("next")}
-          disabled={!canGoNext}
-          className={`transition-all duration-200 rounded-full p-1 ${
-            canGoNext
-              ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
-              : "cursor-not-allowed opacity-50"
-          }`}
-          title="Next Chapter"
-        >
-          <LoopingGif
-            src={Next}
-            alt="Next chapter"
-            className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-            duration={2000}
-          />
-        </button>
+        {canGoNext ? (
+          <button
+            onClick={() => navigateToChapter("next")}
+            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            title="Next Chapter"
+          >
+            <LoopingGif
+              src={Next}
+              alt="Next chapter"
+              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+              duration={2000}
+            />
+          </button>
+        ) : (
+          <button className="p-1">
+            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
+          </button>
+        )}
         {/* </div> */}
       </div>
     </div>
