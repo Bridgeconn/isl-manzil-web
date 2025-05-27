@@ -21,12 +21,19 @@ interface AvailableData {
   chapters: { [bookCode: string]: ChapterOption[] };
 }
 
+export interface VerseMarkerType {
+  id: number;
+  verse: string;
+  time: string;
+}
+
 interface BibleStore {
   selectedBook: BookOption | null;
   selectedChapter: ChapterOption | null;
   selectedVerse: VerseOption | null;
   currentVideoId: number | null;
   availableData: AvailableData;
+  bibleVerseMarker: VerseMarkerType[] | null;
   isLoading: boolean;
   isInitialized: boolean;
   isVideoLoading: boolean;
@@ -49,6 +56,7 @@ interface BibleStore {
     chapter: number
   ) => Promise<number | null>;
   loadVideoForCurrentSelection: () => void;
+  getBibleVerseMarker: () => Promise<VerseMarkerType[] | null>;
 }
 
 const typedVersificationData = versificationData as VersificationData;
@@ -66,6 +74,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     chapters: {},
   },
   currentLoadingRequest: null,
+  bibleVerseMarker: [],
 
   setBook: (book: BookOption | null) => {
     set({ selectedBook: book });
@@ -316,6 +325,51 @@ const useBibleStore = create<BibleStore>((set, get) => ({
           currentLoadingRequest: null,
         });
       }
+    }
+  },
+  getBibleVerseMarker: async (): Promise<VerseMarkerType[] | null> => {
+    const { selectedBook, selectedChapter } = get();
+    if (!selectedBook || !selectedChapter) {
+      return null;
+    }
+    try {
+      const csvFiles = import.meta.glob(
+        "/src/assets/data/verse_markers/*.csv",
+        {
+          query: "?raw",
+          import: "default",
+        }
+      );
+      console.log("csv files", csvFiles);
+      const filePath = `/src/assets/data/verse_markers/${selectedBook.label}_${selectedChapter.label}.csv`;
+      console.log("file path", filePath);
+      if (!csvFiles[filePath]) {
+        set({ bibleVerseMarker: [] });
+        console.warn(
+          `Verse marker file not found: ${selectedBook.label}_${selectedChapter.label}.csv`
+        );
+        return [];
+      }
+      const csvText = (await csvFiles[filePath]()) as string;
+      const parsedData = await Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+      });
+      const formattedVerseMarkerData: VerseMarkerType[] = parsedData.data.map(
+        (row: any, index) => {
+          return {
+            id: index,
+            verse: row.verse.toString().trim() || "",
+            time: row.time.toString().trim() || "",
+          };
+        }
+      );
+      set({ bibleVerseMarker: formattedVerseMarkerData });
+      return formattedVerseMarkerData;
+    } catch (err) {
+      console.error(`Failed to load verse markers:`, err);
+      set({ bibleVerseMarker: [] });
+      return null;
     }
   },
 }));
