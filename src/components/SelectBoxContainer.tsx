@@ -88,7 +88,7 @@ const SelectBoxContainer = () => {
       return (
         <div
           className="flex items-center gap-2"
-          title={isDisabled ? "This book is not available" : ""}
+          title={isDisabled ? "The videos for this book are not available" : ""}
         >
           {option.image ? (
             <img
@@ -114,7 +114,9 @@ const SelectBoxContainer = () => {
           className={`block text-center ${
             isDisabled ? "text-gray-400 cursor-not-allowed" : ""
           }`}
-          title={isDisabled ? "This chapter is not available" : ""}
+          title={
+            isDisabled ? "The video for this chapter is not available" : ""
+          }
         >
           {option.label}
         </span>

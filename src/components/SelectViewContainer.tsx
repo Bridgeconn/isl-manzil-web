@@ -139,7 +139,7 @@ const SelectViewContainer = () => {
             }
             title={
               chapter.isDisabled
-                ? "This chapter is not available"
+                ? "The video for this Chapter is not available"
                 : `Chapter ${chapter.value}`
             }
           >
@@ -196,7 +196,11 @@ const SelectViewContainer = () => {
                 : ""
             }`}
             onClick={() => handleBookSelect(book)}
-            title={book.isDisabled ? "This book is not available" : book.label}
+            title={
+              book.isDisabled
+                ? "The videos for this book are not available"
+                : book.label
+            }
           >
             {book.image ? (
               <img
