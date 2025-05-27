@@ -3,7 +3,6 @@ import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
 // import { ChevronLeft, ChevronRight } from "lucide-react";
 import Next from "../assets/images/Next.gif";
 import Previous from "../assets/images/Previous.gif";
-
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
@@ -199,6 +198,7 @@ const CustomVideoPlayer = () => {
       }
     };
   }, [currentVideoId]);
+  
   useEffect(() => {
     const handleSeekEvent = (e: any) => {
       const { time } = e.detail;
@@ -528,23 +528,39 @@ const CustomVideoPlayer = () => {
   return (
     <div className="w-full max-w-6xl mx-auto px-2">
       <div className="flex items-center justify-center w-full">
-        <button
-          onClick={() => navigateToChapter("previous")}
-          disabled={!canGoPrevious}
-          className={`transition-all duration-200 rounded-full p-1 ${
-            canGoPrevious
-              ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
-              : "cursor-not-allowed opacity-50"
-          }`}
-          title="Previous Chapter"
-        >
-          <LoopingGif
-            src={Previous}
-            alt="Previous chapter"
-            className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-            duration={2000}
-          />
-        </button>
+        {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
+        {/* <button
+            onClick={() => navigateToChapter("previous")}
+            disabled={!canGoPrevious}
+            className={`p-1 rounded-full transition-all duration-200 ${
+              canGoPrevious
+                ? "bg-gray-200 bg-opacity-50 hover:bg-opacity-70 hover:scale-110"
+                : "cursor-not-allowed opacity-50"
+            }`}
+            title="Previous Chapter"
+          >
+            <ChevronLeft size={24} />
+          </button> */}
+        {canGoPrevious ? (
+          <button
+            onClick={() => navigateToChapter("previous")}
+            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            title="Previous Chapter"
+          >
+            <LoopingGif
+              src={Previous}
+              alt="Previous chapter"
+              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+              duration={2000}
+            />
+          </button>
+        ) : (
+          <button className="p-1">
+            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
+          </button>
+        )}
+
+        {/* </div> */}
 
         <div
           ref={playerContainerRef}
@@ -560,14 +576,14 @@ const CustomVideoPlayer = () => {
           )}
           {showComingSoon && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 z-10">
-              <Clock className="w-16 h-16 text-blue-400 mb-6" />
-              <div className="text-white text-2xl font-bold mb-2">
+              <Clock className="w-16 h-16 text-blue-400 mb-2 sm:mb-6" />
+              <div className="text-white text-xl sm:text-2xl font-bold mb-2">
                 Video Coming Soon
               </div>
-              <div className="text-gray-300 text-lg text-center px-4">
+              <div className="text-gray-300 sm:text-lg text-center px-4">
                 {selectedBook?.label} Chapter {selectedChapter?.label}
               </div>
-              <div className="text-gray-400 text-sm mt-4 text-center px-4">
+              <div className="text-gray-400 text-sm mt-2 sm:mt-4 text-center px-4">
                 This video is currently being prepared and will be available
                 soon.
               </div>
@@ -575,10 +591,12 @@ const CustomVideoPlayer = () => {
           )}
           {isVideoAvailable && (
             <>
+              {/* Vimeo Player Container */}
               <div className="w-full h-full">
                 <div ref={playerRef} className="w-full h-full" />
               </div>
 
+              {/* Play/Pause/Replay Bezel Effect */}
               {showPlayBezel && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
                   <div className="bg-black bg-opacity-50 rounded-full p-6">
@@ -592,7 +610,7 @@ const CustomVideoPlayer = () => {
                   </div>
                 </div>
               )}
-
+              {/* Video Ended Overlay */}
               {isEnded && !(currentTime < duration) && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
                   <button
@@ -604,12 +622,13 @@ const CustomVideoPlayer = () => {
                   </button>
                 </div>
               )}
-
+              {/* Controls Overlay */}
               <div
                 className={`absolute inset-0 transition-opacity duration-300 ${
                   showControls || isEnded ? "opacity-100" : "opacity-0"
                 } z-20`}
               >
+                {/* Bottom Controls */}
                 <div
                   ref={controlsRef}
                   className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 pointer-events-auto"
@@ -617,16 +636,20 @@ const CustomVideoPlayer = () => {
                   onMouseEnter={handleControlsMouseEnter}
                   onMouseLeave={handleControlsMouseLeave}
                 >
+                  {/* Seekbar with sections */}
                   <div
                     ref={seekBarRef}
                     className="relative h-1 bg-gray-600 rounded-full mb-4 cursor-pointer"
                     onClick={handleSeekClick}
                   >
+                    {/* Progress Bar */}
                     <div
                       className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full"
                       style={{ width: `${progressPercent}%` }}
                     ></div>
+                    {/* Verse markers */}
                     {bibleVerseMarker &&
+                      bibleVerseMarker.length > 0 &&
                       bibleVerseMarker.map((verse: VerseMarkerType) => {
                         const verseTimeInSeconds = timeToSeconds(verse.time);
                         const versePosition =
@@ -643,10 +666,11 @@ const CustomVideoPlayer = () => {
                               transform: "translateX(-50%)",
                             }}
                             onClick={(e) => handleVerseMarkerClick(verse, e)}
-                            title={`${verse.verse} (${verse.time})`}
+                            title={`Verse:${verse.verse} (${verse.time})`}
                           ></div>
                         );
                       })}
+                    {/* Current Time Indicator */}
                     <div
                       className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
                       style={{
@@ -656,15 +680,18 @@ const CustomVideoPlayer = () => {
                       onMouseDown={handleSeekMouseDown}
                     ></div>
                   </div>
-
+                  {/* Control Buttons */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
+                      {/* Play/Pause/Replay Button */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (isEnded && !(currentTime < duration))
+                          if (isEnded && !(currentTime < duration)) {
                             replayVideo(e);
-                          else togglePlay();
+                          } else {
+                            togglePlay();
+                          }
                         }}
                         className="text-white hover:text-blue-400"
                         aria-label={
@@ -684,11 +711,11 @@ const CustomVideoPlayer = () => {
                           <FilledPlayIcon size={24} />
                         )}
                       </button>
+                      {/* Timer */}
                       <div className="text-white text-sm">
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
-
                     <div className="flex items-center space-x-4">
                       <button
                         onClick={(e) => {
@@ -717,24 +744,38 @@ const CustomVideoPlayer = () => {
             </>
           )}
         </div>
-
-        <button
-          onClick={() => navigateToChapter("next")}
-          disabled={!canGoNext}
-          className={`transition-all duration-200 rounded-full p-1 ${
-            canGoNext
-              ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
-              : "cursor-not-allowed opacity-50"
-          }`}
-          title="Next Chapter"
-        >
-          <LoopingGif
-            src={Next}
-            alt="Next chapter"
-            className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-            duration={2000}
-          />
-        </button>
+        {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
+        {/* <button
+            onClick={() => navigateToChapter("next")}
+            disabled={!canGoNext}
+            className={`p-1 rounded-full transition-all duration-200 ${
+              canGoNext
+                ? "bg-gray-200 bg-opacity-50 hover:bg-opacity-70 hover:scale-110"
+                : "cursor-not-allowed opacity-50"
+            }`}
+            title="Next Chapter"
+          >
+            <ChevronRight size={24} />
+          </button> */}
+        {canGoNext ? (
+          <button
+            onClick={() => navigateToChapter("next")}
+            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            title="Next Chapter"
+          >
+            <LoopingGif
+              src={Next}
+              alt="Next chapter"
+              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+              duration={2000}
+            />
+          </button>
+        ) : (
+          <button className="p-1">
+            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
+          </button>
+        )}
+        {/* </div> */}
       </div>
     </div>
   );
