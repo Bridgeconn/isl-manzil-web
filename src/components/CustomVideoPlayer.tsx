@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { RefreshCw, Maximize, Minimize } from "lucide-react";
+import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
+import Next from "../assets/images/Next.gif";
+import Previous from "../assets/images/Previous.gif";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
+import { useChapterNavigation } from "../hooks/useChapterNavigation";
+import LoopingGif from "./LoopingGif";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -30,8 +34,11 @@ const FilledPauseIcon = ({ size = 24, className = "" }) => (
 );
 
 const CustomVideoPlayer = () => {
+  const { canGoPrevious, canGoNext, navigateToChapter } =
+    useChapterNavigation();
   const {
     currentVideoId,
+    setCurrentVideoId,
     selectedBook,
     selectedChapter,
     selectedVerse,
@@ -41,6 +48,7 @@ const CustomVideoPlayer = () => {
     getCurrentVerseFromTime,
     setCurrentPlayingVerse,
     currentPlayingVerse,
+    isVideoLoading,
   } = useBibleStore();
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +60,7 @@ const CustomVideoPlayer = () => {
   const verseTrackingIntervalRef = useRef<number | null>(null);
   const isDraggingRef = useRef<boolean>(false);
   const controlsTimeoutRef = useRef<number | null>(null);
-  
+
   // Track previous selectedVerse to detect changes
   const prevSelectedVerseRef = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
@@ -67,14 +75,23 @@ const CustomVideoPlayer = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
+  const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
+  const showComingSoon =
+    !isVideoLoading &&
+    currentVideoId === null &&
+    selectedBook &&
+    selectedChapter;
+
   useEffect(() => {
     if (selectedBook && selectedChapter) {
+      setCurrentVideoId(null);
       loadVideoForCurrentSelection();
       getBibleVerseMarker();
     }
   }, [
     selectedBook,
     selectedChapter,
+    setCurrentVideoId,
     loadVideoForCurrentSelection,
     getBibleVerseMarker,
   ]);
@@ -140,46 +157,64 @@ const CustomVideoPlayer = () => {
   ]);
 
   // Helper function to find verse marker by verse number
-  const findVerseMarker = useCallback((verseNumber: number): VerseMarkerType | null => {
-    if (!bibleVerseMarker || bibleVerseMarker.length === 0) return null;
-    return bibleVerseMarker.find(marker => marker.verse === verseNumber.toString()) || null;
-  }, [bibleVerseMarker]);
+  const findVerseMarker = useCallback(
+    (verseNumber: number): VerseMarkerType | null => {
+      if (!bibleVerseMarker || bibleVerseMarker.length === 0) return null;
+      return (
+        bibleVerseMarker.find(
+          (marker) => marker.verse === verseNumber.toString()
+        ) || null
+      );
+    },
+    [bibleVerseMarker]
+  );
 
   // Helper function to jump to a specific verse
-  const jumpToVerse = useCallback(async (verseNumber: number) => {
-    if (!vimeoPlayerRef.current || !isPlayerReady) return;
+  const jumpToVerse = useCallback(
+    async (verseNumber: number) => {
+      if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
-    const verseMarker = findVerseMarker(verseNumber);
-    if (!verseMarker) {
-      console.warn(`Verse ${verseNumber} marker not found`);
-      return;
-    }
-
-    try {
-      const seekTime = timeToSeconds(verseMarker.time);
-      await vimeoPlayerRef.current.setCurrentTime(seekTime);
-      setCurrentTime(seekTime);
-      setCurrentPlayingVerse(verseNumber.toString());
-      
-      // If video was ended, update state
-      if (isEnded) {
-        setIsEnded(false);
+      const verseMarker = findVerseMarker(verseNumber);
+      if (!verseMarker) {
+        console.warn(`Verse ${verseNumber} marker not found`);
+        return;
       }
-      
-      console.log(`Jumped to verse ${verseNumber} at time ${verseMarker.time}`);
-    } catch (error) {
-      console.error(`Error jumping to verse ${verseNumber}:`, error);
-    }
-  }, [isPlayerReady, findVerseMarker, isEnded]);
+
+      try {
+        const seekTime = timeToSeconds(verseMarker.time);
+        await vimeoPlayerRef.current.setCurrentTime(seekTime);
+        setCurrentTime(seekTime);
+        setCurrentPlayingVerse(verseNumber.toString());
+
+        // If video was ended, update state
+        if (isEnded) {
+          setIsEnded(false);
+        }
+
+        console.log(
+          `Jumped to verse ${verseNumber} at time ${verseMarker.time}`
+        );
+      } catch (error) {
+        console.error(`Error jumping to verse ${verseNumber}:`, error);
+      }
+    },
+    [isPlayerReady, findVerseMarker, isEnded]
+  );
 
   // Effect to handle selectedVerse changes
   useEffect(() => {
     const handleVerseChange = async () => {
-      if (!selectedVerse || !isPlayerReady || !bibleVerseMarker || bibleVerseMarker.length === 0) {
+      if (
+        !selectedVerse ||
+        !isPlayerReady ||
+        !bibleVerseMarker ||
+        bibleVerseMarker.length === 0
+      ) {
         return;
       }
       // Check if selectedVerse changed
-      const hasVerseChanged = prevSelectedVerseRef.current !== selectedVerse.value;
+      const hasVerseChanged =
+        prevSelectedVerseRef.current !== selectedVerse.value;
       if (hasVerseChanged) {
         // Reset user interaction flag when verse changes via dropdown
         userInteractedRef.current = false;
@@ -212,7 +247,7 @@ const CustomVideoPlayer = () => {
       document.body.appendChild(script);
     };
 
-    if (playerRef.current) {
+    if (playerRef.current && isVideoAvailable) {
       loadVimeo();
     }
 
@@ -226,11 +261,11 @@ const CustomVideoPlayer = () => {
         setIsPlayerReady(false);
       }
     };
-  }, [clearIntervals]);
+  }, [clearIntervals, isVideoAvailable]);
 
   // Handle video ID changes
   useEffect(() => {
-    if (!currentVideoId || !playerRef.current) return;
+    if (!currentVideoId || !playerRef.current || isVideoLoading) return;
 
     const loadNewVideo = async () => {
       try {
@@ -250,7 +285,7 @@ const CustomVideoPlayer = () => {
         setIsEnded(false);
         setIsPlayerReady(false);
         setCurrentPlayingVerse(null);
-        
+
         // Reset tracking references
         prevSelectedVerseRef.current = null;
         userInteractedRef.current = false;
@@ -337,13 +372,13 @@ const CustomVideoPlayer = () => {
   // Handle keyboard controls
   useEffect(() => {
     const handleKeyDown = async (event: KeyboardEvent) => {
-      if (!isPlayerReady) return;
-      
+      if (!isPlayerReady || !isVideoAvailable) return;
+
       // Mark user interaction for seek operations
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         userInteractedRef.current = true;
       }
-      
+
       switch (event.key) {
         case " ":
           togglePlay();
@@ -385,12 +420,21 @@ const CustomVideoPlayer = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPlaying, isFullscreen, isPlayerReady, duration, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
+  }, [
+    isPlaying,
+    isFullscreen,
+    isPlayerReady,
+    duration,
+    isEnded,
+    getCurrentVerseFromTime,
+    setCurrentPlayingVerse,
+    isVideoAvailable,
+  ]);
 
   // Setup global mouse events for seek bar dragging
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDraggingRef.current && seekBarRef.current) {
+      if (isDraggingRef.current && seekBarRef.current && isVideoAvailable) {
         handleSeekPosition(e.clientX);
       }
     };
@@ -406,7 +450,7 @@ const CustomVideoPlayer = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [duration]);
+  }, [duration, isVideoAvailable]);
 
   // Set up event listeners for Vimeo player
   const setupEventListeners = () => {
@@ -596,13 +640,17 @@ const CustomVideoPlayer = () => {
   // Handle click on seek bar
   const handleSeekClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    handleSeekPosition(event.clientX);
+    if (isVideoAvailable) {
+      handleSeekPosition(event.clientX);
+    }
   };
 
   // For dragging
   const handleSeekMouseDown = (event: React.MouseEvent) => {
     event.stopPropagation();
-    isDraggingRef.current = true;
+    if (isVideoAvailable) {
+      isDraggingRef.current = true;
+    }
   };
 
   // Handle verse marker click
@@ -611,7 +659,7 @@ const CustomVideoPlayer = () => {
     event: React.MouseEvent
   ) => {
     event.stopPropagation();
-    if (!vimeoPlayerRef.current || !isPlayerReady) return;
+    if (!vimeoPlayerRef.current || !isPlayerReady || !isVideoAvailable) return;
 
     // Mark as user interaction
     userInteractedRef.current = true;
@@ -652,7 +700,7 @@ const CustomVideoPlayer = () => {
   };
 
   const handleControlsMouseLeave = () => {
-    if (!isEnded && !isDraggingRef.current) {
+    if (!isEnded && !isDraggingRef.current && isVideoAvailable) {
       setControlsHideTimeout();
     }
   };
@@ -661,160 +709,253 @@ const CustomVideoPlayer = () => {
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div
-      ref={playerContainerRef}
-      className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
-      style={{ aspectRatio: "16/9" }}
-      onClick={togglePlay}
-    >
-      {!isPlayerReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
-          <div className="text-white text-lg">Loading video...</div>
-        </div>
-      )}
-
-      {/* Vimeo Player Container */}
-      <div className="w-full h-full">
-        <div ref={playerRef} className="w-full h-full" />
-      </div>
-
-      {/* Play/Pause/Replay Bezel Effect */}
-      {showPlayBezel && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-          <div className="bg-black bg-opacity-50 rounded-full p-6">
-            {isEnded && !(currentTime < duration) ? (
-              <RefreshCw size={48} className="text-white" />
-            ) : lastAction === "pause" ? (
-              <FilledPauseIcon size={48} className="text-white" />
-            ) : (
-              <FilledPlayIcon size={48} className="text-white pl-1" />
-            )}
-          </div>
-        </div>
-      )}
-      {/* Video Ended Overlay */}
-      {isEnded && !(currentTime < duration) && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-          <button
-            onClick={replayVideo}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"
+    <div className="w-full max-w-6xl mx-auto px-2">
+      <div className="flex items-center justify-center w-full">
+        {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
+        {/* <button
+            onClick={() => navigateToChapter("previous")}
+            disabled={!canGoPrevious}
+            className={`p-1 rounded-full transition-all duration-200 ${
+              canGoPrevious
+                ? "bg-gray-200 bg-opacity-50 hover:bg-opacity-70 hover:scale-110"
+                : "cursor-not-allowed opacity-50"
+            }`}
+            title="Previous Chapter"
           >
-            <RefreshCw size={24} />
-            <span>Replay</span>
-          </button>
-        </div>
-      )}
-      {/* Controls Overlay */}
-      <div
-        className={`absolute inset-0 transition-opacity duration-300 ${
-          showControls || isEnded ? "opacity-100" : "opacity-0"
-        } z-20`}
-      >
-        {/* Bottom Controls */}
-        <div
-          ref={controlsRef}
-          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 pointer-events-auto"
-          onClick={(e) => e.stopPropagation()}
-          onMouseEnter={handleControlsMouseEnter}
-          onMouseLeave={handleControlsMouseLeave}
+            <ChevronLeft size={24} />
+          </button> */}
+        <button
+          onClick={() => navigateToChapter("previous")}
+          disabled={!canGoPrevious}
+          className={`transition-all duration-200 rounded-full p-1 ${
+            canGoPrevious
+              ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
+              : "cursor-not-allowed opacity-50"
+          }`}
+          title="Previous Chapter"
         >
-          {/* Seekbar with sections */}
-          <div
-            ref={seekBarRef}
-            className="relative h-1 bg-gray-600 rounded-full mb-4 cursor-pointer"
-            onClick={handleSeekClick}
-          >
-            {/* Progress Bar */}
-            <div
-              className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full"
-              style={{ width: `${progressPercent}%` }}
-            ></div>
-            {/* Verse markers */}
-            {bibleVerseMarker &&
-              bibleVerseMarker.length > 0 &&
-              bibleVerseMarker.map((verse: VerseMarkerType) => {
-                const verseTimeInSeconds = timeToSeconds(verse.time);
-                const versePosition = (verseTimeInSeconds / duration) * 100;
-                const isPassed = currentTime >= verseTimeInSeconds;
-                return (
-                  <div
-                    key={verse.id}
-                    className={`absolute top-0 w-0.5 h-1 ${
-                      isPassed ? "bg-yellow-400" : "bg-black"
-                    }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
-                    style={{
-                      left: `${versePosition}%`,
-                      transform: "translateX(-50%)",
-                    }}
-                    onClick={(e) => handleVerseMarkerClick(verse, e)}
-                    title={`Verse:${verse.verse} (${verse.time})`}
-                  ></div>
-                );
-              })}
-            {/* Current Time Indicator */}
-            <div
-              className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
-              style={{
-                left: `${progressPercent}%`,
-                transform: "translateX(-50%)",
-              }}
-              onMouseDown={handleSeekMouseDown}
-            ></div>
-          </div>
-          {/* Control Buttons */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {/* Play/Pause/Replay Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (isEnded && !(currentTime < duration)) {
-                    replayVideo(e);
-                  } else {
-                    togglePlay();
-                  }
-                }}
-                className="text-white hover:text-blue-400"
-                aria-label={
-                  isEnded && !(currentTime < duration)
-                    ? "Replay"
-                    : isPlaying
-                    ? "Pause"
-                    : "Play"
-                }
-                disabled={!isPlayerReady}
-              >
-                {isEnded && !(currentTime < duration) ? (
-                  <RefreshCw size={24} />
-                ) : isPlaying ? (
-                  <FilledPauseIcon size={24} />
-                ) : (
-                  <FilledPlayIcon size={24} />
-                )}
-              </button>
-              {/* Timer */}
-              <div className="text-white text-sm">
-                {formatTime(currentTime)} / {formatTime(duration)}
+          <LoopingGif
+            src={Previous}
+            alt="Previous chapter"
+            className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+            duration={2000}
+          />
+        </button>
+        {/* </div> */}
+
+        <div
+          ref={playerContainerRef}
+          className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
+          style={{ aspectRatio: "16/9" }}
+          onClick={isVideoAvailable ? togglePlay : undefined}
+        >
+          {(isVideoLoading || !isPlayerReady) && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
+              <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
+              <div className="text-white text-lg">Loading video...</div>
+            </div>
+          )}
+          {showComingSoon && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 z-10">
+              <Clock className="w-16 h-16 text-blue-400 mb-6" />
+              <div className="text-white text-2xl font-bold mb-2">
+                Video Coming Soon
+              </div>
+              <div className="text-gray-300 text-lg text-center px-4">
+                {selectedBook?.label} Chapter {selectedChapter?.label}
+              </div>
+              <div className="text-gray-400 text-sm mt-4 text-center px-4">
+                This video is currently being prepared and will be available
+                soon.
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFullscreen();
-                }}
-                className="text-white hover:text-blue-400"
-                aria-label={
-                  isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
-                }
-                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                disabled={!isPlayerReady}
+          )}
+          {isVideoAvailable && (
+            <>
+              {/* Vimeo Player Container */}
+              <div className="w-full h-full">
+                <div ref={playerRef} className="w-full h-full" />
+              </div>
+
+              {/* Play/Pause/Replay Bezel Effect */}
+              {showPlayBezel && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                  <div className="bg-black bg-opacity-50 rounded-full p-6">
+                    {isEnded && !(currentTime < duration) ? (
+                      <RefreshCw size={48} className="text-white" />
+                    ) : lastAction === "pause" ? (
+                      <FilledPauseIcon size={48} className="text-white" />
+                    ) : (
+                      <FilledPlayIcon size={48} className="text-white pl-1" />
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* Video Ended Overlay */}
+              {isEnded && !(currentTime < duration) && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+                  <button
+                    onClick={replayVideo}
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"
+                  >
+                    <RefreshCw size={24} />
+                    <span>Replay</span>
+                  </button>
+                </div>
+              )}
+              {/* Controls Overlay */}
+              <div
+                className={`absolute inset-0 transition-opacity duration-300 ${
+                  showControls || isEnded ? "opacity-100" : "opacity-0"
+                } z-20`}
               >
-                {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
-              </button>
-            </div>
-          </div>
+                {/* Bottom Controls */}
+                <div
+                  ref={controlsRef}
+                  className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 pointer-events-auto"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseEnter={handleControlsMouseEnter}
+                  onMouseLeave={handleControlsMouseLeave}
+                >
+                  {/* Seekbar with sections */}
+                  <div
+                    ref={seekBarRef}
+                    className="relative h-1 bg-gray-600 rounded-full mb-4 cursor-pointer"
+                    onClick={handleSeekClick}
+                  >
+                    {/* Progress Bar */}
+                    <div
+                      className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full"
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
+                    {/* Verse markers */}
+                    {bibleVerseMarker &&
+                      bibleVerseMarker.length > 0 &&
+                      bibleVerseMarker.map((verse: VerseMarkerType) => {
+                        const verseTimeInSeconds = timeToSeconds(verse.time);
+                        const versePosition =
+                          (verseTimeInSeconds / duration) * 100;
+                        const isPassed = currentTime >= verseTimeInSeconds;
+                        return (
+                          <div
+                            key={verse.id}
+                            className={`absolute top-0 w-0.5 h-1 ${
+                              isPassed ? "bg-yellow-400" : "bg-black"
+                            }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
+                            style={{
+                              left: `${versePosition}%`,
+                              transform: "translateX(-50%)",
+                            }}
+                            onClick={(e) => handleVerseMarkerClick(verse, e)}
+                            title={`Verse:${verse.verse} (${verse.time})`}
+                          ></div>
+                        );
+                      })}
+                    {/* Current Time Indicator */}
+                    <div
+                      className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
+                      style={{
+                        left: `${progressPercent}%`,
+                        transform: "translateX(-50%)",
+                      }}
+                      onMouseDown={handleSeekMouseDown}
+                    ></div>
+                  </div>
+                  {/* Control Buttons */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      {/* Play/Pause/Replay Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isEnded && !(currentTime < duration)) {
+                            replayVideo(e);
+                          } else {
+                            togglePlay();
+                          }
+                        }}
+                        className="text-white hover:text-blue-400"
+                        aria-label={
+                          isEnded && !(currentTime < duration)
+                            ? "Replay"
+                            : isPlaying
+                            ? "Pause"
+                            : "Play"
+                        }
+                        disabled={!isPlayerReady}
+                      >
+                        {isEnded && !(currentTime < duration) ? (
+                          <RefreshCw size={24} />
+                        ) : isPlaying ? (
+                          <FilledPauseIcon size={24} />
+                        ) : (
+                          <FilledPlayIcon size={24} />
+                        )}
+                      </button>
+                      {/* Timer */}
+                      <div className="text-white text-sm">
+                        {formatTime(currentTime)} / {formatTime(duration)}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFullscreen();
+                        }}
+                        className="text-white hover:text-blue-400"
+                        aria-label={
+                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                        }
+                        title={
+                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                        }
+                        disabled={!isPlayerReady}
+                      >
+                        {isFullscreen ? (
+                          <Minimize size={24} />
+                        ) : (
+                          <Maximize size={24} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
+        {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
+        {/* <button
+            onClick={() => navigateToChapter("next")}
+            disabled={!canGoNext}
+            className={`p-1 rounded-full transition-all duration-200 ${
+              canGoNext
+                ? "bg-gray-200 bg-opacity-50 hover:bg-opacity-70 hover:scale-110"
+                : "cursor-not-allowed opacity-50"
+            }`}
+            title="Next Chapter"
+          >
+            <ChevronRight size={24} />
+          </button> */}
+        <button
+          onClick={() => navigateToChapter("next")}
+          disabled={!canGoNext}
+          className={`transition-all duration-200 rounded-full p-1 ${
+            canGoNext
+              ? "cursor-pointer hover:scale-110 hover:bg-gray-100"
+              : "cursor-not-allowed opacity-50"
+          }`}
+          title="Next Chapter"
+        >
+          <LoopingGif
+            src={Next}
+            alt="Next chapter"
+            className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+            duration={2000}
+          />
+        </button>
+        {/* </div> */}
       </div>
     </div>
   );
