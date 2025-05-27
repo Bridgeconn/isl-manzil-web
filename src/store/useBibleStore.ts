@@ -16,6 +16,7 @@ interface VideoLinkRowData {
   VideoId: number;
 }
 
+
 interface AvailableData {
   books: BookOption[];
   chapters: { [bookCode: string]: ChapterOption[] };
@@ -36,6 +37,7 @@ interface BibleStore {
   bibleVerseMarker: VerseMarkerType[] | null;
   isLoading: boolean;
   isInitialized: boolean;
+  seekToVerse: (verse: string) => void;
 
   setBook: (book: BookOption | null) => void;
   setChapter: (chapter: ChapterOption | null) => void;
@@ -328,6 +330,27 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       return null;
     }
   },
+  seekToVerse: async (verse: string) => {
+    const { bibleVerseMarker } = get();
+    // console.log("bibleVerseMarker", bibleVerseMarker);
+    console.log("verse", verse);
+
+    const marker = bibleVerseMarker?.find((v) =>  v.verse.toString().trim() === verse.toString().trim()
+  );
+  console.log("marker", marker);
+    const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
+
+    // console.log("cleaned time", cleanedTime);
+    if (marker) {
+      const event = new CustomEvent("seek-to-verse", {
+        detail: { time: cleanedTime },
+      });
+      window.dispatchEvent(event);
+    } else {
+      console.warn(`No timestamp found for verse ${verse}`);
+    }
+  },
+
 }));
 
 export default useBibleStore;

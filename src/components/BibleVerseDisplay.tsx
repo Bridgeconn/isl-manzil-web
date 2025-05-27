@@ -4,7 +4,8 @@ import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 
 const BibleVerseDisplay = () => {
-  const { selectedBook, selectedChapter, selectedVerse } = useBibleStore();
+  const { selectedBook, selectedChapter, selectedVerse, seekToVerse } =
+    useBibleStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -91,7 +92,10 @@ const BibleVerseDisplay = () => {
                 <span className="text-4xl font-bold text-gray-800">
                   {selectedChapter.value}
                 </span>
-                <span className="antialiased tracking-wide font-normal font-roboto ml-2">
+                <span
+                  className="antialiased tracking-wide font-normal font-roboto ml-2 cursor-pointer"
+                  onClick={() => seekToVerse("1")}
+                >
                   {verseData[0]?.text}
                 </span>
               </div>
@@ -100,7 +104,12 @@ const BibleVerseDisplay = () => {
                 <div className="space-y-2 ml-1">
                   {verseData.slice(1).map((verseItem, index) => {
                     return (
-                      <div key={index + 1} id={`verse-${verseItem.verse}`}>
+                      <div
+                        className="cursor-pointer"
+                        key={index + 1}
+                        id={`verse-${verseItem.verse}`}
+                        onClick={() => seekToVerse(verseItem.verse)}
+                      >
                         <span className="font-semibold text-gray-500 text-sm mr-2">
                           {verseItem.verse}
                         </span>
