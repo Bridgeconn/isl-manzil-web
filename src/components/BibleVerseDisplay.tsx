@@ -148,7 +148,7 @@ const BibleVerseDisplay = () => {
                   className={`antialiased tracking-wide font-normal font-roboto ml-2 cursor-pointer rounded transition-colors duration-300 ${
                     isCurrentVerse(verseData[0]?.verse) ? "bg-blue-200" : ""
                   }`}
-                  onClick={() => seekToVerse("1")}
+                  onClick={() => seekToVerse(verseData[0]?.verse)}
                 >
                   {verseData[0]?.text}
                 </span>

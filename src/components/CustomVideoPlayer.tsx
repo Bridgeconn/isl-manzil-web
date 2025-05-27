@@ -44,6 +44,7 @@ const CustomVideoPlayer = () => {
     selectedVerse,
     loadVideoForCurrentSelection,
     bibleVerseMarker,
+    findVerseMarkerForVerse,
     getBibleVerseMarker,
     getCurrentVerseFromTime,
     setCurrentPlayingVerse,
@@ -160,11 +161,7 @@ const CustomVideoPlayer = () => {
   const findVerseMarker = useCallback(
     (verseNumber: number): VerseMarkerType | null => {
       if (!bibleVerseMarker || bibleVerseMarker.length === 0) return null;
-      return (
-        bibleVerseMarker.find(
-          (marker) => marker.verse === verseNumber.toString()
-        ) || null
-      );
+      return findVerseMarkerForVerse(verseNumber);
     },
     [bibleVerseMarker]
   );
@@ -359,19 +356,38 @@ const CustomVideoPlayer = () => {
   ]);
   
   useEffect(() => {
-    const handleSeekEvent = (e: any) => {
-      const { time } = e.detail;
-      const seconds = timeToSeconds(time);
-      if (vimeoPlayerRef.current) {
-        vimeoPlayerRef.current.setCurrentTime(seconds);
+  const handleSeekEvent = async (e: any) => {
+    const { time } = e.detail;
+    const seconds = timeToSeconds(time);
+    
+    if (vimeoPlayerRef.current && isPlayerReady) {
+      try {
+        userInteractedRef.current = true;
+        
+        await vimeoPlayerRef.current.setCurrentTime(seconds);
+        
+        setCurrentTime(seconds);
+        
+        const newCurrentVerse = getCurrentVerseFromTime(seconds);
+        setCurrentPlayingVerse(newCurrentVerse);
+        
+        if (isEnded) {
+          setIsEnded(false);
+        }
+        
+      } catch (error) {
+        console.error("Error seeking to verse:", error);
       }
-    };
+    } else {
+      console.warn("Player not ready for seeking");
+    }
+  };
 
-    window.addEventListener("seek-to-verse", handleSeekEvent);
-    return () => {
-      window.removeEventListener("seek-to-verse", handleSeekEvent);
-    };
-  }, []);
+  window.addEventListener("seek-to-verse", handleSeekEvent);
+  return () => {
+    window.removeEventListener("seek-to-verse", handleSeekEvent);
+  };
+}, [isPlayerReady, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
 
   // Handle fullscreen changes
   useEffect(() => {

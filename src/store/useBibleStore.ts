@@ -66,6 +66,8 @@ interface BibleStore {
   ) => Promise<number | null>;
   loadVideoForCurrentSelection: () => void;
   getBibleVerseMarker: () => Promise<VerseMarkerType[] | null>;
+  findVerseMarkerForVerse: (verseNumber: number) => VerseMarkerType | null;
+  isVerseInRange: (verseNumber: number, verseRange: string) => boolean;
 }
 
 const typedVersificationData = versificationData as VersificationData;
@@ -85,6 +87,45 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
   bibleVerseMarker: [],
   currentLoadingRequest: null,
+
+  // Helper function to check if a verse number is within a verse range
+  isVerseInRange: (verseNumber: number, verseRange: string): boolean => {
+    const trimmedRange = verseRange.trim();
+
+    // If it's a single verse (no dash), check for exact match
+    if (!trimmedRange.includes("-")) {
+      return parseInt(trimmedRange) === verseNumber;
+    }
+
+    // If it's a range (contains dash), check if verse is within the range
+    const rangeParts = trimmedRange.split("-");
+    if (rangeParts.length === 2) {
+      const startVerse = parseInt(rangeParts[0].trim());
+      const endVerse = parseInt(rangeParts[1].trim());
+
+      if (!isNaN(startVerse) && !isNaN(endVerse)) {
+        return verseNumber >= startVerse && verseNumber <= endVerse;
+      }
+    }
+
+    return false;
+  },
+
+  // Helper function to find verse marker for a specific verse number
+  findVerseMarkerForVerse: (verseNumber: number): VerseMarkerType | null => {
+    const { bibleVerseMarker } = get();
+
+    if (!bibleVerseMarker || bibleVerseMarker.length === 0) {
+      return null;
+    }
+
+    // Find the marker that contains this verse number
+    return (
+      bibleVerseMarker.find((marker) =>
+        get().isVerseInRange(verseNumber, marker.verse)
+      ) || null
+    );
+  },
 
   setBook: (book: BookOption | null) => {
     set({ selectedBook: book, currentPlayingVerse: null });
@@ -441,12 +482,12 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
   seekToVerse: async (verse: string) => {
     const { bibleVerseMarker } = get();
-    // console.log("bibleVerseMarker", bibleVerseMarker);
     console.log("verse", verse);
 
-    const marker = bibleVerseMarker?.find((v) =>  v.verse.toString().trim() === verse.toString().trim()
-  );
-  console.log("marker", marker);
+    const marker = bibleVerseMarker?.find(
+      (v) => v.verse.toString().trim() === verse.toString().trim()
+    );
+    console.log("marker", marker);
     const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
 
     // console.log("cleaned time", cleanedTime);
@@ -459,7 +500,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       console.warn(`No timestamp found for verse ${verse}`);
     }
   },
-
 }));
 
 export default useBibleStore;
