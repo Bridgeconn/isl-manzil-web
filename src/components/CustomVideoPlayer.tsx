@@ -181,11 +181,7 @@ const CustomVideoPlayer = () => {
     };
   }, [currentVideoId]);
   useEffect(() => {
-    const handleSeekEvent = (e: {
-      detail: {
-        time: string;
-      };
-    }) => {
+    const handleSeekEvent = (e: any) => {
       const { time } = e.detail;
       const seconds = timeToSeconds(time);
       if (vimeoPlayerRef.current) {
