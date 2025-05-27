@@ -357,6 +357,21 @@ const CustomVideoPlayer = () => {
     setupIntervals,
     clearIntervals,
   ]);
+  
+  useEffect(() => {
+    const handleSeekEvent = (e: any) => {
+      const { time } = e.detail;
+      const seconds = timeToSeconds(time);
+      if (vimeoPlayerRef.current) {
+        vimeoPlayerRef.current.setCurrentTime(seconds);
+      }
+    };
+
+    window.addEventListener("seek-to-verse", handleSeekEvent);
+    return () => {
+      window.removeEventListener("seek-to-verse", handleSeekEvent);
+    };
+  }, []);
 
   // Handle fullscreen changes
   useEffect(() => {

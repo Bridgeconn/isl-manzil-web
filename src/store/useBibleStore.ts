@@ -16,6 +16,11 @@ interface VideoLinkRowData {
   VideoId: number;
 }
 
+interface AvailableData {
+  books: BookOption[];
+  chapters: { [bookCode: string]: ChapterOption[] };
+}
+
 export interface VerseMarkerType {
   id: number;
   verse: string;
@@ -37,6 +42,7 @@ interface BibleStore {
   currentPlayingVerse: string | null;
   isLoading: boolean;
   isInitialized: boolean;
+  seekToVerse: (verse: string) => void;
   isVideoLoading: boolean;
   // Add request tracking
   currentLoadingRequest: string | null;
@@ -77,8 +83,8 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     books: [],
     chapters: {},
   },
-  currentLoadingRequest: null,
   bibleVerseMarker: [],
+  currentLoadingRequest: null,
 
   setBook: (book: BookOption | null) => {
     set({ selectedBook: book, currentPlayingVerse: null });
@@ -433,6 +439,27 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       return null;
     }
   },
+  seekToVerse: async (verse: string) => {
+    const { bibleVerseMarker } = get();
+    // console.log("bibleVerseMarker", bibleVerseMarker);
+    console.log("verse", verse);
+
+    const marker = bibleVerseMarker?.find((v) =>  v.verse.toString().trim() === verse.toString().trim()
+  );
+  console.log("marker", marker);
+    const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
+
+    // console.log("cleaned time", cleanedTime);
+    if (marker) {
+      const event = new CustomEvent("seek-to-verse", {
+        detail: { time: cleanedTime },
+      });
+      window.dispatchEvent(event);
+    } else {
+      console.warn(`No timestamp found for verse ${verse}`);
+    }
+  },
+
 }));
 
 export default useBibleStore;

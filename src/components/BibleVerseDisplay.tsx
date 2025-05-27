@@ -4,8 +4,13 @@ import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 
 const BibleVerseDisplay = () => {
-  const { selectedBook, selectedChapter, selectedVerse, currentPlayingVerse } =
-    useBibleStore();
+  const {
+    selectedBook,
+    selectedChapter,
+    selectedVerse,
+    currentPlayingVerse,
+    seekToVerse,
+  } = useBibleStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -29,18 +34,18 @@ const BibleVerseDisplay = () => {
 
     const scrollToVerse = () => {
       const verseElement = verseRefs.current[currentPlayingVerse];
-      
+
       if (verseElement) {
         verseElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest'
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
         });
       }
     };
 
     const timeoutId = setTimeout(scrollToVerse, 200);
-    
+
     return () => clearTimeout(timeoutId);
   }, [currentPlayingVerse, verseData]);
 
@@ -112,7 +117,10 @@ const BibleVerseDisplay = () => {
     return currentPlayingVerse === verseNumber.toString();
   };
 
-  const setVerseRef = (verseNumber: string | number, element: HTMLDivElement | null) => {
+  const setVerseRef = (
+    verseNumber: string | number,
+    element: HTMLDivElement | null
+  ) => {
     verseRefs.current[verseNumber.toString()] = element;
   };
 
@@ -123,12 +131,12 @@ const BibleVerseDisplay = () => {
           {renderLoadingOrError()}
 
           {!isFetching && !error && verseData.length > 0 && (
-            <div 
+            <div
               ref={containerRef}
               className="flex flex-col h-full overflow-y-auto"
-              style={{ scrollBehavior: 'smooth' }}
+              style={{ scrollBehavior: "smooth" }}
             >
-              <div 
+              <div
                 className="mb-2"
                 ref={(el) => setVerseRef(verseData[0]?.verse, el)}
                 id={`verse-${verseData[0]?.verse}`}
@@ -136,11 +144,12 @@ const BibleVerseDisplay = () => {
                 <span className="text-4xl font-bold text-gray-800">
                   {selectedChapter.value}
                 </span>
-                <span className={`antialiased tracking-wide font-normal font-roboto ml-2 rounded transition-colors duration-300 ${
-                    isCurrentVerse(verseData[0]?.verse)
-                      ? "bg-blue-200"
-                      : ""
-                  }`}>
+                <span
+                  className={`antialiased tracking-wide font-normal font-roboto ml-2 cursor-pointer rounded transition-colors duration-300 ${
+                    isCurrentVerse(verseData[0]?.verse) ? "bg-blue-200" : ""
+                  }`}
+                  onClick={() => seekToVerse("1")}
+                >
                   {verseData[0]?.text}
                 </span>
               </div>
@@ -150,9 +159,11 @@ const BibleVerseDisplay = () => {
                   {verseData.slice(1).map((verseItem, index) => {
                     const isPlaying = isCurrentVerse(verseItem.verse);
                     return (
-                      <div 
-                        key={index + 1} 
+                      <div
+                        className="cursor-pointer"
+                        key={index + 1}
                         id={`verse-${verseItem.verse}`}
+                        onClick={() => seekToVerse(verseItem.verse)}
                         ref={(el) => setVerseRef(verseItem.verse, el)}
                       >
                         <span
