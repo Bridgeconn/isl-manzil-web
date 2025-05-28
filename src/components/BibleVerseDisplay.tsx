@@ -4,17 +4,50 @@ import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 
 const BibleVerseDisplay = () => {
-  const { selectedBook, selectedChapter, selectedVerse, seekToVerse } =
-    useBibleStore();
+  const {
+    selectedBook,
+    selectedChapter,
+    selectedVerse,
+    currentPlayingVerse,
+    seekToVerse,
+  } = useBibleStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const chapterCache = useRef<Record<string, VerseData[]>>({});
+  const containerRef = useRef<HTMLDivElement>(null);
+  const verseRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Clear refs when data changes
+  useEffect(() => {
+    verseRefs.current = {};
+  }, [verseData]);
 
   const csvFiles = import.meta.glob("/src/assets/data/books/**/*.csv", {
     query: "?raw",
     import: "default",
   });
+
+  // Auto-scroll as per current playing verse
+  useEffect(() => {
+    if (!currentPlayingVerse || !verseData.length) return;
+
+    const scrollToVerse = () => {
+      const verseElement = verseRefs.current[currentPlayingVerse];
+
+      if (verseElement) {
+        verseElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest",
+        });
+      }
+    };
+
+    const timeoutId = setTimeout(scrollToVerse, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentPlayingVerse, verseData]);
 
   useEffect(() => {
     if (!selectedBook || !selectedChapter) return;
@@ -80,6 +113,17 @@ const BibleVerseDisplay = () => {
     return null;
   };
 
+  const isCurrentVerse = (verseNumber: string | number): boolean => {
+    return currentPlayingVerse === verseNumber.toString();
+  };
+
+  const setVerseRef = (
+    verseNumber: string | number,
+    element: HTMLDivElement | null
+  ) => {
+    verseRefs.current[verseNumber.toString()] = element;
+  };
+
   return (
     <>
       {selectedBook && selectedChapter && (
@@ -87,14 +131,24 @@ const BibleVerseDisplay = () => {
           {renderLoadingOrError()}
 
           {!isFetching && !error && verseData.length > 0 && (
-            <div className="flex flex-col">
-              <div className="mb-2">
+            <div
+              ref={containerRef}
+              className="flex flex-col h-full overflow-y-auto"
+              style={{ scrollBehavior: "smooth" }}
+            >
+              <div
+                className="mb-2"
+                ref={(el) => setVerseRef(verseData[0]?.verse, el)}
+                id={`verse-${verseData[0]?.verse}`}
+              >
                 <span className="text-4xl font-bold text-gray-800">
                   {selectedChapter.value}
                 </span>
                 <span
-                  className="antialiased tracking-wide font-normal font-roboto ml-2 cursor-pointer"
-                  onClick={() => seekToVerse("1")}
+                  className={`antialiased tracking-wide font-normal font-roboto ml-2 cursor-pointer rounded transition-colors duration-300 ${
+                    isCurrentVerse(verseData[0]?.verse) ? "bg-blue-200" : ""
+                  }`}
+                  onClick={() => seekToVerse(verseData[0]?.verse)}
                 >
                   {verseData[0]?.text}
                 </span>
@@ -103,17 +157,27 @@ const BibleVerseDisplay = () => {
               {verseData.length > 1 && (
                 <div className="space-y-2 ml-1">
                   {verseData.slice(1).map((verseItem, index) => {
+                    const isPlaying = isCurrentVerse(verseItem.verse);
                     return (
                       <div
                         className="cursor-pointer"
                         key={index + 1}
                         id={`verse-${verseItem.verse}`}
                         onClick={() => seekToVerse(verseItem.verse)}
+                        ref={(el) => setVerseRef(verseItem.verse, el)}
                       >
-                        <span className="font-semibold text-gray-500 text-sm mr-2">
+                        <span
+                          className={`font-semibold text-gray-500 text-sm mr-2 rounded transition-colors duration-300 ${
+                            isPlaying ? "bg-blue-200" : ""
+                          }`}
+                        >
                           {verseItem.verse}
                         </span>
-                        <span className="antialiased tracking-wide font-normal font-roboto">
+                        <span
+                          className={`antialiased tracking-wide font-normal font-roboto rounded transition-colors duration-300 ${
+                            isPlaying ? "bg-blue-200" : ""
+                          }`}
+                        >
                           {verseItem.text}
                         </span>
                       </div>

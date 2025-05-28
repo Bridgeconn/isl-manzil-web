@@ -16,7 +16,6 @@ interface VideoLinkRowData {
   VideoId: number;
 }
 
-
 interface AvailableData {
   books: BookOption[];
   chapters: { [bookCode: string]: ChapterOption[] };
@@ -28,6 +27,11 @@ export interface VerseMarkerType {
   time: string;
 }
 
+interface AvailableData {
+  books: BookOption[];
+  chapters: { [bookCode: string]: ChapterOption[] };
+}
+
 interface BibleStore {
   selectedBook: BookOption | null;
   selectedChapter: ChapterOption | null;
@@ -35,6 +39,7 @@ interface BibleStore {
   currentVideoId: number | null;
   availableData: AvailableData;
   bibleVerseMarker: VerseMarkerType[] | null;
+  currentPlayingVerse: string | null;
   isLoading: boolean;
   isInitialized: boolean;
   seekToVerse: (verse: string) => void;
@@ -46,6 +51,8 @@ interface BibleStore {
   setChapter: (chapter: ChapterOption | null) => void;
   setVerse: (verse: VerseOption | null) => void;
   setCurrentVideoId: (videoId: number | null) => void;
+  setCurrentPlayingVerse: (verse: string | null) => void;
+  getCurrentVerseFromTime: (currentTime: number) => string | null;
   getVideoUrlData: () => Promise<VideoLinkRowData[] | null>;
   initializeAvailableData: () => Promise<void>;
   getAvailableChaptersForBook: (bookCode: string) => ChapterOption[];
@@ -59,6 +66,8 @@ interface BibleStore {
   ) => Promise<number | null>;
   loadVideoForCurrentSelection: () => void;
   getBibleVerseMarker: () => Promise<VerseMarkerType[] | null>;
+  findVerseMarkerForVerse: (verseNumber: number) => VerseMarkerType | null;
+  isVerseInRange: (verseNumber: number, verseRange: string) => boolean;
 }
 
 const typedVersificationData = versificationData as VersificationData;
@@ -68,6 +77,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   selectedChapter: null,
   selectedVerse: null,
   currentVideoId: null,
+  currentPlayingVerse: null,
   isLoading: false,
   isInitialized: false,
   isVideoLoading: false,
@@ -78,8 +88,47 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   bibleVerseMarker: [],
   currentLoadingRequest: null,
 
+  // Helper function to check if a verse number is within a verse range
+  isVerseInRange: (verseNumber: number, verseRange: string): boolean => {
+    const trimmedRange = verseRange.trim();
+
+    // If it's a single verse (no dash), check for exact match
+    if (!trimmedRange.includes("-")) {
+      return parseInt(trimmedRange) === verseNumber;
+    }
+
+    // If it's a range (contains dash), check if verse is within the range
+    const rangeParts = trimmedRange.split("-");
+    if (rangeParts.length === 2) {
+      const startVerse = parseInt(rangeParts[0].trim());
+      const endVerse = parseInt(rangeParts[1].trim());
+
+      if (!isNaN(startVerse) && !isNaN(endVerse)) {
+        return verseNumber >= startVerse && verseNumber <= endVerse;
+      }
+    }
+
+    return false;
+  },
+
+  // Helper function to find verse marker for a specific verse number
+  findVerseMarkerForVerse: (verseNumber: number): VerseMarkerType | null => {
+    const { bibleVerseMarker } = get();
+
+    if (!bibleVerseMarker || bibleVerseMarker.length === 0) {
+      return null;
+    }
+
+    // Find the marker that contains this verse number
+    return (
+      bibleVerseMarker.find((marker) =>
+        get().isVerseInRange(verseNumber, marker.verse)
+      ) || null
+    );
+  },
+
   setBook: (book: BookOption | null) => {
-    set({ selectedBook: book });
+    set({ selectedBook: book, currentPlayingVerse: null });
 
     // Auto-set first available chapter when book changes
     if (book) {
@@ -95,7 +144,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
 
   setChapter: (chapter: ChapterOption | null) => {
-    set({ selectedChapter: chapter });
+    set({ selectedChapter: chapter, currentPlayingVerse: null });
 
     // Auto-set first verse when chapter changes
     if (chapter && get().selectedBook) {
@@ -116,6 +165,58 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   setVerse: (verse: VerseOption | null) => set({ selectedVerse: verse }),
   setCurrentVideoId: (videoId: number | null) =>
     set({ currentVideoId: videoId }),
+  setCurrentPlayingVerse: (verse: string | null) =>
+    set({ currentPlayingVerse: verse }),
+
+  getCurrentVerseFromTime: (currentTime: number): string | null => {
+    const { bibleVerseMarker } = get();
+
+    if (!bibleVerseMarker || bibleVerseMarker.length === 0) {
+      return null;
+    }
+
+    const timeToSeconds = (timeStr: string): number => {
+      if (!timeStr) return 0;
+      const parts = timeStr.split(":");
+
+      if (parts.length === 3 || parts.length === 4) {
+        return (
+          parseInt(parts[0]) * 3600 +
+          parseInt(parts[1]) * 60 +
+          parseInt(parts[2])
+        );
+      } else if (parts.length === 2) {
+        return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      } else {
+        return parseInt(parts[0]);
+      }
+    };
+
+    // Convert verse markers to seconds and sort by time
+    const sortedMarkers = bibleVerseMarker
+      .map((marker) => ({
+        ...marker,
+        timeInSeconds: timeToSeconds(marker.time),
+      }))
+      .sort((a, b) => a.timeInSeconds - b.timeInSeconds);
+
+    let currentVerse = null;
+
+    for (let i = 0; i < sortedMarkers.length; i++) {
+      const currentMarker = sortedMarkers[i];
+      const nextMarker = sortedMarkers[i + 1];
+
+      if (currentTime >= currentMarker.timeInSeconds) {
+        // If there's no next marker, or current time is before next marker
+        if (!nextMarker || currentTime < nextMarker.timeInSeconds) {
+          currentVerse = currentMarker.verse;
+          break;
+        }
+      }
+    }
+
+    return currentVerse;
+  },
 
   getVideoUrlData: async (): Promise<VideoLinkRowData[] | null> => {
     try {
@@ -288,8 +389,10 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     }
 
     // Create unique request ID to track this specific request
-    const requestId = `${selectedBook.value}-${selectedChapter.value}-${Date.now()}`;
-    
+    const requestId = `${selectedBook.value}-${
+      selectedChapter.value
+    }-${Date.now()}`;
+
     set({
       isVideoLoading: true,
       currentLoadingRequest: requestId,
@@ -298,13 +401,13 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     try {
       const bookName = selectedBook.value;
       const chapter = parseInt(selectedChapter.label);
-      
+
       const videoId = await get().getVideoIdByBookAndChapter(bookName, chapter);
-      
+
       // Check if this is still the current request (no newer request has started)
       const currentRequest = get().currentLoadingRequest;
       if (currentRequest !== requestId) {
-        console.log('Request outdated, ignoring result:', requestId);
+        console.log("Request outdated, ignoring result:", requestId);
         return; // This request is outdated, ignore the result
       }
 
@@ -314,10 +417,9 @@ const useBibleStore = create<BibleStore>((set, get) => ({
         isVideoLoading: false,
         currentLoadingRequest: null,
       });
-      
     } catch (error) {
-      console.error('Error loading video:', error);
-      
+      console.error("Error loading video:", error);
+
       // Only update error state if this is still the current request
       const currentRequest = get().currentLoadingRequest;
       if (currentRequest === requestId) {
@@ -325,6 +427,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
           currentVideoId: null,
           isVideoLoading: false,
           currentLoadingRequest: null,
+          currentPlayingVerse: null,
         });
       }
     }
@@ -346,7 +449,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       const filePath = `/src/assets/data/verse_markers/${selectedBook.label}_${selectedChapter.label}.csv`;
       console.log("file path", filePath);
       if (!csvFiles[filePath]) {
-        set({ bibleVerseMarker: [] });
+        set({ bibleVerseMarker: [], currentPlayingVerse: null });
         console.warn(
           `Verse marker file not found: ${selectedBook.label}_${selectedChapter.label}.csv`
         );
@@ -366,22 +469,25 @@ const useBibleStore = create<BibleStore>((set, get) => ({
           };
         }
       );
-      set({ bibleVerseMarker: formattedVerseMarkerData });
+      set({
+        bibleVerseMarker: formattedVerseMarkerData,
+        currentPlayingVerse: null,
+      });
       return formattedVerseMarkerData;
     } catch (err) {
       console.error(`Failed to load verse markers:`, err);
-      set({ bibleVerseMarker: [] });
+      set({ bibleVerseMarker: [], currentPlayingVerse: null });
       return null;
     }
   },
   seekToVerse: async (verse: string) => {
     const { bibleVerseMarker } = get();
-    // console.log("bibleVerseMarker", bibleVerseMarker);
     console.log("verse", verse);
 
-    const marker = bibleVerseMarker?.find((v) =>  v.verse.toString().trim() === verse.toString().trim()
-  );
-  console.log("marker", marker);
+    const marker = bibleVerseMarker?.find(
+      (v) => v.verse.toString().trim() === verse.toString().trim()
+    );
+    console.log("marker", marker);
     const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
 
     // console.log("cleaned time", cleanedTime);
@@ -394,7 +500,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       console.warn(`No timestamp found for verse ${verse}`);
     }
   },
-
 }));
 
 export default useBibleStore;
