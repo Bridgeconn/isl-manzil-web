@@ -34,7 +34,7 @@ const FilledPauseIcon = ({ size = 24, className = "" }) => (
 );
 
 const FilledSkipBackIcon = ({ size = 24, className = "" }) => (
-   <svg
+  <svg
     width={size}
     height={size}
     viewBox="0 0 24 24"
@@ -224,6 +224,9 @@ const CustomVideoPlayer = () => {
       ) {
         return;
       }
+      if (!prevSelectedVerseRef.current) {
+        prevSelectedVerseRef.current = selectedVerse.value;
+      }
       // Check if selectedVerse changed
       const hasVerseChanged =
         prevSelectedVerseRef.current !== selectedVerse.value;
@@ -348,24 +351,14 @@ const CustomVideoPlayer = () => {
 
   // Update intervals when play state changes
   useEffect(() => {
-    if (
-      isPlayerReady &&
-      isPlaying &&
-      !isEnded
-    ) {
+    if (isPlayerReady && isPlaying && !isEnded) {
       setupIntervals();
     }
 
     return () => {
       clearIntervals();
     };
-  }, [
-    isPlaying,
-    isPlayerReady,
-    isEnded,
-    setupIntervals,
-    clearIntervals,
-  ]);
+  }, [isPlaying, isPlayerReady, isEnded, setupIntervals, clearIntervals]);
 
   useEffect(() => {
     const handleSeekEvent = async (e: any) => {
@@ -433,26 +426,30 @@ const CustomVideoPlayer = () => {
           const currentTime =
             (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
           const newTime = Math.max(0, currentTime - 10);
-          await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          vimeoPlayerRef.current?.setCurrentTime(newTime);
           setCurrentTime(newTime);
           if (isEnded) {
             setIsEnded(false);
           }
-          const newCurrentVerse = getCurrentVerseFromTime(newTime);
-          setCurrentPlayingVerse(newCurrentVerse);
+          if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
+            const newCurrentVerse = getCurrentVerseFromTime(newTime);
+            setCurrentPlayingVerse(newCurrentVerse);
+          }
           break;
         }
         case "ArrowRight": {
           const currentTime =
             (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
           const newTime = Math.min(duration, currentTime + 10);
-          await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          vimeoPlayerRef.current?.setCurrentTime(newTime);
           setCurrentTime(newTime);
           if (isEnded) {
             setIsEnded(false);
           }
-          const newCurrentVerse = getCurrentVerseFromTime(newTime);
-          setCurrentPlayingVerse(newCurrentVerse);
+          if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
+            const newCurrentVerse = getCurrentVerseFromTime(newTime);
+            setCurrentPlayingVerse(newCurrentVerse);
+          }
           break;
         }
         default:
@@ -468,6 +465,7 @@ const CustomVideoPlayer = () => {
     isPlayerReady,
     duration,
     isEnded,
+    bibleVerseMarker,
     getCurrentVerseFromTime,
     setCurrentPlayingVerse,
     isVideoAvailable,
@@ -831,7 +829,14 @@ const CustomVideoPlayer = () => {
           ref={playerContainerRef}
           className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
           style={{ aspectRatio: "16/9" }}
-          onClick={isVideoAvailable ? togglePlay : undefined}
+          onClick={
+            isVideoAvailable
+              ? () => {
+                  togglePlay();
+                  setControlsHideTimeout();
+                }
+              : undefined
+          }
         >
           {(isVideoLoading || !isPlayerReady) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
