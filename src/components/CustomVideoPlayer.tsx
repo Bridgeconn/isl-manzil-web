@@ -33,6 +33,30 @@ const FilledPauseIcon = ({ size = 24, className = "" }) => (
   </svg>
 );
 
+const FilledSkipBackIcon = ({ size = 24, className = "" }) => (
+   <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M4 5h2v14H4V5zm4.5 7l9.5 7V5l-9.5 7z" />
+  </svg>
+);
+
+const FilledSkipForwardIcon = ({ size = 24, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M20 5h-2v14h2V5zm-4.5 7L6 19V5l9.5 7z" />
+  </svg>
+);
+
 const CustomVideoPlayer = () => {
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
@@ -157,21 +181,12 @@ const CustomVideoPlayer = () => {
     clearIntervals,
   ]);
 
-  // Helper function to find verse marker by verse number
-  const findVerseMarker = useCallback(
-    (verseNumber: number): VerseMarkerType | null => {
-      if (!bibleVerseMarker || bibleVerseMarker.length === 0) return null;
-      return findVerseMarkerForVerse(verseNumber);
-    },
-    [bibleVerseMarker]
-  );
-
   // Helper function to jump to a specific verse
   const jumpToVerse = useCallback(
     async (verseNumber: number) => {
       if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
-      const verseMarker = findVerseMarker(verseNumber);
+      const verseMarker = findVerseMarkerForVerse(verseNumber);
       if (!verseMarker) {
         console.warn(`Verse ${verseNumber} marker not found`);
         return;
@@ -195,7 +210,7 @@ const CustomVideoPlayer = () => {
         console.error(`Error jumping to verse ${verseNumber}:`, error);
       }
     },
-    [isPlayerReady, findVerseMarker, isEnded]
+    [isPlayerReady, findVerseMarkerForVerse, setCurrentPlayingVerse, isEnded]
   );
 
   // Effect to handle selectedVerse changes
@@ -354,40 +369,39 @@ const CustomVideoPlayer = () => {
     setupIntervals,
     clearIntervals,
   ]);
-  
-  useEffect(() => {
-  const handleSeekEvent = async (e: any) => {
-    const { time } = e.detail;
-    const seconds = timeToSeconds(time);
-    
-    if (vimeoPlayerRef.current && isPlayerReady) {
-      try {
-        userInteractedRef.current = true;
-        
-        await vimeoPlayerRef.current.setCurrentTime(seconds);
-        
-        setCurrentTime(seconds);
-        
-        const newCurrentVerse = getCurrentVerseFromTime(seconds);
-        setCurrentPlayingVerse(newCurrentVerse);
-        
-        if (isEnded) {
-          setIsEnded(false);
-        }
-        
-      } catch (error) {
-        console.error("Error seeking to verse:", error);
-      }
-    } else {
-      console.warn("Player not ready for seeking");
-    }
-  };
 
-  window.addEventListener("seek-to-verse", handleSeekEvent);
-  return () => {
-    window.removeEventListener("seek-to-verse", handleSeekEvent);
-  };
-}, [isPlayerReady, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
+  useEffect(() => {
+    const handleSeekEvent = async (e: any) => {
+      const { time } = e.detail;
+      const seconds = timeToSeconds(time);
+
+      if (vimeoPlayerRef.current && isPlayerReady) {
+        try {
+          userInteractedRef.current = true;
+
+          await vimeoPlayerRef.current.setCurrentTime(seconds);
+
+          setCurrentTime(seconds);
+
+          const newCurrentVerse = getCurrentVerseFromTime(seconds);
+          setCurrentPlayingVerse(newCurrentVerse);
+
+          if (isEnded) {
+            setIsEnded(false);
+          }
+        } catch (error) {
+          console.error("Error seeking to verse:", error);
+        }
+      } else {
+        console.warn("Player not ready for seeking");
+      }
+    };
+
+    window.addEventListener("seek-to-verse", handleSeekEvent);
+    return () => {
+      window.removeEventListener("seek-to-verse", handleSeekEvent);
+    };
+  }, [isPlayerReady, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -709,6 +723,46 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  const navigateToVerse = (direction: "forward" | "backward") => {
+    if (!vimeoPlayerRef.current) return;
+
+    const verseTimes =
+      bibleVerseMarker &&
+      bibleVerseMarker.map((verse) => timeToSeconds(verse.time));
+
+    if (!verseTimes) return;
+
+    const nextVerseIndex = verseTimes.findIndex(
+      (verseTime) => verseTime > currentTime
+    );
+
+    const currentVerseIndex =
+      nextVerseIndex === -1 ? verseTimes.length - 1 : nextVerseIndex - 1;
+
+    let targetVerseIndex;
+    if (direction === "forward") {
+      targetVerseIndex =
+        nextVerseIndex === -1 ? verseTimes.length - 1 : nextVerseIndex;
+    } else {
+      targetVerseIndex = currentVerseIndex <= 0 ? 0 : currentVerseIndex - 1;
+    }
+
+    console.log("target verse index", targetVerseIndex);
+
+    const nextVerse = bibleVerseMarker[targetVerseIndex];
+
+    if (nextVerse) {
+      const seekTime = timeToSeconds(nextVerse.time);
+      vimeoPlayerRef.current.setCurrentTime(seekTime);
+      setCurrentTime(seekTime);
+      setCurrentPlayingVerse(nextVerse.verse);
+
+      if (isEnded) {
+        setIsEnded(false);
+      }
+    }
+  };
+
   // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!playerContainerRef.current) return;
@@ -901,6 +955,17 @@ const CustomVideoPlayer = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          navigateToVerse("backward");
+                        }}
+                        className="text-white hover:text-blue-400"
+                        aria-label="Previous Verse"
+                        disabled={!isPlayerReady}
+                      >
+                        <FilledSkipBackIcon size={24} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (isEnded && !(currentTime < duration)) {
                             replayVideo(e);
                           } else {
@@ -924,6 +989,17 @@ const CustomVideoPlayer = () => {
                         ) : (
                           <FilledPlayIcon size={24} />
                         )}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigateToVerse("forward");
+                        }}
+                        className="text-white hover:text-blue-400"
+                        aria-label="Next Verse"
+                        disabled={!isPlayerReady}
+                      >
+                        <FilledSkipForwardIcon size={24} />
                       </button>
                       {/* Timer */}
                       <div className="text-white text-sm">
