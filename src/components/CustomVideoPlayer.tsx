@@ -351,9 +351,7 @@ const CustomVideoPlayer = () => {
     if (
       isPlayerReady &&
       isPlaying &&
-      !isEnded &&
-      bibleVerseMarker &&
-      bibleVerseMarker?.length > 0
+      !isEnded
     ) {
       setupIntervals();
     }
@@ -365,7 +363,6 @@ const CustomVideoPlayer = () => {
     isPlaying,
     isPlayerReady,
     isEnded,
-    bibleVerseMarker,
     setupIntervals,
     clearIntervals,
   ]);
