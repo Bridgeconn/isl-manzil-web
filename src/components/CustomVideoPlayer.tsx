@@ -196,16 +196,13 @@ const CustomVideoPlayer = () => {
         const seekTime = timeToSeconds(verseMarker.time);
         await vimeoPlayerRef.current.setCurrentTime(seekTime);
         setCurrentTime(seekTime);
-        setCurrentPlayingVerse(verseNumber.toString());
+        setCurrentPlayingVerse(verseMarker.verse);
 
         // If video was ended, update state
         if (isEnded) {
           setIsEnded(false);
         }
 
-        console.log(
-          `Jumped to verse ${verseNumber} at time ${verseMarker.time}`
-        );
       } catch (error) {
         console.error(`Error jumping to verse ${verseNumber}:`, error);
       }
