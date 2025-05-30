@@ -40,11 +40,18 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
               `}
             >
               <div className="space-y-2">
-                <div
-                  className="w-full h-8 rounded border"
-                  style={{ backgroundColor: theme.backgroundColor }}
-                />
-                <div className="text-xs font-medium text-gray-600">
+                <div className="flex flex-row w-full border rounder-border">
+                  <div
+                    className="flex-1 h-6"
+                    style={{ backgroundColor: theme.backgroundColor }}
+                  />
+                  <div
+                    className="flex-1 h-6"
+                    style={{ backgroundColor: theme.textColor }}
+                  />
+                </div>
+
+                <div className="text-xs font-semibold text-gray-600">
                   {theme.name}
                 </div>
                 <div className="flex items-center gap-2">
