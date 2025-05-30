@@ -25,13 +25,13 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
       <div className="space-y-2 sm:space-y-4">
         <h4 className="text-sm font-medium text-gray-700 mb-3">Choose Theme</h4>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           {themes.map((theme) => (
             <button
               key={theme.id}
               onClick={() => setTheme(theme)}
               className={`
-                relative p-3 rounded-lg border-2 transition-all duration-200
+                relative p-1 border-2 transition-all duration-200
                 ${
                   currentTheme?.id === theme.id
                     ? "border-blue-500 ring-2 ring-blue-200"
@@ -50,25 +50,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
                     style={{ backgroundColor: theme.textColor }}
                   />
                 </div>
-
-                <div className="text-xs font-semibold text-gray-600">
-                  {theme.name}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full border border-gray-300"
-                    style={{ backgroundColor: theme.backgroundColor }}
-                  />
-                  <div
-                    className="w-3 h-3 rounded-full border border-gray-300"
-                    style={{ backgroundColor: theme.textColor }}
-                  />
-                </div>
               </div>
-
-              {currentTheme?.id === theme.id && (
-                <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
-              )}
             </button>
           ))}
         </div>
