@@ -5,6 +5,24 @@ import bookCodesData from "../assets/data/book_codes.json";
 import versificationData from "../assets/data/versification.json";
 import { VersificationData } from "../types/bible";
 
+export enum VimeoVideoQuality {
+  AUTO = "auto",
+  _720P = "720p",
+  _480P = "480p",
+  _360P = "360p",
+  _144P = "144p",
+}
+
+export const qualityMapping: { [key: string]: VimeoVideoQuality } = {
+  auto: VimeoVideoQuality.AUTO,
+  "720p": VimeoVideoQuality._720P,
+  "480p": VimeoVideoQuality._480P,
+  "360p": VimeoVideoQuality._360P,
+  "144p": VimeoVideoQuality._144P,
+};
+// or wherever it's defined
+
+
 const videoLinksData = new URL(
   "../assets/data/isl_video_urls.csv",
   import.meta.url
@@ -47,6 +65,16 @@ interface BibleStore {
   // Add request tracking
   currentLoadingRequest: string | null;
 
+  //Add video quality
+  availableQualities: VimeoVideoQuality[];
+
+// Enum type for the selected quality as well
+selectedQuality: VimeoVideoQuality;
+
+// Setters
+setAvailableQualities: (qualities: VimeoVideoQuality[]) => void;
+setSelectedQuality: (quality: VimeoVideoQuality) => void;
+
   setBook: (book: BookOption | null) => void;
   setChapter: (chapter: ChapterOption | null) => void;
   setVerse: (verse: VerseOption | null) => void;
@@ -87,6 +115,14 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
   bibleVerseMarker: [],
   currentLoadingRequest: null,
+
+  // video quality
+  availableQualities: [],
+  selectedQuality: VimeoVideoQuality._720P,
+
+  setAvailableQualities: (qualities) => set({ availableQualities: qualities }),
+  setSelectedQuality: (quality) => set({ selectedQuality: quality }),
+  
 
   // Helper function to check if a verse number is within a verse range
   isVerseInRange: (verseNumber: number, verseRange: string): boolean => {

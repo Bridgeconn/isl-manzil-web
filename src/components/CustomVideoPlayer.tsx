@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
+import SettingsButton from "../components/SettingsButton";
+
+import SettingsDrawer from "../components/SettingsDrawer";
+import QualityDrawer from "../components/QualityDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Next from "../assets/images/Next.gif";
 import Previous from "../assets/images/Previous.gif";
@@ -8,6 +12,7 @@ import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
 import LoopingGif from "./LoopingGif";
 
+//video qualiy function
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
     width={size}
@@ -50,7 +55,16 @@ const CustomVideoPlayer = () => {
     setCurrentPlayingVerse,
     currentPlayingVerse,
     isVideoLoading,
+
+    availableQualities,
+
+    selectedQuality,
+    setAvailableQualities,
+    setSelectedQuality,
   } = useBibleStore();
+  useEffect(() => {
+    console.log("Available Qualities Updated:", availableQualities);
+  }, [availableQualities]);
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -66,6 +80,8 @@ const CustomVideoPlayer = () => {
   const prevSelectedVerseRef = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
 
+  //settings icon
+
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -75,6 +91,8 @@ const CustomVideoPlayer = () => {
   const [lastAction, setLastAction] = useState<"play" | "pause" | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showQualityDrawer, setShowQualityDrawer] = useState(false);
 
   const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
   const showComingSoon =
@@ -287,9 +305,12 @@ const CustomVideoPlayer = () => {
         prevSelectedVerseRef.current = null;
         userInteractedRef.current = false;
 
+        //video quality id
+
         // Create new player
         const options: VimeoPlayerOptions = {
           id: currentVideoId,
+          // id: currentVideoId,
           controls: false,
           responsive: true,
           title: false,
@@ -310,6 +331,14 @@ const CustomVideoPlayer = () => {
             resolve(true);
           });
         });
+
+        // Fetch Available Qualities When the Player Loads a Video:
+
+        const qualities = await vimeoPlayerRef.current.getQualities();
+        console.log("Available qualities:", qualities);
+        const qualityList = qualities.map((q) => q.quality);
+        setAvailableQualities(qualityList); // ✅ This updates the Zustand store
+
         // Set up events after player is ready
         setupEventListeners();
 
@@ -330,6 +359,8 @@ const CustomVideoPlayer = () => {
       clearIntervals();
     };
   }, [currentVideoId, clearIntervals]);
+
+  // Add effect to reload video when quality changes
 
   // Update intervals when play state changes
   useEffect(() => {
@@ -354,40 +385,39 @@ const CustomVideoPlayer = () => {
     setupIntervals,
     clearIntervals,
   ]);
-  
-  useEffect(() => {
-  const handleSeekEvent = async (e: any) => {
-    const { time } = e.detail;
-    const seconds = timeToSeconds(time);
-    
-    if (vimeoPlayerRef.current && isPlayerReady) {
-      try {
-        userInteractedRef.current = true;
-        
-        await vimeoPlayerRef.current.setCurrentTime(seconds);
-        
-        setCurrentTime(seconds);
-        
-        const newCurrentVerse = getCurrentVerseFromTime(seconds);
-        setCurrentPlayingVerse(newCurrentVerse);
-        
-        if (isEnded) {
-          setIsEnded(false);
-        }
-        
-      } catch (error) {
-        console.error("Error seeking to verse:", error);
-      }
-    } else {
-      console.warn("Player not ready for seeking");
-    }
-  };
 
-  window.addEventListener("seek-to-verse", handleSeekEvent);
-  return () => {
-    window.removeEventListener("seek-to-verse", handleSeekEvent);
-  };
-}, [isPlayerReady, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
+  useEffect(() => {
+    const handleSeekEvent = async (e: any) => {
+      const { time } = e.detail;
+      const seconds = timeToSeconds(time);
+
+      if (vimeoPlayerRef.current && isPlayerReady) {
+        try {
+          userInteractedRef.current = true;
+
+          await vimeoPlayerRef.current.setCurrentTime(seconds);
+
+          setCurrentTime(seconds);
+
+          const newCurrentVerse = getCurrentVerseFromTime(seconds);
+          setCurrentPlayingVerse(newCurrentVerse);
+
+          if (isEnded) {
+            setIsEnded(false);
+          }
+        } catch (error) {
+          console.error("Error seeking to verse:", error);
+        }
+      } else {
+        console.warn("Player not ready for seeking");
+      }
+    };
+
+    window.addEventListener("seek-to-verse", handleSeekEvent);
+    return () => {
+      window.removeEventListener("seek-to-verse", handleSeekEvent);
+    };
+  }, [isPlayerReady, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -736,6 +766,45 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  // const handleQualityChange = async (quality: string) => {
+  //   setSelectedQuality(quality);
+
+  //   if (vimeoPlayerRef.current && isPlayerReady) {
+  //     try {
+  //       const qualityEnum = quality.toLowerCase() as VimeoVideoQuality;
+  //       await vimeoPlayerRef.current.setQuality(qualityEnum);
+  //     } catch (error) {
+  //       console.warn(`Quality ${quality} may not be available`, error);
+  //     }
+  //   }
+  // };
+  const handleQualityChange = async (quality: string) => {
+    setSelectedQuality(quality);
+
+    if (vimeoPlayerRef.current && isPlayerReady) {
+      try {
+        const qualities = await vimeoPlayerRef.current.getQualities();
+        const targetQuality = qualities.find(
+          (q) => q.quality === quality.toLowerCase()
+        );
+
+        if (!targetQuality) {
+          console.warn("Requested quality not available:", quality);
+          return;
+        }
+
+        await vimeoPlayerRef.current.setQuality(targetQuality); // ✅ pass full object
+
+        if (!isPlaying) {
+          await vimeoPlayerRef.current.play();
+          setIsPlaying(true);
+        }
+      } catch (error) {
+        console.warn(`Error setting quality to ${quality}:`, error);
+      }
+    }
+  };
+
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -930,7 +999,34 @@ const CustomVideoPlayer = () => {
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
+
                     <div className="flex items-center space-x-4">
+                      {/* Settings Button */}
+                      <SettingsButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowSettingsMenu(true);
+                        }}
+                        isDisabled={!isPlayerReady}
+                      />
+
+                      <SettingsDrawer
+                        isVisible={showSettingsMenu}
+                        onClose={() => setShowSettingsMenu(false)}
+                        selectedQuality={selectedQuality}
+                        onOpenQualityDrawer={() => {
+                          setShowSettingsMenu(false);
+                          setShowQualityDrawer(true);
+                        }}
+                      />
+                      <QualityDrawer
+                        isVisible={showQualityDrawer}
+                        selectedQuality={selectedQuality}
+                        availableQualities={availableQualities} // ✅ Add this prop
+                        onSelect={handleQualityChange}
+                        onClose={() => setShowQualityDrawer(false)}
+                      />
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
