@@ -19,7 +19,7 @@ const ButtonHide: React.FC<ButtonHideProps> = ({ isVisible, toggle }) => {
         {buttonImage && (
           <img src={buttonImage} alt="show/hide" className="w-9 h-9" />
         )}
-        <span>{buttonText}</span>
+        <span className="themed-text">{buttonText}</span>
       </button>
     </div>
   );

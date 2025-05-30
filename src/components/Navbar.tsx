@@ -1,15 +1,38 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { NavbarItem } from "../types/Navigation";
 import SettingGif from "../assets/images/settings.gif";
+import Settings from "./Settings";
 
 interface NavbarProps {
   items: NavbarItem[];
 }
 
 const Navbar: React.FC<NavbarProps> = ({ items }) => {
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        settingsRef.current &&
+        !settingsRef.current.contains(event.target as Node)
+      ) {
+        setIsSettingsOpen(false);
+      }
+    };
+
+    if (isSettingsOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSettingsOpen]);
+
   return (
     <nav className="w-full bg-[var(--ribbon-color)] min-h-12 flex justify-between items-center">
-      <div className="max-w-6xl w-full mx-auto flex flex-1 gap-8 justify-between">
+      <div className="relative max-w-6xl w-full mx-auto flex flex-1 gap-8 justify-between">
         <div className="max-w-5xl w-full ml-24 flex items-center justify-start gap-8 flex-grow flex-wrap">
           {items.map((item) => (
             <div
@@ -24,8 +47,18 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
           <img
             src={SettingGif}
             alt="Settings"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain cursor-pointer"
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
           />
+          
+          {isSettingsOpen && (
+            <div
+              ref={settingsRef}
+              className="absolute top-full right-0 mt-2 z-50"
+            >
+              <Settings onClose={() => setIsSettingsOpen(false)} />
+            </div>
+          )}
         </div>
       </div>
     </nav>
