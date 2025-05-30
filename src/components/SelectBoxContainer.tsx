@@ -159,14 +159,16 @@ const SelectBoxContainer = () => {
       </div>
 
       <div className="flex-1 max-w-[120px]">
-        <Dropdown
-          options={verseOptions}
-          value={selectedVerse}
-          formatOptionLabel={formattedOptionLabel}
-          onChange={handleVerseChange}
-          placeholder="Verse"
-          zIndex="z-30"
-        />
+        {verseOptions.length !== 0 && (
+          <Dropdown
+            options={verseOptions}
+            value={selectedVerse}
+            formatOptionLabel={formattedOptionLabel}
+            onChange={handleVerseChange}
+            placeholder="Verse"
+            zIndex="z-30"
+          />
+        )}
       </div>
     </div>
   );

@@ -94,6 +94,9 @@ const useBibleStore = create<BibleStore>((set, get) => ({
 
     // If it's a single verse (no dash), check for exact match
     if (!trimmedRange.includes("-")) {
+      if (verseRange === "intro" && verseNumber === 0) {
+        return true;
+      }
       return parseInt(trimmedRange) === verseNumber;
     }
 
@@ -134,7 +137,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     if (book) {
       const availableChapters = get().getAvailableChaptersForBook(book.value);
       if (availableChapters.length > 0) {
-        get().setChapter(availableChapters[0]);
+        get().setChapter(availableChapters[1]);
       } else {
         get().setChapter(null);
       }
@@ -250,7 +253,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       const bookChapters: { [bookCode: string]: number[] } = {};
 
       for (const row of videoData) {
-        if (row.BookCode && row.Chapter && parseInt(row.Chapter) > 0) {
+        if (row.BookCode && row.Chapter) {
           const bookCode = row.BookCode.toLowerCase();
           const chapter = parseInt(row.Chapter);
 
@@ -333,7 +336,13 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       }
     );
 
-    return allChapters;
+    const introChapter: ChapterOption = {
+      value: 0,
+      label: "intro",
+      isDisabled: !availableChapters.some((ch) => ch.value === 0),
+    };
+
+    return [introChapter, ...allChapters];
   },
 
   getAvailableVersesForBookAndChapter: (
@@ -342,6 +351,10 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   ): VerseOption[] => {
     const bookCodeUpper = bookCode.toUpperCase();
     const chapterIndex = chapter - 1;
+
+    if(chapterIndex < 0) {
+      return [];
+    }
 
     const maxVerses = parseInt(
       typedVersificationData.maxVerses[bookCodeUpper]?.[chapterIndex] || "0"
@@ -352,7 +365,11 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       label: `${i + 1}`,
     }));
 
-    return verses;
+    const introVerse: VerseOption = {
+      value: 0,
+      label: "intro",
+    };
+    return [introVerse, ...verses];
   },
 
   getVideoIdByBookAndChapter: async (
@@ -388,6 +405,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       return;
     }
 
+
     // Create unique request ID to track this specific request
     const requestId = `${selectedBook.value}-${
       selectedChapter.value
@@ -400,14 +418,13 @@ const useBibleStore = create<BibleStore>((set, get) => ({
 
     try {
       const bookName = selectedBook.value;
-      const chapter = parseInt(selectedChapter.label);
+      const chapter = selectedChapter.value;
 
       const videoId = await get().getVideoIdByBookAndChapter(bookName, chapter);
 
       // Check if this is still the current request (no newer request has started)
       const currentRequest = get().currentLoadingRequest;
       if (currentRequest !== requestId) {
-        console.log("Request outdated, ignoring result:", requestId);
         return; // This request is outdated, ignore the result
       }
 
@@ -437,6 +454,10 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     if (!selectedBook || !selectedChapter) {
       return null;
     }
+    if (selectedChapter.value === 0) {
+      set({ bibleVerseMarker: [], currentPlayingVerse: null });
+      return null;
+    }
     try {
       const csvFiles = import.meta.glob(
         "/src/assets/data/verse_markers/*.csv",
@@ -445,13 +466,11 @@ const useBibleStore = create<BibleStore>((set, get) => ({
           import: "default",
         }
       );
-      console.log("csv files", csvFiles);
-      const filePath = `/src/assets/data/verse_markers/${selectedBook.label}_${selectedChapter.label}.csv`;
-      console.log("file path", filePath);
+      const filePath = `/src/assets/data/verse_markers/${selectedBook.label}_${selectedChapter.value}.csv`;
       if (!csvFiles[filePath]) {
         set({ bibleVerseMarker: [], currentPlayingVerse: null });
         console.warn(
-          `Verse marker file not found: ${selectedBook.label}_${selectedChapter.label}.csv`
+          `Verse marker file not found: ${selectedBook.label}_${selectedChapter.value}.csv`
         );
         return [];
       }
@@ -463,17 +482,33 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       const formattedVerseMarkerData: VerseMarkerType[] = parsedData.data.map(
         (row: any, index) => {
           return {
-            id: index,
+            id: index + 1,
             verse: row.verse.toString().trim() || "",
             time: row.time.toString().trim() || "",
           };
         }
       );
-      set({
-        bibleVerseMarker: formattedVerseMarkerData,
-        currentPlayingVerse: null,
-      });
-      return formattedVerseMarkerData;
+      const isIntroAvailable = formattedVerseMarkerData.some((v) =>
+        ["00:00:00:00", "00:00:00", "0:00:00"].includes(v.time)
+      );
+      if (!isIntroAvailable) {
+        const introVerse = {
+          id: 0,
+          verse: "intro",
+          time: "00:00:00:00",
+        };
+        set({
+          bibleVerseMarker: [introVerse, ...formattedVerseMarkerData],
+          currentPlayingVerse: null,
+        });
+        return [introVerse, ...formattedVerseMarkerData];
+      } else {
+        set({
+          bibleVerseMarker: formattedVerseMarkerData,
+          currentPlayingVerse: null,
+        });
+        return formattedVerseMarkerData;
+      }
     } catch (err) {
       console.error(`Failed to load verse markers:`, err);
       set({ bibleVerseMarker: [], currentPlayingVerse: null });
@@ -482,12 +517,10 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
   seekToVerse: async (verse: string) => {
     const { bibleVerseMarker } = get();
-    console.log("verse", verse);
 
     const marker = bibleVerseMarker?.find(
       (v) => v.verse.toString().trim() === verse.toString().trim()
     );
-    console.log("marker", marker);
     const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
 
     // console.log("cleaned time", cleanedTime);

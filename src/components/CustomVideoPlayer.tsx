@@ -86,8 +86,8 @@ const CustomVideoPlayer = () => {
   const isDraggingRef = useRef<boolean>(false);
   const controlsTimeoutRef = useRef<number | null>(null);
 
-  // Track previous selectedVerse to detect changes
-  const prevSelectedVerseRef = useRef<number | null>(null);
+  const prevSelectedVerse = useRef<number | null>(null);
+  const prevSelectedChapter = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
 
   const [showControls, setShowControls] = useState(true);
@@ -202,7 +202,6 @@ const CustomVideoPlayer = () => {
         if (isEnded) {
           setIsEnded(false);
         }
-
       } catch (error) {
         console.error(`Error jumping to verse ${verseNumber}:`, error);
       }
@@ -212,37 +211,33 @@ const CustomVideoPlayer = () => {
 
   // Effect to handle selectedVerse changes
   useEffect(() => {
-    const handleVerseChange = async () => {
-      if (
-        !selectedVerse ||
-        !isPlayerReady ||
-        !bibleVerseMarker ||
-        bibleVerseMarker.length === 0
-      ) {
+  const handleVerseChange = async () => {
+    if (!selectedVerse || !isPlayerReady) {
+      return;
+    }
+
+    const currentChapter = selectedChapter?.value ?? null;
+    const currentVerse = selectedVerse.value;
+
+    if (prevSelectedChapter.current !== currentChapter) {
+      prevSelectedVerse.current = null;
+      prevSelectedChapter.current = currentChapter;
+
+      if (currentVerse === 0) {
+        prevSelectedVerse.current = 0;
         return;
       }
-      if (!prevSelectedVerseRef.current) {
-        prevSelectedVerseRef.current = selectedVerse.value;
-      }
-      // Check if selectedVerse changed
-      const hasVerseChanged =
-        prevSelectedVerseRef.current !== selectedVerse.value;
-      if (hasVerseChanged) {
-        // Reset user interaction flag when verse changes via dropdown
-        userInteractedRef.current = false;
-        await jumpToVerse(selectedVerse.value);
-        prevSelectedVerseRef.current = selectedVerse.value;
-      }
-    };
+    }
 
-    handleVerseChange();
-  }, [selectedVerse, isPlayerReady, bibleVerseMarker, jumpToVerse]);
+    if (prevSelectedVerse.current !== currentVerse) {
+      prevSelectedVerse.current = currentVerse;
+      userInteractedRef.current = false;
+      await jumpToVerse(currentVerse);
+    }
+  };
 
-  useEffect(() => {
-    // Reset previous verse tracking when book or chapter changes
-    prevSelectedVerseRef.current = null;
-    userInteractedRef.current = false;
-  }, [selectedBook, selectedChapter]);
+  handleVerseChange();
+}, [selectedVerse, selectedChapter, isPlayerReady, jumpToVerse]);
 
   // Initialize Vimeo player
   useEffect(() => {
@@ -299,7 +294,6 @@ const CustomVideoPlayer = () => {
         setCurrentPlayingVerse(null);
 
         // Reset tracking references
-        prevSelectedVerseRef.current = null;
         userInteractedRef.current = false;
 
         // Create new player

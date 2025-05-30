@@ -88,22 +88,32 @@ const SelectViewContainer = () => {
       return;
     }
 
-    const newChapter = {
+    const chapter = {
       value: chapterNum,
-      label: `${chapterNum}`,
+      label: chapterOption.label,
     };
 
-    setChapter(newChapter);
-    setActiveView("verse");
+    setChapter(chapter as ChapterOption);
+    if(chapter.value !== 0) {
+      setActiveView("verse");
+      return;
+    }
+    setIsDialogOpen(false);
   };
 
   const handleVerseSelect = (verseNum: number) => {
-    const verseOption = {
+    const verseOption = verseOptions.find((v) => v.value === verseNum);
+
+    if (!verseOption || verseOptions.length === 0) {
+      setIsDialogOpen(false);
+      return;
+    }
+    const verse = {
       value: verseNum,
-      label: `${verseNum}`,
+      label: verseOption.label,
     };
 
-    setVerse(verseOption);
+    setVerse(verse as VerseOption);
     setIsDialogOpen(false);
   };
 
@@ -143,7 +153,7 @@ const SelectViewContainer = () => {
                 : `Chapter ${chapter.value}`
             }
           >
-            {chapter.value}
+            {chapter.label}
           </div>
         ))}
       </>
@@ -166,7 +176,7 @@ const SelectViewContainer = () => {
              }`}
             onClick={() => handleVerseSelect(verse.value)}
           >
-            {verse.value}
+            {verse.label}
           </div>
         ))}
       </>
@@ -296,14 +306,16 @@ const SelectViewContainer = () => {
                     ? "bg-[var(--indigo-color)] text-white border-[var(--indigo-color)]"
                     : "bg-white text-[var(--indigo-color)]"
                 } ${
-                  !selectedBook || !selectedChapter
+                  !selectedBook || !selectedChapter || verseOptions.length === 0
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
                 onClick={() =>
                   selectedBook && selectedChapter && setActiveView("verse")
                 }
-                disabled={!selectedBook || !selectedChapter}
+                disabled={
+                  !selectedBook || !selectedChapter || verseOptions.length === 0
+                }
               >
                 Verse
               </button>
