@@ -3,11 +3,10 @@ import Papa from "papaparse";
 import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 
-const BibleVerseDisplay = () => {
+const BibleVerseDisplay = ({setIsIntroDataAvailable}: {setIsIntroDataAvailable: (value: boolean) => void}) => {
   const {
     selectedBook,
     selectedChapter,
-    selectedVerse,
     currentPlayingVerse,
     seekToVerse,
   } = useBibleStore();
@@ -70,6 +69,12 @@ const BibleVerseDisplay = () => {
         const filePath = `/src/assets/data/books/${bookCode}/${chapterNum}.csv`;
 
         if (!csvFiles[filePath]) {
+          if(chapterNum === 0) {
+            setVerseData([]);
+            setIsFetching(false);
+            setIsIntroDataAvailable(false);
+            return;
+          }
           throw new Error(
             `CSV file not found for ${bookCode} chapter ${chapterNum}`
           );
@@ -102,7 +107,7 @@ const BibleVerseDisplay = () => {
     };
 
     fetchData();
-  }, [selectedBook, selectedChapter, selectedVerse, csvFiles]);
+  }, [selectedBook, selectedChapter]);
 
   const renderLoadingOrError = () => {
     if (isFetching)

@@ -3,10 +3,16 @@ import ButtonHide from "@/components/ButtonHide";
 interface MiddleBarProps {
   showVerse: boolean;
   toggleButton: () => void;
+  isIntroDataAvailable: boolean
 }
 
-const Middlebar = ({ showVerse, toggleButton }: MiddleBarProps) => {
+const Middlebar = ({ showVerse, toggleButton, isIntroDataAvailable }: MiddleBarProps) => {
   const { selectedBook, selectedChapter } = useBibleStore();
+
+  if (selectedChapter?.value === 0 && !isIntroDataAvailable) {
+    return null;
+  }
+  
   return (
     <div className="w-full sm:w-3/4 mx-auto bg-gray-100 flex justify-start  py-2 px-4 mt-2 gap-2 items-center rounded-md">
       <ButtonHide isVisible={showVerse} toggle={toggleButton} />
