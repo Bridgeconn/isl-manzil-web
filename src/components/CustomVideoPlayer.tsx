@@ -1,147 +1,566 @@
-import { useState, useRef, useEffect } from "react";
-import { Play, Pause, RefreshCw } from "lucide-react";
-import { bibleVerses, VerseData } from "../assets/data/bibleVersesSample";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
+import { Options as VimeoPlayerOptions } from "@vimeo/player";
+import Next from "../assets/images/Next.gif";
+import Previous from "../assets/images/Previous.gif";
+import Player from "@vimeo/player";
+import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
+import { useChapterNavigation } from "../hooks/useChapterNavigation";
+import LoopingGif from "./LoopingGif";
+
+const FilledPlayIcon = ({ size = 24, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <polygon points="5,3 19,12 5,21" />
+  </svg>
+);
+
+const FilledPauseIcon = ({ size = 24, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <rect x="6" y="4" width="4" height="16" />
+    <rect x="14" y="4" width="4" height="16" />
+  </svg>
+);
 
 const CustomVideoPlayer = () => {
+  const { canGoPrevious, canGoNext, navigateToChapter } =
+    useChapterNavigation();
+  const {
+    currentVideoId,
+    setCurrentVideoId,
+    selectedBook,
+    selectedChapter,
+    selectedVerse,
+    loadVideoForCurrentSelection,
+    bibleVerseMarker,
+    findVerseMarkerForVerse,
+    getBibleVerseMarker,
+    getCurrentVerseFromTime,
+    setCurrentPlayingVerse,
+    currentPlayingVerse,
+    isVideoLoading,
+  } = useBibleStore();
+
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
-  const ytPlayerRef = useRef<YouTubePlayer | null>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const vimeoPlayerRef = useRef<Player | null>(null);
   const updateIntervalRef = useRef<number | null>(null);
+  const verseTrackingIntervalRef = useRef<number | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
+  const controlsTimeoutRef = useRef<number | null>(null);
+
+  // Track previous selectedVerse to detect changes
+  const prevSelectedVerseRef = useRef<number | null>(null);
+  const userInteractedRef = useRef<boolean>(false);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showYouTubeControls, setShowYouTubeControls] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
-  const [lastAction, setLastAction] = useState<
-    "play" | "pause" | "replay" | null
-  >(null);
+  const [lastAction, setLastAction] = useState<"play" | "pause" | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-  // Load YouTube API and create player
+  const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
+  const showComingSoon =
+    !isVideoLoading &&
+    currentVideoId === null &&
+    selectedBook &&
+    selectedChapter;
+
   useEffect(() => {
-    // Only load the API once
-    if (window.YT) {
-      initializeYouTubePlayer();
-      return;
+    if (selectedBook && selectedChapter) {
+      setCurrentVideoId(null);
+      loadVideoForCurrentSelection();
+      getBibleVerseMarker();
     }
+  }, [
+    selectedBook,
+    selectedChapter,
+    setCurrentVideoId,
+    loadVideoForCurrentSelection,
+    getBibleVerseMarker,
+  ]);
 
-    // Create script tag for YouTube API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    if (firstScriptTag && firstScriptTag.parentNode) {
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  // Helper function to clear all intervals
+  const clearIntervals = useCallback(() => {
+    if (updateIntervalRef.current !== null) {
+      clearInterval(updateIntervalRef.current);
+      updateIntervalRef.current = null;
     }
+    if (verseTrackingIntervalRef.current !== null) {
+      clearInterval(verseTrackingIntervalRef.current);
+      verseTrackingIntervalRef.current = null;
+    }
+  }, []);
 
-    // Define the callback function that YouTube API will call when ready
-    window.onYouTubeIframeAPIReady = initializeYouTubePlayer;
+  const setupIntervals = useCallback(() => {
+    clearIntervals();
+
+    // Set up interval for time updates
+    updateIntervalRef.current = window.setInterval(async () => {
+      if (vimeoPlayerRef.current && isPlayerReady) {
+        try {
+          const time = await vimeoPlayerRef.current.getCurrentTime();
+          setCurrentTime(time);
+        } catch (error) {
+          console.error("Error getting current time:", error);
+        }
+      }
+    }, 500);
+
+    // Set up interval for verse tracking
+    verseTrackingIntervalRef.current = window.setInterval(async () => {
+      if (
+        vimeoPlayerRef.current &&
+        isPlayerReady &&
+        isPlaying &&
+        !isEnded &&
+        bibleVerseMarker &&
+        bibleVerseMarker?.length > 0
+      ) {
+        try {
+          const time = await vimeoPlayerRef.current.getCurrentTime();
+          const currentVerse = getCurrentVerseFromTime(time);
+
+          if (currentVerse && currentVerse !== currentPlayingVerse) {
+            setCurrentPlayingVerse(currentVerse);
+          }
+        } catch (error) {
+          console.error("Error tracking verse:", error);
+        }
+      }
+    }, 500);
+  }, [
+    isPlayerReady,
+    isPlaying,
+    isEnded,
+    bibleVerseMarker,
+    getCurrentVerseFromTime,
+    currentPlayingVerse,
+    setCurrentPlayingVerse,
+    clearIntervals,
+  ]);
+
+  // Helper function to find verse marker by verse number
+  const findVerseMarker = useCallback(
+    (verseNumber: number): VerseMarkerType | null => {
+      if (!bibleVerseMarker || bibleVerseMarker.length === 0) return null;
+      return findVerseMarkerForVerse(verseNumber);
+    },
+    [bibleVerseMarker]
+  );
+
+  // Helper function to jump to a specific verse
+  const jumpToVerse = useCallback(
+    async (verseNumber: number) => {
+      if (!vimeoPlayerRef.current || !isPlayerReady) return;
+
+      const verseMarker = findVerseMarker(verseNumber);
+      if (!verseMarker) {
+        console.warn(`Verse ${verseNumber} marker not found`);
+        return;
+      }
+
+      try {
+        const seekTime = timeToSeconds(verseMarker.time);
+        await vimeoPlayerRef.current.setCurrentTime(seekTime);
+        setCurrentTime(seekTime);
+        setCurrentPlayingVerse(verseNumber.toString());
+
+        // If video was ended, update state
+        if (isEnded) {
+          setIsEnded(false);
+        }
+
+        console.log(
+          `Jumped to verse ${verseNumber} at time ${verseMarker.time}`
+        );
+      } catch (error) {
+        console.error(`Error jumping to verse ${verseNumber}:`, error);
+      }
+    },
+    [isPlayerReady, findVerseMarker, isEnded]
+  );
+
+  // Effect to handle selectedVerse changes
+  useEffect(() => {
+    const handleVerseChange = async () => {
+      if (
+        !selectedVerse ||
+        !isPlayerReady ||
+        !bibleVerseMarker ||
+        bibleVerseMarker.length === 0
+      ) {
+        return;
+      }
+      // Check if selectedVerse changed
+      const hasVerseChanged =
+        prevSelectedVerseRef.current !== selectedVerse.value;
+      if (hasVerseChanged) {
+        // Reset user interaction flag when verse changes via dropdown
+        userInteractedRef.current = false;
+        await jumpToVerse(selectedVerse.value);
+        prevSelectedVerseRef.current = selectedVerse.value;
+      }
+    };
+
+    handleVerseChange();
+  }, [selectedVerse, isPlayerReady, bibleVerseMarker, jumpToVerse]);
+
+  useEffect(() => {
+    // Reset previous verse tracking when book or chapter changes
+    prevSelectedVerseRef.current = null;
+    userInteractedRef.current = false;
+  }, [selectedBook, selectedChapter]);
+
+  // Initialize Vimeo player
+  useEffect(() => {
+    const loadVimeo = () => {
+      if (window.Vimeo) {
+        initializeVimeoPlayer();
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://player.vimeo.com/api/player.js";
+      script.async = true;
+      script.onload = initializeVimeoPlayer;
+      document.body.appendChild(script);
+    };
+
+    if (playerRef.current && isVideoAvailable) {
+      loadVimeo();
+    }
 
     return () => {
-      if (updateIntervalRef.current !== null) {
-        clearInterval(updateIntervalRef.current);
+      clearControlsTimeout();
+      clearIntervals();
+
+      if (vimeoPlayerRef.current) {
+        vimeoPlayerRef.current.destroy();
+        vimeoPlayerRef.current = null;
+        setIsPlayerReady(false);
       }
-      // Reset callback to an empty function instead of null to avoid type errors
-      window.onYouTubeIframeAPIReady = () => {};
+    };
+  }, [clearIntervals, isVideoAvailable]);
+
+  // Handle video ID changes
+  useEffect(() => {
+    if (!currentVideoId || !playerRef.current || isVideoLoading) return;
+
+    const loadNewVideo = async () => {
+      try {
+        // Clear previous player if it exists
+        if (vimeoPlayerRef.current) {
+          clearIntervals();
+
+          // Destroy old player
+          await vimeoPlayerRef.current.destroy();
+          vimeoPlayerRef.current = null;
+        }
+
+        // Reset states
+        setIsPlaying(false);
+        setCurrentTime(0);
+        setDuration(0);
+        setIsEnded(false);
+        setIsPlayerReady(false);
+        setCurrentPlayingVerse(null);
+
+        // Reset tracking references
+        prevSelectedVerseRef.current = null;
+        userInteractedRef.current = false;
+
+        // Create new player
+        const options: VimeoPlayerOptions = {
+          id: currentVideoId,
+          controls: false,
+          responsive: true,
+          title: false,
+          byline: false,
+          portrait: false,
+          autopause: false,
+        };
+        // Ensure the DOM element is ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Create player again
+        vimeoPlayerRef.current = new Player(playerRef.current!, options);
+
+        // Wait for player to be ready
+        await new Promise((resolve) => {
+          vimeoPlayerRef.current!.ready().then(() => {
+            console.log("Player ready!");
+            resolve(true);
+          });
+        });
+        // Set up events after player is ready
+        setupEventListeners();
+
+        // Get and set video duration
+        const newDuration = await vimeoPlayerRef.current.getDuration();
+        setDuration(newDuration);
+
+        setIsPlayerReady(true);
+      } catch (error) {
+        console.error("Error loading new video:", error);
+      }
+    };
+
+    loadNewVideo();
+
+    return () => {
+      clearControlsTimeout();
+      clearIntervals();
+    };
+  }, [currentVideoId, clearIntervals]);
+
+  // Update intervals when play state changes
+  useEffect(() => {
+    if (
+      isPlayerReady &&
+      isPlaying &&
+      !isEnded &&
+      bibleVerseMarker &&
+      bibleVerseMarker?.length > 0
+    ) {
+      setupIntervals();
+    }
+
+    return () => {
+      clearIntervals();
+    };
+  }, [
+    isPlaying,
+    isPlayerReady,
+    isEnded,
+    bibleVerseMarker,
+    setupIntervals,
+    clearIntervals,
+  ]);
+  
+  useEffect(() => {
+  const handleSeekEvent = async (e: any) => {
+    const { time } = e.detail;
+    const seconds = timeToSeconds(time);
+    
+    if (vimeoPlayerRef.current && isPlayerReady) {
+      try {
+        userInteractedRef.current = true;
+        
+        await vimeoPlayerRef.current.setCurrentTime(seconds);
+        
+        setCurrentTime(seconds);
+        
+        const newCurrentVerse = getCurrentVerseFromTime(seconds);
+        setCurrentPlayingVerse(newCurrentVerse);
+        
+        if (isEnded) {
+          setIsEnded(false);
+        }
+        
+      } catch (error) {
+        console.error("Error seeking to verse:", error);
+      }
+    } else {
+      console.warn("Player not ready for seeking");
+    }
+  };
+
+  window.addEventListener("seek-to-verse", handleSeekEvent);
+  return () => {
+    window.removeEventListener("seek-to-verse", handleSeekEvent);
+  };
+}, [isPlayerReady, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
+
+  // Handle fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement !== null);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
+  // Handle keyboard controls
   useEffect(() => {
-    if (!ytPlayerRef.current) return;
+    const handleKeyDown = async (event: KeyboardEvent) => {
+      if (!isPlayerReady || !isVideoAvailable) return;
 
-    try {
-      // Get all iframes in the player container
-      const iframe = playerContainerRef.current?.querySelector("iframe");
-      if (iframe) {
-        // When showing YouTube controls, we need to make sure our overlay doesn't block interaction
-        if (showYouTubeControls) {
-          iframe.style.zIndex = "30"; // Put iframe above custom controls
-        } else {
-          iframe.style.zIndex = "10"; // Put iframe below custom controls
+      // Mark user interaction for seek operations
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        userInteractedRef.current = true;
+      }
+
+      switch (event.key) {
+        case " ":
+          togglePlay();
+          event.preventDefault();
+          break;
+        case "f":
+          toggleFullscreen();
+          break;
+        case "ArrowLeft": {
+          const currentTime =
+            (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
+          const newTime = Math.max(0, currentTime - 10);
+          await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          setCurrentTime(newTime);
+          if (isEnded) {
+            setIsEnded(false);
+          }
+          const newCurrentVerse = getCurrentVerseFromTime(newTime);
+          setCurrentPlayingVerse(newCurrentVerse);
+          break;
         }
+        case "ArrowRight": {
+          const currentTime =
+            (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
+          const newTime = Math.min(duration, currentTime + 10);
+          await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          setCurrentTime(newTime);
+          if (isEnded) {
+            setIsEnded(false);
+          }
+          const newCurrentVerse = getCurrentVerseFromTime(newTime);
+          setCurrentPlayingVerse(newCurrentVerse);
+          break;
+        }
+        default:
+          break;
       }
-    } catch (error) {
-      console.error("Error adjusting iframe z-index:", error);
-    }
-  }, [showYouTubeControls]);
+    };
 
-  const videoId = "pcaZRtDZtaU";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    isPlaying,
+    isFullscreen,
+    isPlayerReady,
+    duration,
+    isEnded,
+    getCurrentVerseFromTime,
+    setCurrentPlayingVerse,
+    isVideoAvailable,
+  ]);
 
-  // Intiialize Youtube player with videoId and player options
-  const initializeYouTubePlayer = () => {
-    if (!playerRef.current || ytPlayerRef.current) return;
-
-    // Make sure YT API is loaded
-    if (!window.YT || !window.YT.Player) {
-      console.error("YouTube API not loaded");
-      return;
-    }
-
-    ytPlayerRef.current = new window.YT.Player(playerRef.current, {
-      videoId: videoId,
-      playerVars: {
-        controls: 0, // Hide YouTube controls - important!
-        modestbranding: 1, // Minimal YouTube branding
-        rel: 1, // Show related videos
-        showinfo: 1, // Show video info
-        fs: 0, // Hide fullscreen button
-        cc_load_policy: 1, // Show closed captions by default
-        iv_load_policy: 1, // Show annotations
-        autohide: 0, // Show controls when paused
-        playsinline: 1, // Play inline on mobile
-        origin: window.location.origin,
-        widget_referrer: window.location.href,
-        enablejsapi: 1, // Enable JS API
-        disablekb: 0, // Enable keyboard controls
-      },
-      events: {
-        onReady: onPlayerReady,
-        onStateChange: onPlayerStateChange,
-        onError: onPlayerError,
-      },
-    });
-  };
-
-  // Handle player ready event
-  const onPlayerReady = (event: { target: YouTubePlayer }) => {
-    setDuration(event.target.getDuration());
-
-    event.target.mute();
-
-    // Start interval to update current time
-    updateIntervalRef.current = window.setInterval(() => {
-      if (ytPlayerRef.current) {
-        setCurrentTime(ytPlayerRef.current.getCurrentTime());
+  // Setup global mouse events for seek bar dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingRef.current && seekBarRef.current && isVideoAvailable) {
+        handleSeekPosition(e.clientX);
       }
-    }, 500);
-  };
+    };
 
-  // Handle youtube player state changes along with custom controls state changes
-  const onPlayerStateChange = (event: { data: number }) => {
-    // YT.PlayerState values: UNSTARTED (-1), ENDED (0), PLAYING (1), PAUSED (2)
-    if (event.data === 0) {
-      // ENDED
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [duration, isVideoAvailable]);
+
+  // Set up event listeners for Vimeo player
+  const setupEventListeners = () => {
+    if (!vimeoPlayerRef.current) return;
+
+    vimeoPlayerRef.current.off("play");
+    vimeoPlayerRef.current.off("pause");
+    vimeoPlayerRef.current.off("ended");
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+      setIsEnded(false);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+      setShowControls(true);
+      clearControlsTimeout();
+    };
+
+    const handleEnded = () => {
+      console.log("Video ended event triggered");
       setIsPlaying(false);
       setShowControls(true);
       setIsEnded(true);
-      setShowYouTubeControls(false);
-    } else if (event.data === 1) {
-      // PLAYING
-      setIsPlaying(true);
-      setIsEnded(false);
-      setShowYouTubeControls(false);
-    } else if (event.data === 2) {
-      // PAUSED
-      setIsPlaying(false);
-      setShowControls(true);
-      setShowYouTubeControls(true);
+      setCurrentPlayingVerse(null);
+      clearControlsTimeout();
+      clearIntervals();
+    };
+    // Add listeners
+    vimeoPlayerRef.current.on("play", handlePlay);
+    vimeoPlayerRef.current.on("pause", handlePause);
+    vimeoPlayerRef.current.on("ended", handleEnded);
+  };
+  // Initialize Vimeo player
+  const initializeVimeoPlayer = () => {
+    if (
+      !playerRef.current ||
+      vimeoPlayerRef.current ||
+      !window.Vimeo ||
+      !currentVideoId
+    )
+      return;
+    try {
+      const options: VimeoPlayerOptions = {
+        id: currentVideoId,
+        controls: false,
+        responsive: true,
+        title: false,
+        byline: false,
+        portrait: false,
+        autopause: false,
+      };
+
+      vimeoPlayerRef.current = new Player(playerRef.current, options);
+
+      // Get video metadata
+      vimeoPlayerRef.current.ready().then(() => {
+        vimeoPlayerRef.current?.getDuration().then(setDuration);
+        setupEventListeners();
+        setIsPlayerReady(true);
+      });
+    } catch (error) {
+      console.error("Error initializing Vimeo player:", error);
     }
   };
 
-  const onPlayerError = (event: { data: number }) => {
-    console.error("YouTube Player Error:", event.data);
+  const clearControlsTimeout = () => {
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+      controlsTimeoutRef.current = null;
+    }
+  };
+
+  const setControlsHideTimeout = () => {
+    clearControlsTimeout();
+    controlsTimeoutRef.current = window.setTimeout(() => {
+      setShowControls(false);
+    }, 2000);
   };
 
   const timeToSeconds = (timeStr: string) => {
@@ -149,8 +568,8 @@ const CustomVideoPlayer = () => {
 
     const parts = timeStr.split(":");
 
-    // Handle hours:minutes:seconds format (hh:mm:ss)
-    if (parts.length === 3) {
+    // Handle hours:minutes:seconds format (hh:mm:ss or hh:mm:ss:ff)
+    if (parts.length === 3 || parts.length == 4) {
       return (
         parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2])
       );
@@ -176,7 +595,6 @@ const CustomVideoPlayer = () => {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
 
-    // Include hours only if needed
     if (hours > 0) {
       return `${padTime(hours)}:${padTime(mins)}:${padTime(secs)}`;
     } else {
@@ -186,17 +604,15 @@ const CustomVideoPlayer = () => {
 
   // Toggle play/pause
   const togglePlay = () => {
-    if (!ytPlayerRef.current) return;
+    if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
     const newIsPlaying = !isPlaying;
     if (newIsPlaying) {
-      ytPlayerRef.current.playVideo();
-      setShowYouTubeControls(false);
+      vimeoPlayerRef.current.play();
       setIsEnded(false);
       setLastAction("play");
     } else {
-      ytPlayerRef.current.pauseVideo();
-      setShowYouTubeControls(true);
+      vimeoPlayerRef.current.pause();
       setLastAction("pause");
     }
 
@@ -210,34 +626,41 @@ const CustomVideoPlayer = () => {
   // Replay the video
   const replayVideo = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!ytPlayerRef.current) return;
+    if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
-    ytPlayerRef.current.seekTo(0, true);
-    ytPlayerRef.current.playVideo();
+    // Mark as user interaction
+    userInteractedRef.current = true;
+
+    vimeoPlayerRef.current.setCurrentTime(0);
+    vimeoPlayerRef.current.play();
 
     setCurrentTime(0);
     setIsPlaying(true);
     setIsEnded(false);
-    setShowYouTubeControls(false);
-    setLastAction("replay");
-
-    // Show replay bezel effect
+    setCurrentPlayingVerse(null);
     setShowPlayBezel(true);
     setTimeout(() => setShowPlayBezel(false), 800);
   };
 
   // Handle seeking in the video
-  const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!ytPlayerRef.current || !seekBarRef.current) return;
-    event.stopPropagation();
+  const handleSeekPosition = (clientX: number) => {
+    if (!vimeoPlayerRef.current || !seekBarRef.current || !isPlayerReady)
+      return;
+
+    // Mark as user interaction
+    userInteractedRef.current = true;
 
     const rect = seekBarRef.current.getBoundingClientRect();
-    const offsetX = event.clientX - rect.left;
-    const seekPos = offsetX / rect.width;
+    const offsetX = clientX - rect.left;
+    const seekPos = Math.max(0, Math.min(1, offsetX / rect.width));
     const seekTime = seekPos * duration;
 
-    ytPlayerRef.current.seekTo(seekTime, true);
+    vimeoPlayerRef.current.setCurrentTime(seekTime);
     setCurrentTime(seekTime);
+
+    // Update current verse based on seek position
+    const newCurrentVerse = getCurrentVerseFromTime(seekTime);
+    setCurrentPlayingVerse(newCurrentVerse);
 
     // If video was ended, update state
     if (isEnded) {
@@ -245,22 +668,71 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  // Handle click on seek bar
+  const handleSeekClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    if (isVideoAvailable) {
+      handleSeekPosition(event.clientX);
+    }
+  };
+
+  // For dragging
+  const handleSeekMouseDown = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (isVideoAvailable) {
+      isDraggingRef.current = true;
+    }
+  };
+
   // Handle verse marker click
   const handleVerseMarkerClick = (
-    verse: VerseData,
+    verse: VerseMarkerType,
     event: React.MouseEvent
   ) => {
     event.stopPropagation();
-    if (!ytPlayerRef.current) return;
+    if (!vimeoPlayerRef.current || !isPlayerReady || !isVideoAvailable) return;
+
+    // Mark as user interaction
+    userInteractedRef.current = true;
 
     const seekTime = timeToSeconds(verse.time);
 
-    ytPlayerRef.current.seekTo(seekTime, true);
+    vimeoPlayerRef.current.setCurrentTime(seekTime);
     setCurrentTime(seekTime);
+
+    // Update current verse based on clicked marker
+    setCurrentPlayingVerse(verse.verse);
 
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
+    }
+  };
+
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    if (!playerContainerRef.current) return;
+    if (isFullscreen) {
+      if (document?.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    } else {
+      if (playerContainerRef.current.requestFullscreen) {
+        playerContainerRef.current.requestFullscreen();
+      }
+    }
+    setIsFullscreen(!isFullscreen);
+  };
+
+  // Handle controls area mouse events
+  const handleControlsMouseEnter = () => {
+    setShowControls(true);
+    clearControlsTimeout();
+  };
+
+  const handleControlsMouseLeave = () => {
+    if (!isEnded && !isDraggingRef.current && isVideoAvailable) {
+      setControlsHideTimeout();
     }
   };
 
@@ -268,143 +740,256 @@ const CustomVideoPlayer = () => {
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div
-      ref={playerContainerRef}
-      className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
-      style={{ aspectRatio: "16/9" }}
-      onMouseMove={() => !showYouTubeControls && setShowControls(true)}
-      onMouseLeave={() =>
-        isPlaying &&
-        !showYouTubeControls &&
-        !isEnded &&
-        setTimeout(() => setShowControls(false), 2000)
-      }
-      onClick={togglePlay}
-    >
-      {/* YouTube Player Container */}
-      <div className="w-full h-full">
-        {/* This div will be replaced by the YouTube iframe */}
-        <div ref={playerRef} className="w-full h-full" />
-      </div>
-
-      {/* Play/Pause/Replay Bezel Effect */}
-      {showPlayBezel && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-          <div className="bg-black bg-opacity-50 rounded-full p-6">
-            {lastAction === "replay" || isEnded ? (
-              <RefreshCw size={48} className="text-white" />
-            ) : lastAction === "pause" ? (
-              <Pause size={48} className="text-white" />
-            ) : (
-              <Play size={48} className="text-white" />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Video Ended Overlay */}
-      {isEnded && !showYouTubeControls && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+    <div className="w-full max-w-6xl mx-auto px-2">
+      <div className="flex items-center justify-center w-full">
+        {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
+        {/* <button
+            onClick={() => navigateToChapter("previous")}
+            disabled={!canGoPrevious}
+            className={`p-1 rounded-full transition-all duration-200 ${
+              canGoPrevious
+                ? "bg-gray-200 bg-opacity-50 hover:bg-opacity-70 hover:scale-110"
+                : "cursor-not-allowed opacity-50"
+            }`}
+            title="Previous Chapter"
+          >
+            <ChevronLeft size={24} />
+          </button> */}
+        {canGoPrevious ? (
           <button
-            onClick={replayVideo}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"
+            onClick={() => navigateToChapter("previous")}
+            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            title="Previous Chapter"
           >
-            <RefreshCw size={24} />
-            <span>Replay</span>
+            <LoopingGif
+              src={Previous}
+              alt="Previous chapter"
+              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+              duration={2000}
+            />
           </button>
-        </div>
-      )}
+        ) : (
+          <button className="p-1">
+            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
+          </button>
+        )}
 
-      {/* Controls Overlay - Always show our custom controls */}
-      <div
-        className={`absolute inset-0 transition-opacity duration-300 ${
-          (showControls && !showYouTubeControls) || isEnded
-            ? "opacity-100"
-            : "opacity-0"
-        } ${
-          showYouTubeControls ? "pointer-events-none" : "pointer-events-auto"
-        } z-20`}
-        style={{ display: showYouTubeControls ? "none" : "block" }}
-      >
-        {/* Bottom Controls */}
+        {/* </div> */}
+
         <div
-          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4"
-          onClick={(e) => e.stopPropagation()}
+          ref={playerContainerRef}
+          className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
+          style={{ aspectRatio: "16/9" }}
+          onClick={isVideoAvailable ? togglePlay : undefined}
         >
-          {/* Seekbar with sections */}
-          <div
-            ref={seekBarRef}
-            className="relative h-3 bg-gray-600 rounded-full mb-4 cursor-pointer"
-            onClick={handleSeek}
-          >
-            {/* Progress Bar */}
-            <div
-              className="absolute top-0 left-0 h-3 bg-blue-500 rounded-full"
-              style={{ width: `${progressPercent}%` }}
-            ></div>
-
-            {bibleVerses.map((verse: VerseData) => {
-              const verseTimeInSeconds = timeToSeconds(verse.time);
-              const versePosition = (verseTimeInSeconds / duration) * 100;
-              const isPassed = currentTime >= verseTimeInSeconds;
-              return (
-                <div
-                  key={verse.id}
-                  className={`absolute top-0 w-3 h-3 ${
-                    isPassed ? "bg-yellow-400" : "bg-white"
-                  } border border-white rounded-full cursor-pointer z-10 transition-colors duration-200`}
-                  style={{
-                    left: `${versePosition}%`,
-                    transform: "translateX(-50%)",
-                  }}
-                  onClick={(e) => handleVerseMarkerClick(verse, e)}
-                  title={`${verse.title} (${verse.time})`}
-                ></div>
-              );
-            })}
-
-            {/* Current Time Indicator */}
-            <div
-              className="absolute top-0 w-3 h-3 bg-white rounded-full cursor-grab z-20"
-              style={{
-                left: `${progressPercent}%`,
-                transform: "translateX(-50%)",
-              }}
-            ></div>
-          </div>
-
-          {/* Control Buttons */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {/* Play/Pause/Replay Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (isEnded) {
-                    replayVideo(e);
-                  } else {
-                    togglePlay();
-                  }
-                }}
-                className="text-white hover:text-blue-400"
-                aria-label={isEnded ? "Replay" : isPlaying ? "Pause" : "Play"}
-              >
-                {isEnded ? (
-                  <RefreshCw size={24} />
-                ) : isPlaying ? (
-                  <Pause size={24} />
-                ) : (
-                  <Play size={24} />
-                )}
-              </button>
-
-              {/* Timer */}
-              <div className="text-white text-sm">
-                {formatTime(currentTime)} / {formatTime(duration)}
+          {(isVideoLoading || !isPlayerReady) && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
+              <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
+              <div className="text-white text-lg">Loading video...</div>
+            </div>
+          )}
+          {showComingSoon && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 z-10">
+              <Clock className="w-16 h-16 text-blue-400 mb-2 sm:mb-6" />
+              <div className="text-white text-xl sm:text-2xl font-bold mb-2">
+                Video Coming Soon
+              </div>
+              <div className="text-gray-300 sm:text-lg text-center px-4">
+                {selectedBook?.label} Chapter {selectedChapter?.label}
+              </div>
+              <div className="text-gray-400 text-sm mt-2 sm:mt-4 text-center px-4">
+                This video is currently being prepared and will be available
+                soon.
               </div>
             </div>
-          </div>
+          )}
+          {isVideoAvailable && (
+            <>
+              {/* Vimeo Player Container */}
+              <div className="w-full h-full">
+                <div ref={playerRef} className="w-full h-full" />
+              </div>
+
+              {/* Play/Pause/Replay Bezel Effect */}
+              {showPlayBezel && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                  <div className="bg-black bg-opacity-50 rounded-full p-6">
+                    {isEnded && !(currentTime < duration) ? (
+                      <RefreshCw size={48} className="text-white" />
+                    ) : lastAction === "pause" ? (
+                      <FilledPauseIcon size={48} className="text-white" />
+                    ) : (
+                      <FilledPlayIcon size={48} className="text-white pl-1" />
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* Video Ended Overlay */}
+              {isEnded && !(currentTime < duration) && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+                  <button
+                    onClick={replayVideo}
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"
+                  >
+                    <RefreshCw size={24} />
+                    <span>Replay</span>
+                  </button>
+                </div>
+              )}
+              {/* Controls Overlay */}
+              <div
+                className={`absolute inset-0 transition-opacity duration-300 ${
+                  showControls || isEnded ? "opacity-100" : "opacity-0"
+                } z-20`}
+              >
+                {/* Bottom Controls */}
+                <div
+                  ref={controlsRef}
+                  className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 pointer-events-auto"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseEnter={handleControlsMouseEnter}
+                  onMouseLeave={handleControlsMouseLeave}
+                >
+                  {/* Seekbar with sections */}
+                  <div
+                    ref={seekBarRef}
+                    className="relative h-1 bg-gray-600 rounded-full mb-4 cursor-pointer"
+                    onClick={handleSeekClick}
+                  >
+                    {/* Progress Bar */}
+                    <div
+                      className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full"
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
+                    {/* Verse markers */}
+                    {bibleVerseMarker &&
+                      bibleVerseMarker.length > 0 &&
+                      bibleVerseMarker.map((verse: VerseMarkerType) => {
+                        const verseTimeInSeconds = timeToSeconds(verse.time);
+                        const versePosition =
+                          (verseTimeInSeconds / duration) * 100;
+                        const isPassed = currentTime >= verseTimeInSeconds;
+                        return (
+                          <div
+                            key={verse.id}
+                            className={`absolute top-0 w-0.5 h-1 ${
+                              isPassed ? "bg-yellow-400" : "bg-black"
+                            }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
+                            style={{
+                              left: `${versePosition}%`,
+                              transform: "translateX(-50%)",
+                            }}
+                            onClick={(e) => handleVerseMarkerClick(verse, e)}
+                            title={`Verse:${verse.verse} (${verse.time})`}
+                          ></div>
+                        );
+                      })}
+                    {/* Current Time Indicator */}
+                    <div
+                      className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
+                      style={{
+                        left: `${progressPercent}%`,
+                        transform: "translateX(-50%)",
+                      }}
+                      onMouseDown={handleSeekMouseDown}
+                    ></div>
+                  </div>
+                  {/* Control Buttons */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      {/* Play/Pause/Replay Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isEnded && !(currentTime < duration)) {
+                            replayVideo(e);
+                          } else {
+                            togglePlay();
+                          }
+                        }}
+                        className="text-white hover:text-blue-400"
+                        aria-label={
+                          isEnded && !(currentTime < duration)
+                            ? "Replay"
+                            : isPlaying
+                            ? "Pause"
+                            : "Play"
+                        }
+                        disabled={!isPlayerReady}
+                      >
+                        {isEnded && !(currentTime < duration) ? (
+                          <RefreshCw size={24} />
+                        ) : isPlaying ? (
+                          <FilledPauseIcon size={24} />
+                        ) : (
+                          <FilledPlayIcon size={24} />
+                        )}
+                      </button>
+                      {/* Timer */}
+                      <div className="text-white text-sm">
+                        {formatTime(currentTime)} / {formatTime(duration)}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFullscreen();
+                        }}
+                        className="text-white hover:text-blue-400"
+                        aria-label={
+                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                        }
+                        title={
+                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                        }
+                        disabled={!isPlayerReady}
+                      >
+                        {isFullscreen ? (
+                          <Minimize size={24} />
+                        ) : (
+                          <Maximize size={24} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
+        {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
+        {/* <button
+            onClick={() => navigateToChapter("next")}
+            disabled={!canGoNext}
+            className={`p-1 rounded-full transition-all duration-200 ${
+              canGoNext
+                ? "bg-gray-200 bg-opacity-50 hover:bg-opacity-70 hover:scale-110"
+                : "cursor-not-allowed opacity-50"
+            }`}
+            title="Next Chapter"
+          >
+            <ChevronRight size={24} />
+          </button> */}
+        {canGoNext ? (
+          <button
+            onClick={() => navigateToChapter("next")}
+            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            title="Next Chapter"
+          >
+            <LoopingGif
+              src={Next}
+              alt="Next chapter"
+              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+              duration={2000}
+            />
+          </button>
+        ) : (
+          <button className="p-1">
+            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
+          </button>
+        )}
+        {/* </div> */}
       </div>
     </div>
   );

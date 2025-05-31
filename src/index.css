@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -75,6 +76,7 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
   --ribbon-color: #CD9F46;
+  --indigo-color: #5D6697;
 }
 
 .dark {
@@ -117,5 +119,11 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .font-roboto {
+    font-family: 'Roboto', sans-serif;
   }
 }
