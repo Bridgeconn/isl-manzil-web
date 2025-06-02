@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
+import SettingsButton from "../components/SettingsButton";
+
+import SettingsDrawer from "../components/SettingsDrawer";
+import QualityDrawer from "../components/QualityDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Next from "../assets/images/Next.gif";
 import Previous from "../assets/images/Previous.gif";
@@ -7,6 +11,9 @@ import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
 import LoopingGif from "./LoopingGif";
+
+
+
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -34,6 +41,7 @@ const FilledPauseIcon = ({ size = 24, className = "" }) => (
 );
 
 const CustomVideoPlayer = () => {
+ 
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
   const {
@@ -62,9 +70,14 @@ const CustomVideoPlayer = () => {
   const isDraggingRef = useRef<boolean>(false);
   const controlsTimeoutRef = useRef<number | null>(null);
 
+  const pendingQualityChangeTimeRef = useRef<number | null>(null);
+  const wasPlayingRef = useRef<boolean>(false);
+
+
   // Track previous selectedVerse to detect changes
   const prevSelectedVerseRef = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
+
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
@@ -75,6 +88,13 @@ const CustomVideoPlayer = () => {
   const [lastAction, setLastAction] = useState<"play" | "pause" | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [showQualityDrawer, setShowQualityDrawer] = useState(false);
+  const [selectedQuality, setSelectedQuality] = useState("Auto");
+  const [availableQualities, setAvailableQualities] = useState<
+  { id: string; label: string }[]
+>([]);
+
 
   const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
   const showComingSoon =
@@ -82,6 +102,16 @@ const CustomVideoPlayer = () => {
     currentVideoId === null &&
     selectedBook &&
     selectedChapter;
+
+ 
+
+
+  const handleChangeSettings = () => {
+    console.log("go to handlechangesettings")
+   
+    setShowQualityDrawer(false)
+    setShowSettingsMenu(true)
+};
 
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -287,8 +317,11 @@ const CustomVideoPlayer = () => {
         prevSelectedVerseRef.current = null;
         userInteractedRef.current = false;
 
+        
+
         // Create new player
         const options: VimeoPlayerOptions = {
+         
           id: currentVideoId,
           controls: false,
           responsive: true,
@@ -331,6 +364,64 @@ const CustomVideoPlayer = () => {
     };
   }, [currentVideoId, clearIntervals]);
 
+  
+  useEffect(() => {
+    const fetchAndApplyVideoQuality = async () => {
+      if (vimeoPlayerRef.current && isPlayerReady && selectedQuality) {
+        try {
+          const player = vimeoPlayerRef.current;
+          await player.ready();
+
+        
+  
+          const qualities = await player.getQualities(); // returns array of { id: string, label: string }
+          console.log("player qualities",qualities)
+          const qualityIds = qualities.map((q) => q.id);
+          console.log("player id's",qualityIds) // e.g. ["auto", "2160p", "720p", ...]
+  
+          setAvailableQualities(qualities); //  Update available qualities for UI
+  
+          // Apply selected quality only if available
+          const selected = selectedQuality.toLowerCase();
+          if (qualityIds.includes(selected)) {
+            await player.setQuality(selected as import("@vimeo/player").VimeoVideoQuality);
+            console.log(`Video quality set to: ${selected}`);
+          } else {
+            console.warn("Selected quality not available:", selected, "Available:", qualityIds);
+          }
+
+         //  Use the time stored at click time
+        const timeToSeek = pendingQualityChangeTimeRef.current ?? 0;
+        await player.setCurrentTime(timeToSeek);
+        setCurrentTime(timeToSeek);
+
+        // if (isPlaying) {
+        //   await player.play();
+        //   setIsPlaying(true);
+        // }
+         //  Resume if it was playing
+         if (wasPlayingRef.current) {
+          await player.play();
+          setIsPlaying(true);
+        }
+
+
+        // Clear it after applying
+        pendingQualityChangeTimeRef.current = null;
+        wasPlayingRef.current = false;
+  
+        } catch (err) {
+          console.error("Error applying video quality:", err);
+        }
+      }
+    };
+  
+    fetchAndApplyVideoQuality();
+  }, [selectedQuality, isPlayerReady]);
+  
+  
+  
+
   // Update intervals when play state changes
   useEffect(() => {
     if (
@@ -354,40 +445,39 @@ const CustomVideoPlayer = () => {
     setupIntervals,
     clearIntervals,
   ]);
-  
-  useEffect(() => {
-  const handleSeekEvent = async (e: any) => {
-    const { time } = e.detail;
-    const seconds = timeToSeconds(time);
-    
-    if (vimeoPlayerRef.current && isPlayerReady) {
-      try {
-        userInteractedRef.current = true;
-        
-        await vimeoPlayerRef.current.setCurrentTime(seconds);
-        
-        setCurrentTime(seconds);
-        
-        const newCurrentVerse = getCurrentVerseFromTime(seconds);
-        setCurrentPlayingVerse(newCurrentVerse);
-        
-        if (isEnded) {
-          setIsEnded(false);
-        }
-        
-      } catch (error) {
-        console.error("Error seeking to verse:", error);
-      }
-    } else {
-      console.warn("Player not ready for seeking");
-    }
-  };
 
-  window.addEventListener("seek-to-verse", handleSeekEvent);
-  return () => {
-    window.removeEventListener("seek-to-verse", handleSeekEvent);
-  };
-}, [isPlayerReady, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
+  useEffect(() => {
+    const handleSeekEvent = async (e: any) => {
+      const { time } = e.detail;
+      const seconds = timeToSeconds(time);
+
+      if (vimeoPlayerRef.current && isPlayerReady) {
+        try {
+          userInteractedRef.current = true;
+
+          await vimeoPlayerRef.current.setCurrentTime(seconds);
+
+          setCurrentTime(seconds);
+
+          const newCurrentVerse = getCurrentVerseFromTime(seconds);
+          setCurrentPlayingVerse(newCurrentVerse);
+
+          if (isEnded) {
+            setIsEnded(false);
+          }
+        } catch (error) {
+          console.error("Error seeking to verse:", error);
+        }
+      } else {
+        console.warn("Player not ready for seeking");
+      }
+    };
+
+    window.addEventListener("seek-to-verse", handleSeekEvent);
+    return () => {
+      window.removeEventListener("seek-to-verse", handleSeekEvent);
+    };
+  }, [isPlayerReady, isEnded, getCurrentVerseFromTime, setCurrentPlayingVerse]);
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -930,7 +1020,47 @@ const CustomVideoPlayer = () => {
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
+
                     <div className="flex items-center space-x-4">
+                      {/* Settings Button */}
+                      <SettingsButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowSettingsMenu(true);
+                        }}
+                        isDisabled={!isPlayerReady}
+                      />
+
+                      <SettingsDrawer
+                        isVisible={showSettingsMenu}
+                        onClose={() => setShowSettingsMenu(false)}
+                        selectedQuality={selectedQuality}
+                        onOpenQualityDrawer={() => {
+                          setShowSettingsMenu(false);
+                          setShowQualityDrawer(true);
+                        }}
+                      />
+
+                      <QualityDrawer
+                        isVisible={showQualityDrawer}
+                        selectedQuality={selectedQuality}
+                        availableQualities={availableQualities}
+                        onSelect={async (quality) => {
+                          if (vimeoPlayerRef.current) {
+                            const currentTime = await vimeoPlayerRef.current.getCurrentTime();
+                            pendingQualityChangeTimeRef.current = currentTime;
+                            console.log("Saved time before quality switch:", currentTime);
+                            // 2. Save if it was playing
+                            const isActuallyPlaying = await vimeoPlayerRef.current.getPaused().then(p => !p);
+                            wasPlayingRef.current = isActuallyPlaying;
+                          }
+                          setSelectedQuality(quality);
+                        }}
+                        onClose={() => setShowQualityDrawer(false)}
+                        
+                        onBackToSettings={handleChangeSettings}
+                      />
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
