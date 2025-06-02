@@ -15,6 +15,8 @@ import LoopingGif from "./LoopingGif";
 
 
 
+
+
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
     width={size}
@@ -1026,7 +1028,7 @@ const CustomVideoPlayer = () => {
                       <SettingsButton
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowSettingsMenu(true);
+                             setShowSettingsMenu((prev) => !prev); 
                         }}
                         isDisabled={!isPlayerReady}
                       />
