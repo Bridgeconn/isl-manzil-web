@@ -21,10 +21,10 @@ const QualityDrawer: React.FC<QualityDrawerProps> = ({
   onClose,
   onBackToSettings
 }) => {
-  console.log("back",onBackToSettings)
-
+ 
   if (!isVisible) return null;
 
+ 
   return (
     <div className="absolute space-y-2 max-h-70 overflow-y-auto pr-1 custom-scrol bottom-16 h-65 right-4 w-64 p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50">
   

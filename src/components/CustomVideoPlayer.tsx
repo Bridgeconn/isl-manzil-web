@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
 import SettingsButton from "../components/SettingsButton";
 
+
 import SettingsDrawer from "../components/SettingsDrawer";
 import QualityDrawer from "../components/QualityDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
@@ -43,7 +44,7 @@ const FilledPauseIcon = ({ size = 24, className = "" }) => (
 );
 
 const CustomVideoPlayer = () => {
- 
+
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
   const {
@@ -76,6 +77,15 @@ const CustomVideoPlayer = () => {
   const wasPlayingRef = useRef<boolean>(false);
 
 
+  const drawerContainerRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const skipNextClickRef = useRef<boolean>(false);
+
+
+
+
+
   // Track previous selectedVerse to detect changes
   const prevSelectedVerseRef = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
@@ -94,8 +104,8 @@ const CustomVideoPlayer = () => {
   const [showQualityDrawer, setShowQualityDrawer] = useState(false);
   const [selectedQuality, setSelectedQuality] = useState("Auto");
   const [availableQualities, setAvailableQualities] = useState<
-  { id: string; label: string }[]
->([]);
+    { id: string; label: string }[]
+  >([]);
 
 
   const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
@@ -105,15 +115,15 @@ const CustomVideoPlayer = () => {
     selectedBook &&
     selectedChapter;
 
- 
+
 
 
   const handleChangeSettings = () => {
     console.log("go to handlechangesettings")
-   
+
     setShowQualityDrawer(false)
     setShowSettingsMenu(true)
-};
+  };
 
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -319,11 +329,11 @@ const CustomVideoPlayer = () => {
         prevSelectedVerseRef.current = null;
         userInteractedRef.current = false;
 
-        
+
 
         // Create new player
         const options: VimeoPlayerOptions = {
-         
+
           id: currentVideoId,
           controls: false,
           responsive: true,
@@ -366,7 +376,7 @@ const CustomVideoPlayer = () => {
     };
   }, [currentVideoId, clearIntervals]);
 
-  
+
   useEffect(() => {
     const fetchAndApplyVideoQuality = async () => {
       if (vimeoPlayerRef.current && isPlayerReady && selectedQuality) {
@@ -374,15 +384,15 @@ const CustomVideoPlayer = () => {
           const player = vimeoPlayerRef.current;
           await player.ready();
 
-        
-  
+
+
           const qualities = await player.getQualities(); // returns array of { id: string, label: string }
-          console.log("player qualities",qualities)
+          console.log("player qualities", qualities)
           const qualityIds = qualities.map((q) => q.id);
-          console.log("player id's",qualityIds) // e.g. ["auto", "2160p", "720p", ...]
-  
+          console.log("player id's", qualityIds) // e.g. ["auto", "2160p", "720p", ...]
+
           setAvailableQualities(qualities); //  Update available qualities for UI
-  
+
           // Apply selected quality only if available
           const selected = selectedQuality.toLowerCase();
           if (qualityIds.includes(selected)) {
@@ -392,37 +402,63 @@ const CustomVideoPlayer = () => {
             console.warn("Selected quality not available:", selected, "Available:", qualityIds);
           }
 
-         //  Use the time stored at click time
-        const timeToSeek = pendingQualityChangeTimeRef.current ?? 0;
-        await player.setCurrentTime(timeToSeek);
-        setCurrentTime(timeToSeek);
+          //  Use the time stored at click time
+          const timeToSeek = pendingQualityChangeTimeRef.current ?? 0;
+          await player.setCurrentTime(timeToSeek);
+          setCurrentTime(timeToSeek);
 
-        // if (isPlaying) {
-        //   await player.play();
-        //   setIsPlaying(true);
-        // }
-         //  Resume if it was playing
-         if (wasPlayingRef.current) {
-          await player.play();
-          setIsPlaying(true);
-        }
+          // if (isPlaying) {
+          //   await player.play();
+          //   setIsPlaying(true);
+          // }
+          //  Resume if it was playing
+          if (wasPlayingRef.current) {
+            await player.play();
+            setIsPlaying(true);
+          }
 
 
-        // Clear it after applying
-        pendingQualityChangeTimeRef.current = null;
-        wasPlayingRef.current = false;
-  
+          // Clear it after applying
+          pendingQualityChangeTimeRef.current = null;
+          wasPlayingRef.current = false;
+
         } catch (err) {
           console.error("Error applying video quality:", err);
         }
       }
     };
-  
+
     fetchAndApplyVideoQuality();
   }, [selectedQuality, isPlayerReady]);
-  
-  
-  
+
+ 
+
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      containerRef.current &&
+      !containerRef.current.contains(event.target as Node)
+    ) {
+      if (showSettingsMenu || showQualityDrawer) {
+        setShowSettingsMenu(false);
+        setShowQualityDrawer(false);
+        skipNextClickRef.current = true; // prevent toggle on same click
+      }
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [showSettingsMenu, showQualityDrawer]);
+
+
+
+
+
+ 
 
   // Update intervals when play state changes
   useEffect(() => {
@@ -698,6 +734,7 @@ const CustomVideoPlayer = () => {
   const togglePlay = () => {
     if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
+
     const newIsPlaying = !isPlaying;
     if (newIsPlaying) {
       vimeoPlayerRef.current.play();
@@ -831,6 +868,7 @@ const CustomVideoPlayer = () => {
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+
   return (
     <div className="w-full max-w-6xl mx-auto px-2">
       <div className="flex items-center justify-center w-full">
@@ -866,14 +904,41 @@ const CustomVideoPlayer = () => {
           </button>
         )}
 
-        {/* </div> */}
+
 
         <div
           ref={playerContainerRef}
           className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
           style={{ aspectRatio: "16/9" }}
-          onClick={isVideoAvailable ? togglePlay : undefined}
+        
+          // onClick={isVideoAvailable ? togglePlay : undefined}
+
+          onClick={(e) => {
+  const clickedInsideDrawer =
+    containerRef.current?.contains(e.target as Node) ?? false;
+
+  // Ignore click if it just closed the drawer
+  if (skipNextClickRef.current) {
+    skipNextClickRef.current = false;
+    return;
+  }
+
+  //  Toggle only if not inside drawer
+  if (!clickedInsideDrawer && isVideoAvailable) {
+    togglePlay();
+  }
+}}
+  //          onClick={ 
+  //   isVideoAvailable && !showSettingsMenu && !showQualityDrawer
+  //     ? togglePlay
+  //     : undefined
+  // }
+
+        
         >
+
+ 
+  
           {(isVideoLoading || !isPlayerReady) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
               <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
@@ -930,9 +995,8 @@ const CustomVideoPlayer = () => {
               )}
               {/* Controls Overlay */}
               <div
-                className={`absolute inset-0 transition-opacity duration-300 ${
-                  showControls || isEnded ? "opacity-100" : "opacity-0"
-                } z-20`}
+                className={`absolute inset-0 transition-opacity duration-300 ${showControls || isEnded ? "opacity-100" : "opacity-0"
+                  } z-20`}
               >
                 {/* Bottom Controls */}
                 <div
@@ -964,9 +1028,8 @@ const CustomVideoPlayer = () => {
                         return (
                           <div
                             key={verse.id}
-                            className={`absolute top-0 w-0.5 h-1 ${
-                              isPassed ? "bg-yellow-400" : "bg-black"
-                            }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
+                            className={`absolute top-0 w-0.5 h-1 ${isPassed ? "bg-yellow-400" : "bg-black"
+                              }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
                             style={{
                               left: `${versePosition}%`,
                               transform: "translateX(-50%)",
@@ -1004,8 +1067,8 @@ const CustomVideoPlayer = () => {
                           isEnded && !(currentTime < duration)
                             ? "Replay"
                             : isPlaying
-                            ? "Pause"
-                            : "Play"
+                              ? "Pause"
+                              : "Play"
                         }
                         disabled={!isPlayerReady}
                       >
@@ -1025,14 +1088,31 @@ const CustomVideoPlayer = () => {
 
                     <div className="flex items-center space-x-4">
                       {/* Settings Button */}
-                      <SettingsButton
+                      <div ref={containerRef}>
+                      <SettingsButton   ref={settingsButtonRef}
                         onClick={(e) => {
-                          e.stopPropagation();
-                             setShowSettingsMenu((prev) => !prev); 
+                          
+                          if (showSettingsMenu && !showQualityDrawer) {
+                          
+                            setShowSettingsMenu(false);
+                          } else if (showQualityDrawer) {
+                           
+                            setShowSettingsMenu(false);
+                            setShowQualityDrawer(false);
+                          } else {
+                           
+                            setShowSettingsMenu(true);
+                           
+                          }
+
+
+
+
                         }}
                         isDisabled={!isPlayerReady}
                       />
-
+                     {/* <div ref={drawerContainerRef}> */}
+                    
                       <SettingsDrawer
                         isVisible={showSettingsMenu}
                         onClose={() => setShowSettingsMenu(false)}
@@ -1059,9 +1139,11 @@ const CustomVideoPlayer = () => {
                           setSelectedQuality(quality);
                         }}
                         onClose={() => setShowQualityDrawer(false)}
-                        
+
                         onBackToSettings={handleChangeSettings}
                       />
+                      </div>
+                     
 
                       <button
                         onClick={(e) => {

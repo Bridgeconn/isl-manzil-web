@@ -14,10 +14,13 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   selectedQuality,
   onOpenQualityDrawer,
 }) => {
+ 
+  
   if (!isVisible) return null;
+  
 
   return (
-    <div className="absolute bottom-16 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-64 p-4 z-50">
+    <div    className="absolute bottom-16 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-64 p-4 z-50">
       <div className="flex justify-between items-center mb-4">
         <span className="text-lg font-semibold">Settings</span>
         <button onClick={onClose} className="text-white">
