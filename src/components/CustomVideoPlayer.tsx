@@ -946,17 +946,19 @@ const CustomVideoPlayer = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       {/* Play/Pause/Replay Button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigateToVerse("backward");
-                        }}
-                        className="text-white hover:text-blue-400"
-                        aria-label="Previous Verse"
-                        disabled={!isPlayerReady}
-                      >
-                        <FilledSkipBackIcon size={24} />
-                      </button>
+                      {bibleVerseMarker && bibleVerseMarker.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateToVerse("backward");
+                          }}
+                          className="text-white hover:text-blue-400"
+                          aria-label="Previous Verse"
+                          disabled={!isPlayerReady}
+                        >
+                          <FilledSkipBackIcon size={24} />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -984,17 +986,19 @@ const CustomVideoPlayer = () => {
                           <FilledPlayIcon size={24} />
                         )}
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigateToVerse("forward");
-                        }}
-                        className="text-white hover:text-blue-400"
-                        aria-label="Next Verse"
-                        disabled={!isPlayerReady}
-                      >
-                        <FilledSkipForwardIcon size={24} />
-                      </button>
+                      {bibleVerseMarker && bibleVerseMarker.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateToVerse("forward");
+                          }}
+                          className="text-white hover:text-blue-400"
+                          aria-label="Next Verse"
+                          disabled={!isPlayerReady}
+                        >
+                          <FilledSkipForwardIcon size={24} />
+                        </button>
+                      )}
                       {/* Timer */}
                       <div className="text-white text-sm">
                         {formatTime(currentTime)} / {formatTime(duration)}
