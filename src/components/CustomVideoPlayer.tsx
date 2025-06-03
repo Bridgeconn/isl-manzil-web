@@ -77,7 +77,7 @@ const CustomVideoPlayer = () => {
   const wasPlayingRef = useRef<boolean>(false);
 
 
-  const drawerContainerRef = useRef<HTMLDivElement>(null);
+  
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const skipNextClickRef = useRef<boolean>(false);
@@ -928,11 +928,7 @@ useEffect(() => {
     togglePlay();
   }
 }}
-  //          onClick={ 
-  //   isVideoAvailable && !showSettingsMenu && !showQualityDrawer
-  //     ? togglePlay
-  //     : undefined
-  // }
+  
 
         
         >
@@ -1090,7 +1086,7 @@ useEffect(() => {
                       {/* Settings Button */}
                       <div ref={containerRef}>
                       <SettingsButton   ref={settingsButtonRef}
-                        onClick={(e) => {
+                        onClick={() => {
                           
                           if (showSettingsMenu && !showQualityDrawer) {
                           
