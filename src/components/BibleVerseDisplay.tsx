@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
 import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
+import useThemeStore from "@/store/useThemeStore";
+
 
 const BibleVerseDisplay = () => {
   const {
@@ -11,6 +13,7 @@ const BibleVerseDisplay = () => {
     currentPlayingVerse,
     seekToVerse,
   } = useBibleStore();
+  const{fontType,fontSize}=useThemeStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -131,11 +134,17 @@ const BibleVerseDisplay = () => {
           {renderLoadingOrError()}
 
           {!isFetching && !error && verseData.length > 0 && (
+           
             <div
-              ref={containerRef}
-              className="flex flex-col h-full overflow-y-auto"
-              style={{ scrollBehavior: "smooth" }}
-            >
+  ref={containerRef}
+  className={`flex flex-col h-full overflow-y-auto ${
+    fontType === "serif" ? "font-serif" : "font-sans"
+  }`}
+  style={{
+    scrollBehavior: "smooth",
+    fontSize: `${fontSize}px`,
+  }}
+>
               <div
                 className="mb-2"
                 ref={(el) => setVerseRef(verseData[0]?.verse, el)}

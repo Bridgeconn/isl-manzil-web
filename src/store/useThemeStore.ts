@@ -10,7 +10,11 @@ export interface ThemeOption {
 interface ThemeStore {
   currentTheme: ThemeOption | null;
   themes: ThemeOption[];
+  fontType:"serif"|"sans";
+  fontSize:number;
   setTheme: (theme: ThemeOption) => void;
+  setFontType:(type:"serif"|"sans")=>void;
+  setFontSize: (size: number) => void;
   applyTheme: () => void;
 }
 
@@ -39,13 +43,28 @@ const useThemeStore = create<ThemeStore>()((set, get) => ({
   currentTheme: null,
   themes: themes,
 
+  fontType: "serif",
+  fontSize: 16,
+
   setTheme: (theme: ThemeOption) => {
     set({ currentTheme: theme });
     get().applyTheme();
   },
 
+  setFontType:(type)=> {
+    set({fontType:type});
+    get().applyTheme();
+    
+  },
+
+  setFontSize:(size)=>{
+
+    set({fontSize:size});
+    get().applyTheme();
+  },
+
   applyTheme: () => {
-    const { currentTheme } = get();
+    const { currentTheme,fontType,fontSize } = get();
     const root = document.documentElement;
     const mainElement = document.querySelector('.layout-main');
 
@@ -58,6 +77,13 @@ const useThemeStore = create<ThemeStore>()((set, get) => ({
       root.style.removeProperty("--theme-bg-color");
       root.style.removeProperty("--theme-text-color");
     }
+     const fontFamily =
+    fontType === "serif"
+      ? 'Helvetica, Arial, sans-serif'
+      : 'Roboto, "Noto Sans", sans-serif';
+
+  root.style.setProperty("--font-family", fontFamily);
+  root.style.setProperty("--font-size", `${fontSize}px`);
   },
 }));
 
