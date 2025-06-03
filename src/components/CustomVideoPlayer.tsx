@@ -6,7 +6,7 @@ import Previous from "../assets/images/Previous.gif";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
-import LoopingGif from "./LoopingGif";
+import HoverControlledGif from "./HoverControlledGif";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -211,33 +211,33 @@ const CustomVideoPlayer = () => {
 
   // Effect to handle selectedVerse changes
   useEffect(() => {
-  const handleVerseChange = async () => {
-    if (!selectedVerse || !isPlayerReady) {
-      return;
-    }
-
-    const currentChapter = selectedChapter?.value ?? null;
-    const currentVerse = selectedVerse.value;
-
-    if (prevSelectedChapter.current !== currentChapter) {
-      prevSelectedVerse.current = null;
-      prevSelectedChapter.current = currentChapter;
-
-      if (currentVerse === 0) {
-        prevSelectedVerse.current = 0;
+    const handleVerseChange = async () => {
+      if (!selectedVerse || !isPlayerReady) {
         return;
       }
-    }
 
-    if (prevSelectedVerse.current !== currentVerse) {
-      prevSelectedVerse.current = currentVerse;
-      userInteractedRef.current = false;
-      await jumpToVerse(currentVerse);
-    }
-  };
+      const currentChapter = selectedChapter?.value ?? null;
+      const currentVerse = selectedVerse.value;
 
-  handleVerseChange();
-}, [selectedVerse, selectedChapter, isPlayerReady, jumpToVerse]);
+      if (prevSelectedChapter.current !== currentChapter) {
+        prevSelectedVerse.current = null;
+        prevSelectedChapter.current = currentChapter;
+
+        if (currentVerse === 0) {
+          prevSelectedVerse.current = 0;
+          return;
+        }
+      }
+
+      if (prevSelectedVerse.current !== currentVerse) {
+        prevSelectedVerse.current = currentVerse;
+        userInteractedRef.current = false;
+        await jumpToVerse(currentVerse);
+      }
+    };
+
+    handleVerseChange();
+  }, [selectedVerse, selectedChapter, isPlayerReady, jumpToVerse]);
 
   // Initialize Vimeo player
   useEffect(() => {
@@ -801,11 +801,12 @@ const CustomVideoPlayer = () => {
             className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
             title="Previous Chapter"
           >
-            <LoopingGif
+            <HoverControlledGif
               src={Previous}
               alt="Previous chapter"
               className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
               duration={2000}
+              loopCount={3}
             />
           </button>
         ) : (
@@ -818,7 +819,7 @@ const CustomVideoPlayer = () => {
 
         <div
           ref={playerContainerRef}
-          className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
+          className={`relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden`}
           style={{ aspectRatio: "16/9" }}
           onClick={
             isVideoAvailable
@@ -1046,11 +1047,12 @@ const CustomVideoPlayer = () => {
             className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
             title="Next Chapter"
           >
-            <LoopingGif
+            <HoverControlledGif
               src={Next}
               alt="Next chapter"
               className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
               duration={2000}
+              loopCount={3}
             />
           </button>
         ) : (
