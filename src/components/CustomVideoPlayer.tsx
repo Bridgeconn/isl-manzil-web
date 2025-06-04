@@ -779,6 +779,8 @@ const CustomVideoPlayer = () => {
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  console.log("selected chapter", selectedChapter, bibleVerseMarker);
+
   return (
     <div className="w-full max-w-6xl mx-auto px-2">
       <div className="flex items-center justify-center w-full">
@@ -945,7 +947,7 @@ const CustomVideoPlayer = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       {/* Play/Pause/Replay Button */}
-                      {bibleVerseMarker && bibleVerseMarker.length > 0 && (
+                      {(bibleVerseMarker?.length ?? 0) > 0 && !selectedChapter?.label.includes("Intro") && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -985,7 +987,7 @@ const CustomVideoPlayer = () => {
                           <FilledPlayIcon size={24} />
                         )}
                       </button>
-                      {bibleVerseMarker && bibleVerseMarker.length > 0 && (
+                      {(bibleVerseMarker?.length ?? 0) > 0 && !selectedChapter?.label.includes("Intro") && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
