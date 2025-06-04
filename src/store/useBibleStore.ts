@@ -481,14 +481,11 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
   seekToVerse: async (verse: string) => {
     const { bibleVerseMarker } = get();
-   
 
     const marker = bibleVerseMarker?.find(
       (v) => v.verse.toString().trim() === verse.toString().trim()
     );
-
     const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
-
 
     if (marker) {
       const event = new CustomEvent("seek-to-verse", {

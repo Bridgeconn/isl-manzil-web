@@ -13,11 +13,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onClose,
   selectedQuality,
   onOpenQualityDrawer,
-}) => {
- 
-  
+}) => { 
   if (!isVisible) return null;
-  
 
   return (
     <div    className="absolute bottom-16 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-64 p-4 z-50">
@@ -38,7 +35,6 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               Quality
             </span>
           </div>
-
           <div className="flex items-center gap-1 text-sm text-gray-400 leading-none">
             <span>{selectedQuality}</span>
             <ChevronRight size={20} />
