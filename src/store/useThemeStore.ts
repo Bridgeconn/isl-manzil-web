@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface ThemeOption {
   id: string;
@@ -12,6 +13,7 @@ interface ThemeStore {
   themes: ThemeOption[];
   setTheme: (theme: ThemeOption) => void;
   applyTheme: () => void;
+  initializeTheme: () => void;
 }
 
 const themes: ThemeOption[] = [
@@ -35,30 +37,52 @@ const themes: ThemeOption[] = [
   },
 ];
 
-const useThemeStore = create<ThemeStore>()((set, get) => ({
-  currentTheme: null,
-  themes: themes,
+const useThemeStore = create<ThemeStore>()(
+  persist(
+    (set, get) => ({
+      currentTheme: null,
+      themes: themes,
 
-  setTheme: (theme: ThemeOption) => {
-    set({ currentTheme: theme });
-    get().applyTheme();
-  },
+      setTheme: (theme: ThemeOption) => {
+        set({ currentTheme: theme });
+        get().applyTheme();
+      },
 
-  applyTheme: () => {
-    const { currentTheme } = get();
-    const root = document.documentElement;
-    const mainElement = document.querySelector('.layout-main');
+      applyTheme: () => {
+        const { currentTheme } = get();
+        const root = document.documentElement;
+        const mainElement = document.querySelector('.layout-main');
 
-    if (currentTheme) {
-      root.style.setProperty("--theme-bg-color", currentTheme.backgroundColor);
-      root.style.setProperty("--theme-text-color", currentTheme.textColor);
-      mainElement?.classList.add('theme-active');
-    } else {
-      mainElement?.classList.remove('theme-active');
-      root.style.removeProperty("--theme-bg-color");
-      root.style.removeProperty("--theme-text-color");
+        if (currentTheme) {
+          root.style.setProperty("--theme-bg-color", currentTheme.backgroundColor);
+          root.style.setProperty("--theme-text-color", currentTheme.textColor);
+          mainElement?.classList.add('theme-active');
+        } else {
+          mainElement?.classList.remove('theme-active');
+          root.style.removeProperty("--theme-bg-color");
+          root.style.removeProperty("--theme-text-color");
+        }
+      },
+
+      initializeTheme: () => {
+        const { currentTheme } = get();
+        if (!currentTheme) {
+          set({ currentTheme: themes[0] });
+        }
+        get().applyTheme();
+      },
+    }),
+    {
+      name: "theme-storage",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ currentTheme: state.currentTheme }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.initializeTheme();
+        }
+      },
     }
-  },
-}));
+  )
+);
 
 export default useThemeStore;
