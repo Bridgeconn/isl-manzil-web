@@ -77,7 +77,7 @@ const CustomVideoPlayer = () => {
   const wasPlayingRef = useRef<boolean>(false);
 
 
-  
+
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const skipNextClickRef = useRef<boolean>(false);
@@ -383,17 +383,9 @@ const CustomVideoPlayer = () => {
         try {
           const player = vimeoPlayerRef.current;
           await player.ready();
-
-
-
-          const qualities = await player.getQualities(); // returns array of { id: string, label: string }
-          console.log("player qualities", qualities)
+          const qualities = await player.getQualities();
           const qualityIds = qualities.map((q) => q.id);
-          console.log("player id's", qualityIds) // e.g. ["auto", "2160p", "720p", ...]
-
-          setAvailableQualities(qualities); //  Update available qualities for UI
-
-          // Apply selected quality only if available
+          setAvailableQualities(qualities);
           const selected = selectedQuality.toLowerCase();
           if (qualityIds.includes(selected)) {
             await player.setQuality(selected as import("@vimeo/player").VimeoVideoQuality);
@@ -406,12 +398,7 @@ const CustomVideoPlayer = () => {
           const timeToSeek = pendingQualityChangeTimeRef.current ?? 0;
           await player.setCurrentTime(timeToSeek);
           setCurrentTime(timeToSeek);
-
-          // if (isPlaying) {
-          //   await player.play();
-          //   setIsPlaying(true);
-          // }
-          //  Resume if it was playing
+         //  Resume if it was playing
           if (wasPlayingRef.current) {
             await player.play();
             setIsPlaying(true);
@@ -431,34 +418,34 @@ const CustomVideoPlayer = () => {
     fetchAndApplyVideoQuality();
   }, [selectedQuality, isPlayerReady]);
 
- 
 
 
-useEffect(() => {
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      containerRef.current &&
-      !containerRef.current.contains(event.target as Node)
-    ) {
-      if (showSettingsMenu || showQualityDrawer) {
-        setShowSettingsMenu(false);
-        setShowQualityDrawer(false);
-        skipNextClickRef.current = true; // prevent toggle on same click
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        if (showSettingsMenu || showQualityDrawer) {
+          setShowSettingsMenu(false);
+          setShowQualityDrawer(false);
+          skipNextClickRef.current = true; // prevent toggle on same click
+        }
       }
-    }
-  };
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, [showSettingsMenu, showQualityDrawer]);
-
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showSettingsMenu, showQualityDrawer]);
 
 
 
 
- 
+
+
 
   // Update intervals when play state changes
   useEffect(() => {
@@ -872,19 +859,7 @@ useEffect(() => {
   return (
     <div className="w-full max-w-6xl mx-auto px-2">
       <div className="flex items-center justify-center w-full">
-        {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
-        {/* <button
-            onClick={() => navigateToChapter("previous")}
-            disabled={!canGoPrevious}
-            className={`p-1 rounded-full transition-all duration-200 ${
-              canGoPrevious
-                ? "bg-gray-200 bg-opacity-50 hover:bg-opacity-70 hover:scale-110"
-                : "cursor-not-allowed opacity-50"
-            }`}
-            title="Previous Chapter"
-          >
-            <ChevronLeft size={24} />
-          </button> */}
+
         {canGoPrevious ? (
           <button
             onClick={() => navigateToChapter("previous")}
@@ -910,31 +885,27 @@ useEffect(() => {
           ref={playerContainerRef}
           className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
           style={{ aspectRatio: "16/9" }}
-        
-          // onClick={isVideoAvailable ? togglePlay : undefined}
 
           onClick={(e) => {
-  const clickedInsideDrawer =
-    containerRef.current?.contains(e.target as Node) ?? false;
+            const clickedInsideDrawer =
+              containerRef.current?.contains(e.target as Node) ?? false;
 
-  // Ignore click if it just closed the drawer
-  if (skipNextClickRef.current) {
-    skipNextClickRef.current = false;
-    return;
-  }
+            // Ignore click if it just closed the drawer
+            if (skipNextClickRef.current) {
+              skipNextClickRef.current = false;
+              return;
+            }
 
-  //  Toggle only if not inside drawer
-  if (!clickedInsideDrawer && isVideoAvailable) {
-    togglePlay();
-  }
-}}
-  
+            //  Toggle only if not inside drawer
+            if (!clickedInsideDrawer && isVideoAvailable) {
+              togglePlay();
+            }
+          }}
 
-        
         >
 
- 
-  
+
+
           {(isVideoLoading || !isPlayerReady) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
               <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
@@ -1085,61 +1056,61 @@ useEffect(() => {
                     <div className="flex items-center space-x-4">
                       {/* Settings Button */}
                       <div ref={containerRef}>
-                      <SettingsButton   ref={settingsButtonRef}
-                        onClick={() => {
-                          
-                          if (showSettingsMenu && !showQualityDrawer) {
-                          
+                        <SettingsButton ref={settingsButtonRef}
+                          onClick={() => {
+
+                            if (showSettingsMenu && !showQualityDrawer) {
+
+                              setShowSettingsMenu(false);
+                            } else if (showQualityDrawer) {
+
+                              setShowSettingsMenu(false);
+                              setShowQualityDrawer(false);
+                            } else {
+
+                              setShowSettingsMenu(true);
+
+                            }
+
+
+
+
+                          }}
+                          isDisabled={!isPlayerReady}
+                        />
+                      
+
+                        <SettingsDrawer
+                          isVisible={showSettingsMenu}
+                          onClose={() => setShowSettingsMenu(false)}
+                          selectedQuality={selectedQuality}
+                          onOpenQualityDrawer={() => {
                             setShowSettingsMenu(false);
-                          } else if (showQualityDrawer) {
-                           
-                            setShowSettingsMenu(false);
-                            setShowQualityDrawer(false);
-                          } else {
-                           
-                            setShowSettingsMenu(true);
-                           
-                          }
+                            setShowQualityDrawer(true);
+                          }}
+                        />
 
+                        <QualityDrawer
+                          isVisible={showQualityDrawer}
+                          selectedQuality={selectedQuality}
+                          availableQualities={availableQualities}
+                          onSelect={async (quality) => {
+                            if (vimeoPlayerRef.current) {
+                              const currentTime = await vimeoPlayerRef.current.getCurrentTime();
+                              pendingQualityChangeTimeRef.current = currentTime;
+                              console.log("Saved time before quality switch:", currentTime);
+                              // 2. Save if it was playing
+                              const isActuallyPlaying = await vimeoPlayerRef.current.getPaused().then(p => !p);
+                              wasPlayingRef.current = isActuallyPlaying;
+                            }
+                            setSelectedQuality(quality);
+                          }}
+                          onClose={() => setShowQualityDrawer(false)}
 
-
-
-                        }}
-                        isDisabled={!isPlayerReady}
-                      />
-                     {/* <div ref={drawerContainerRef}> */}
-                    
-                      <SettingsDrawer
-                        isVisible={showSettingsMenu}
-                        onClose={() => setShowSettingsMenu(false)}
-                        selectedQuality={selectedQuality}
-                        onOpenQualityDrawer={() => {
-                          setShowSettingsMenu(false);
-                          setShowQualityDrawer(true);
-                        }}
-                      />
-
-                      <QualityDrawer
-                        isVisible={showQualityDrawer}
-                        selectedQuality={selectedQuality}
-                        availableQualities={availableQualities}
-                        onSelect={async (quality) => {
-                          if (vimeoPlayerRef.current) {
-                            const currentTime = await vimeoPlayerRef.current.getCurrentTime();
-                            pendingQualityChangeTimeRef.current = currentTime;
-                            console.log("Saved time before quality switch:", currentTime);
-                            // 2. Save if it was playing
-                            const isActuallyPlaying = await vimeoPlayerRef.current.getPaused().then(p => !p);
-                            wasPlayingRef.current = isActuallyPlaying;
-                          }
-                          setSelectedQuality(quality);
-                        }}
-                        onClose={() => setShowQualityDrawer(false)}
-
-                        onBackToSettings={handleChangeSettings}
-                      />
+                          onBackToSettings={handleChangeSettings}
+                        />
                       </div>
-                     
+
 
                       <button
                         onClick={(e) => {
@@ -1168,19 +1139,7 @@ useEffect(() => {
             </>
           )}
         </div>
-        {/* <div className="flex flex-col items-center gap-2 sm:gap-4"> */}
-        {/* <button
-            onClick={() => navigateToChapter("next")}
-            disabled={!canGoNext}
-            className={`p-1 rounded-full transition-all duration-200 ${
-              canGoNext
-                ? "bg-gray-200 bg-opacity-50 hover:bg-opacity-70 hover:scale-110"
-                : "cursor-not-allowed opacity-50"
-            }`}
-            title="Next Chapter"
-          >
-            <ChevronRight size={24} />
-          </button> */}
+       
         {canGoNext ? (
           <button
             onClick={() => navigateToChapter("next")}
@@ -1199,7 +1158,7 @@ useEffect(() => {
             <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
           </button>
         )}
-        {/* </div> */}
+       
       </div>
     </div>
   );
