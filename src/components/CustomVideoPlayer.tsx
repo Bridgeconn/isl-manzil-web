@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
+import {
+  RefreshCw,
+  Maximize,
+  Minimize,
+  Loader2,
+  Clock,
+  Share2,
+} from "lucide-react";
 import SettingsButton from "../components/SettingsButton";
+import SharePopup from "../components/SharePopUp";
+
 import SettingsDrawer from "../components/SettingsDrawer";
 import QualityDrawer from "../components/QualityDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
@@ -64,6 +73,9 @@ const CustomVideoPlayer = () => {
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
   const {
+    availableData,
+    setBook,
+    setChapter,
     currentVideoId,
     setCurrentVideoId,
     selectedBook,
@@ -113,6 +125,54 @@ const CustomVideoPlayer = () => {
   const [availableQualities, setAvailableQualities] = useState<
     { id: string; label: string }[]
   >([]);
+
+  const [showShare, setShowShare] = useState(false);
+  // const [shareUrl, setShareUrl] = useState<string>("");
+
+  const BASE_URL =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:5173";
+
+  const shareUrl =
+    selectedBook?.value && selectedChapter?.value
+      ? `${BASE_URL}/watch/${selectedBook.value}/${selectedChapter.value}`
+      : BASE_URL;
+
+  useEffect(() => {
+    const pathParts = window.location.pathname.split("/");
+    const bookCode = pathParts[2];
+    const chapterNumber = pathParts[3];
+
+    if (!bookCode || !chapterNumber || availableData.books.length === 0) return;
+
+    const matchedBook = availableData.books.find((b) => b.value === bookCode);
+    const chapterList = matchedBook
+      ? availableData.chapters[matchedBook.value]
+      : [];
+    const matchedChapter = chapterList.find(
+      (c) => String(c.value) === String(chapterNumber)
+    );
+
+    if (matchedBook && matchedChapter) {
+      setBook(matchedBook);
+      setChapter(matchedChapter);
+    }
+  }, [availableData.books, availableData.chapters, setBook, setChapter]);
+
+  useEffect(() => {
+    if (selectedBook && selectedChapter) {
+      setCurrentVideoId(null);
+      loadVideoForCurrentSelection();
+      getBibleVerseMarker();
+    }
+  }, [
+    selectedBook,
+    selectedChapter,
+    setCurrentVideoId,
+    loadVideoForCurrentSelection,
+    getBibleVerseMarker,
+  ]);
 
   const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
   const showComingSoon =
@@ -1062,7 +1122,13 @@ const CustomVideoPlayer = () => {
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-4 mt-2 ">
+                      <button
+                        onClick={() => setShowShare((prev) => !prev)}
+                        className="p-2 text-white hover:text-gray-300 "
+                      >
+                        <Share2 strokeWidth={2.5} size={24} />
+                      </button>
                       {/* Settings Button */}
                       <div ref={containerRef} className="flex items-center">
                         <SettingsButton
@@ -1125,11 +1191,19 @@ const CustomVideoPlayer = () => {
                         disabled={!isPlayerReady}
                       >
                         {isFullscreen ? (
-                          <Minimize size={24} />
+                          <Minimize strokeWidth={2.5} size={24} />
                         ) : (
-                          <Maximize size={24} />
+                          <Maximize strokeWidth={2.5} size={24} />
                         )}
                       </button>
+                      {showShare && (
+                        <div className="absolute bottom-5 right-6 ">
+                          <SharePopup
+                            shareUrl={shareUrl}
+                            onClose={() => setShowShare(false)}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
