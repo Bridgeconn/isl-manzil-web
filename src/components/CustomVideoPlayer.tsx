@@ -93,7 +93,6 @@ const CustomVideoPlayer = () => {
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const skipNextClickRef = useRef<boolean>(false);
-  const isInitialLoadRef = useRef<boolean>(false);
   const prevSelectedBook = useRef<string | null>(null);
   const prevSelectedVerse = useRef<number | null>(null);
   const prevSelectedChapter = useRef<number | null>(null);
@@ -101,7 +100,7 @@ const CustomVideoPlayer = () => {
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
@@ -123,7 +122,6 @@ const CustomVideoPlayer = () => {
     selectedChapter;
 
   const handleChangeSettings = () => {
-    console.log("go to handlechangesettings");
     setShowQualityDrawer(false);
     setShowSettingsMenu(true);
   };
@@ -233,23 +231,17 @@ const CustomVideoPlayer = () => {
   // Effect to handle selectedVerse changes
   useEffect(() => {
     const handleVerseChange = async () => {
-      if (!selectedVerse || !isPlayerReady || userInteractedRef.current === true) {
+      if (!selectedVerse || !isPlayerReady) {
         return;
       }
       const currentBook = selectedBook?.value ?? null;
       const currentChapter = selectedChapter?.value ?? null;
       const currentVerse = selectedVerse.value;
 
-      console.log("current verse", currentVerse);
-      console.log("current chapter", currentChapter);
-
-      console.log("prev selected chapter", prevSelectedChapter.current);
-
       if (prevSelectedBook.current !== currentBook) {
         prevSelectedBook.current = currentBook;
         prevSelectedChapter.current = null;
         prevSelectedVerse.current = null;
-        isInitialLoadRef.current = true;
 
         // Don't jump on book change
         if (currentVerse === 0) {
@@ -262,33 +254,15 @@ const CustomVideoPlayer = () => {
       if (prevSelectedChapter.current !== currentChapter) {
         prevSelectedVerse.current = null;
         prevSelectedChapter.current = currentChapter;
-
-        isInitialLoadRef.current = true;
-
         if (currentVerse === 0) {
           prevSelectedVerse.current = 0;
           return;
         }
       }
 
-      console.log("prev selected verse", prevSelectedVerse.current);
-      console.log("current verse", currentVerse);
-
-      if (isInitialLoadRef.current && currentVerse === 0) {
-        prevSelectedVerse.current = 0;
-        isInitialLoadRef.current = false;
-        return;
-      }
-
-      if (userInteractedRef.current) {
-        prevSelectedVerse.current = currentVerse;
-        userInteractedRef.current = false;
-        return;
-      }
-
       if (prevSelectedVerse.current !== currentVerse) {
         prevSelectedVerse.current = currentVerse;
-        isInitialLoadRef.current = false;
+        userInteractedRef.current = false;
         await jumpToVerse(currentVerse);
       }
     };
@@ -302,40 +276,9 @@ const CustomVideoPlayer = () => {
     isPlayerReady,
   ]);
 
-  // Initialize Vimeo player
-  useEffect(() => {
-    const loadVimeo = () => {
-      if (window.Vimeo) {
-        initializeVimeoPlayer();
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.src = "https://player.vimeo.com/api/player.js";
-      script.async = true;
-      script.onload = initializeVimeoPlayer;
-      document.body.appendChild(script);
-    };
-
-    if (playerRef.current && isVideoAvailable) {
-      loadVimeo();
-    }
-
-    return () => {
-      clearControlsTimeout();
-      clearIntervals();
-
-      if (vimeoPlayerRef.current) {
-        vimeoPlayerRef.current.destroy();
-        vimeoPlayerRef.current = null;
-        setIsPlayerReady(false);
-      }
-    };
-  }, [clearIntervals, isVideoAvailable]);
-
   // Handle video ID changes
   useEffect(() => {
-    if (!currentVideoId || !playerRef.current || isVideoLoading) return;
+    if (!currentVideoId || !playerRef.current || isVideoLoading || !isVideoAvailable) return;
 
     const loadNewVideo = async () => {
       try {
@@ -355,10 +298,10 @@ const CustomVideoPlayer = () => {
         setIsEnded(false);
         setIsPlayerReady(false);
         setCurrentPlayingVerse(null);
-        isInitialLoadRef.current = false;
 
         // Reset tracking references
         userInteractedRef.current = false;
+        pendingQualityChangeTimeRef.current = null;
 
         // Create new player
         const options: VimeoPlayerOptions = {
@@ -391,7 +334,6 @@ const CustomVideoPlayer = () => {
         setDuration(newDuration);
 
         setIsPlayerReady(true);
-        isInitialLoadRef.current = true;
       } catch (error) {
         console.error("Error loading new video:", error);
       }
@@ -403,7 +345,7 @@ const CustomVideoPlayer = () => {
       clearControlsTimeout();
       clearIntervals();
     };
-  }, [currentVideoId, clearIntervals]);
+  }, [currentVideoId, clearIntervals, isVideoAvailable]);
 
   useEffect(() => {
     const fetchAndApplyVideoQuality = async () => {
@@ -430,9 +372,11 @@ const CustomVideoPlayer = () => {
           }
 
           //  Use the time stored at click time
-          const timeToSeek = pendingQualityChangeTimeRef.current ?? 0;
-          await player.setCurrentTime(timeToSeek);
-          setCurrentTime(timeToSeek);
+          const timeToSeek = pendingQualityChangeTimeRef.current;
+          if(timeToSeek){
+            await player.setCurrentTime(timeToSeek);
+            setCurrentTime(timeToSeek);
+          }
           //  Resume if it was playing
           if (wasPlayingRef.current) {
             await player.play();
@@ -648,38 +592,6 @@ const CustomVideoPlayer = () => {
     vimeoPlayerRef.current.on("pause", handlePause);
     vimeoPlayerRef.current.on("ended", handleEnded);
   };
-  // Initialize Vimeo player
-  const initializeVimeoPlayer = () => {
-    if (
-      !playerRef.current ||
-      vimeoPlayerRef.current ||
-      !window.Vimeo ||
-      !currentVideoId
-    )
-      return;
-    try {
-      const options: VimeoPlayerOptions = {
-        id: currentVideoId,
-        controls: false,
-        responsive: true,
-        title: false,
-        byline: false,
-        portrait: false,
-        autopause: false,
-      };
-
-      vimeoPlayerRef.current = new Player(playerRef.current, options);
-
-      // Get video metadata
-      vimeoPlayerRef.current.ready().then(() => {
-        vimeoPlayerRef.current?.getDuration().then(setDuration);
-        setupEventListeners();
-        setIsPlayerReady(true);
-      });
-    } catch (error) {
-      console.error("Error initializing Vimeo player:", error);
-    }
-  };
 
   const clearControlsTimeout = () => {
     if (controlsTimeoutRef.current) {
@@ -866,8 +778,6 @@ const CustomVideoPlayer = () => {
     } else {
       targetVerseIndex = currentVerseIndex <= 0 ? 0 : currentVerseIndex - 1;
     }
-
-    console.log("target verse index", targetVerseIndex);
 
     const nextVerse = bibleVerseMarker[targetVerseIndex];
 
@@ -1187,11 +1097,7 @@ const CustomVideoPlayer = () => {
                               const currentTime =
                                 await vimeoPlayerRef.current.getCurrentTime();
                               pendingQualityChangeTimeRef.current = currentTime;
-                              console.log(
-                                "Saved time before quality switch:",
-                                currentTime
-                              );
-                              // 2. Save if it was playing
+                              //Save if it was playing
                               const isActuallyPlaying =
                                 await vimeoPlayerRef.current
                                   .getPaused()
