@@ -7,7 +7,11 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ onClose }) => {
-  const { currentTheme, themes, setTheme } = useThemeStore();
+  const { currentTheme, themes, fontType,
+  fontSize,
+  setFontType,
+  setFontSize, setTheme } = useThemeStore();
+  const percent = ((fontSize - 12) * 100) / (24 - 12);
 
   return (
     <div className="w-80 bg-white border border-gray-200 shadow-lg p-4 pt-2 relative z-50">
@@ -55,8 +59,60 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
           ))}
         </div>
 
+
+
         <div className="pt-4 border-t border-gray-200"></div>
       </div>
+
+      {/* Font Type Toggle */}
+<div className="mt-6">
+  <h4 className="text-sm font-medium text-gray-700 mb-2">Font Type:</h4>
+  <div className="flex items-center gap-4 mb-2">
+    <span className={`${fontType === "serif" ? "font-bold text-black-600" : ""}`}>
+      Serif
+    </span>
+    <button
+      onClick={() => setFontType(fontType === "serif" ? "sans" : "serif")}
+      className="relative w-10 h-4 bg-gray-300 rounded-full focus:outline-none"
+    >
+      <span
+        className={`absolute left-0 top-0 w-4 h-4 bg-white rounded-full shadow transform transition-transform ${
+          fontType === "sans" ? "translate-x-6" : ""
+        }`}
+      />
+    </button>
+    <span className={`${fontType === "sans" ? "font-bold text-black-600" : ""}`}>
+      Sans
+    </span>
+  </div>
+</div>
+
+{/* Font Size Slider */}
+<div className="mt-6">
+  <h4 className="text-sm font-medium text-gray-700 mb-2">Font Size:</h4>
+  <div className="flex items-center gap-3">
+    <span className="text-xs font-bold text-black-600">A-</span>
+   <input
+  type="range"
+  min={12}
+  max={24}
+  step={1}
+  
+  value={fontSize}
+  onChange={(e) => setFontSize(Number(e.target.value))}
+  className="w-full appearance-none rounded-full"
+  style={{
+    height: '4px',
+    background: `linear-gradient(to right, black ${percent}%,#9ca3af ${percent}%)`,
+  }}
+/>
+
+    <span className="text-lg font-bold text-black-600">A+</span>
+  </div>
+</div>
+
+
+
     </div>
   );
 };
