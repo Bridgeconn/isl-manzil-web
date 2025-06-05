@@ -407,9 +407,8 @@ const useBibleStore = create<BibleStore>((set, get) => ({
 
 
     // Create unique request ID to track this specific request
-    const requestId = `${selectedBook.value}-${
-      selectedChapter.value
-    }-${Date.now()}`;
+    const requestId = `${selectedBook.value}-${selectedChapter.value
+      }-${Date.now()}`;
 
     set({
       isVideoLoading: true,
@@ -523,7 +522,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     );
     const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
 
-    // console.log("cleaned time", cleanedTime);
     if (marker) {
       const event = new CustomEvent("seek-to-verse", {
         detail: { time: cleanedTime },
