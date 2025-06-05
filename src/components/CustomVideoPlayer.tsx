@@ -1096,7 +1096,7 @@ const CustomVideoPlayer = () => {
                             }`}
                             aria-label="Previous Verse"
                             disabled={!isPlayerReady || isFirstVerse()}
-                            title={isFirstVerse() ? "" : "Next Verse"}
+                            title={isFirstVerse() ? "" : "Previous Verse"}
                           >
                             <FilledSkipBackIcon size={24} />
                           </button>
