@@ -7,10 +7,15 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ onClose }) => {
-  const { currentTheme, themes, fontType,
-  fontSize,
-  setFontType,
-  setFontSize, setTheme } = useThemeStore();
+  const {
+    currentTheme,
+    themes,
+    fontType,
+    fontSize,
+    setFontType,
+    setFontSize,
+    setTheme,
+  } = useThemeStore();
   const percent = ((fontSize - 12) * 100) / (24 - 12);
 
   return (
@@ -25,6 +30,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
           <X size={20} className="text-gray-500" />
         </button>
       </div>
+      <div className="pt-4 border-t border-gray-200"/>
 
       <div className="space-y-2 sm:space-y-4">
         <h4 className="text-base font-semibold text-gray-700 mb-3">Theme</h4>
@@ -59,60 +65,62 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
           ))}
         </div>
 
-
-
         <div className="pt-4 border-t border-gray-200"></div>
       </div>
 
       {/* Font Type Toggle */}
-<div className="mt-6">
-  <h4 className="text-sm font-medium text-gray-700 mb-2">Font Type:</h4>
-  <div className="flex items-center gap-4 mb-2">
-    <span className={`${fontType === "serif" ? "font-bold text-black-600" : ""}`}>
-      Serif
-    </span>
-    <button
-      onClick={() => setFontType(fontType === "serif" ? "sans" : "serif")}
-      className="relative w-10 h-4 bg-gray-300 rounded-full focus:outline-none"
-    >
-      <span
-        className={`absolute left-0 top-0 w-4 h-4 bg-white rounded-full shadow transform transition-transform ${
-          fontType === "sans" ? "translate-x-6" : ""
-        }`}
-      />
-    </button>
-    <span className={`${fontType === "sans" ? "font-bold text-black-600" : ""}`}>
-      Sans
-    </span>
-  </div>
-</div>
+      <div>
+        <h4 className="text-base font-semibold text-gray-700 mb-3">Font Type</h4>
+        <div className="flex items-center gap-4 mb-2">
+          <span
+            className={`${
+              fontType === "serif" ? "font-bold text-black-600" : ""
+            }`}
+          >
+            Serif
+          </span>
+          <button
+            onClick={() => setFontType(fontType === "serif" ? "sans" : "serif")}
+            className="relative w-10 h-4 bg-gray-300 rounded-full focus:outline-none"
+          >
+            <span
+              className={`absolute left-0 top-0 w-4 h-4 bg-white rounded-full shadow transform transition-transform ${
+                fontType === "sans" ? "translate-x-6" : ""
+              }`}
+            />
+          </button>
+          <span
+            className={`${
+              fontType === "sans" ? "font-bold text-black-600" : ""
+            }`}
+          >
+            Sans
+          </span>
+        </div>
+      </div>
 
-{/* Font Size Slider */}
-<div className="mt-6">
-  <h4 className="text-sm font-medium text-gray-700 mb-2">Font Size:</h4>
-  <div className="flex items-center gap-3">
-    <span className="text-xs font-bold text-black-600">A-</span>
-   <input
-  type="range"
-  min={12}
-  max={24}
-  step={1}
-  
-  value={fontSize}
-  onChange={(e) => setFontSize(Number(e.target.value))}
-  className="w-full appearance-none rounded-full"
-  style={{
-    height: '4px',
-    background: `linear-gradient(to right, black ${percent}%,#9ca3af ${percent}%)`,
-  }}
-/>
+      {/* Font Size Slider */}
+      <div className="mt-4">
+        <h4 className="text-base font-semibold text-gray-700 mb-3">Font Size</h4>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-black-600">A-</span>
+          <input
+            type="range"
+            min={12}
+            max={24}
+            step={1}
+            value={fontSize}
+            onChange={(e) => setFontSize(Number(e.target.value))}
+            className="w-full appearance-none rounded-full"
+            style={{
+              height: "4px",
+              background: `linear-gradient(to right, black ${percent}%,#9ca3af ${percent}%)`,
+            }}
+          />
 
-    <span className="text-lg font-bold text-black-600">A+</span>
-  </div>
-</div>
-
-
-
+          <span className="text-lg font-bold text-black-600">A+</span>
+        </div>
+      </div>
     </div>
   );
 };
