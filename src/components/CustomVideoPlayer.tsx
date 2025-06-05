@@ -36,6 +36,30 @@ const FilledPauseIcon = ({ size = 24, className = "" }) => (
   </svg>
 );
 
+const FilledSkipBackIcon = ({ size = 24, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M4 5h2v14H4V5zm4.5 7l9.5 7V5l-9.5 7z" />
+  </svg>
+);
+
+const FilledSkipForwardIcon = ({ size = 24, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M20 5h-2v14h2V5zm-4.5 7L6 19V5l9.5 7z" />
+  </svg>
+);
+
 const CustomVideoPlayer = () => {
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
@@ -69,14 +93,14 @@ const CustomVideoPlayer = () => {
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const skipNextClickRef = useRef<boolean>(false);
-
-  // Track previous selectedVerse to detect changes
-  const prevSelectedVerseRef = useRef<number | null>(null);
+  const prevSelectedBook = useRef<string | null>(null);
+  const prevSelectedVerse = useRef<number | null>(null);
+  const prevSelectedChapter = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
@@ -98,9 +122,8 @@ const CustomVideoPlayer = () => {
     selectedChapter;
 
   const handleChangeSettings = () => {
-    console.log("go to handlechangesettings")
-    setShowQualityDrawer(false)
-    setShowSettingsMenu(true)
+    setShowQualityDrawer(false);
+    setShowSettingsMenu(true);
   };
 
   useEffect(() => {
@@ -177,21 +200,12 @@ const CustomVideoPlayer = () => {
     clearIntervals,
   ]);
 
-  // Helper function to find verse marker by verse number
-  const findVerseMarker = useCallback(
-    (verseNumber: number): VerseMarkerType | null => {
-      if (!bibleVerseMarker || bibleVerseMarker.length === 0) return null;
-      return findVerseMarkerForVerse(verseNumber);
-    },
-    [bibleVerseMarker]
-  );
-
   // Helper function to jump to a specific verse
   const jumpToVerse = useCallback(
     async (verseNumber: number) => {
       if (!vimeoPlayerRef.current || !isPlayerReady) return;
 
-      const verseMarker = findVerseMarker(verseNumber);
+      const verseMarker = findVerseMarkerForVerse(verseNumber);
       if (!verseMarker) {
         console.warn(`Verse ${verseNumber} marker not found`);
         return;
@@ -201,88 +215,70 @@ const CustomVideoPlayer = () => {
         const seekTime = timeToSeconds(verseMarker.time);
         await vimeoPlayerRef.current.setCurrentTime(seekTime);
         setCurrentTime(seekTime);
-        setCurrentPlayingVerse(verseNumber.toString());
+        setCurrentPlayingVerse(verseMarker.verse);
 
         // If video was ended, update state
         if (isEnded) {
           setIsEnded(false);
         }
-
-        console.log(
-          `Jumped to verse ${verseNumber} at time ${verseMarker.time}`
-        );
       } catch (error) {
         console.error(`Error jumping to verse ${verseNumber}:`, error);
       }
     },
-    [isPlayerReady, findVerseMarker, isEnded]
+    [isPlayerReady, findVerseMarkerForVerse, setCurrentPlayingVerse, isEnded]
   );
 
   // Effect to handle selectedVerse changes
   useEffect(() => {
     const handleVerseChange = async () => {
-      if (
-        !selectedVerse ||
-        !isPlayerReady ||
-        !bibleVerseMarker ||
-        bibleVerseMarker.length === 0
-      ) {
+      if (!selectedVerse || !isPlayerReady) {
         return;
       }
-      // Check if selectedVerse changed
-      const hasVerseChanged =
-        prevSelectedVerseRef.current !== selectedVerse.value;
-      if (hasVerseChanged) {
-        // Reset user interaction flag when verse changes via dropdown
+      const currentBook = selectedBook?.value ?? null;
+      const currentChapter = selectedChapter?.value ?? null;
+      const currentVerse = selectedVerse.value;
+
+      if (prevSelectedBook.current !== currentBook) {
+        prevSelectedBook.current = currentBook;
+        prevSelectedChapter.current = null;
+        prevSelectedVerse.current = null;
+
+        // Don't jump on book change
+        if (currentVerse === 0) {
+          prevSelectedVerse.current = 0;
+          prevSelectedChapter.current = currentChapter;
+          return;
+        }
+      }
+
+      if (prevSelectedChapter.current !== currentChapter) {
+        prevSelectedVerse.current = null;
+        prevSelectedChapter.current = currentChapter;
+        if (currentVerse === 0) {
+          prevSelectedVerse.current = 0;
+          return;
+        }
+      }
+
+      if (prevSelectedVerse.current !== currentVerse) {
+        prevSelectedVerse.current = currentVerse;
         userInteractedRef.current = false;
-        await jumpToVerse(selectedVerse.value);
-        prevSelectedVerseRef.current = selectedVerse.value;
+        await jumpToVerse(currentVerse);
       }
     };
 
     handleVerseChange();
-  }, [selectedVerse, isPlayerReady, bibleVerseMarker, jumpToVerse]);
-
-  useEffect(() => {
-    // Reset previous verse tracking when book or chapter changes
-    prevSelectedVerseRef.current = null;
-    userInteractedRef.current = false;
-  }, [selectedBook, selectedChapter]);
-
-  // Initialize Vimeo player
-  useEffect(() => {
-    const loadVimeo = () => {
-      if (window.Vimeo) {
-        initializeVimeoPlayer();
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.src = "https://player.vimeo.com/api/player.js";
-      script.async = true;
-      script.onload = initializeVimeoPlayer;
-      document.body.appendChild(script);
-    };
-
-    if (playerRef.current && isVideoAvailable) {
-      loadVimeo();
-    }
-
-    return () => {
-      clearControlsTimeout();
-      clearIntervals();
-
-      if (vimeoPlayerRef.current) {
-        vimeoPlayerRef.current.destroy();
-        vimeoPlayerRef.current = null;
-        setIsPlayerReady(false);
-      }
-    };
-  }, [clearIntervals, isVideoAvailable]);
+  }, [
+    selectedBook,
+    selectedVerse,
+    selectedChapter,
+    jumpToVerse,
+    isPlayerReady,
+  ]);
 
   // Handle video ID changes
   useEffect(() => {
-    if (!currentVideoId || !playerRef.current || isVideoLoading) return;
+    if (!currentVideoId || !playerRef.current || isVideoLoading || !isVideoAvailable) return;
 
     const loadNewVideo = async () => {
       try {
@@ -304,8 +300,8 @@ const CustomVideoPlayer = () => {
         setCurrentPlayingVerse(null);
 
         // Reset tracking references
-        prevSelectedVerseRef.current = null;
         userInteractedRef.current = false;
+        pendingQualityChangeTimeRef.current = null;
 
         // Create new player
         const options: VimeoPlayerOptions = {
@@ -349,7 +345,7 @@ const CustomVideoPlayer = () => {
       clearControlsTimeout();
       clearIntervals();
     };
-  }, [currentVideoId, clearIntervals]);
+  }, [currentVideoId, clearIntervals, isVideoAvailable]);
 
   useEffect(() => {
     const fetchAndApplyVideoQuality = async () => {
@@ -362,16 +358,25 @@ const CustomVideoPlayer = () => {
           setAvailableQualities(qualities);
           const selected = selectedQuality.toLowerCase();
           if (qualityIds.includes(selected)) {
-            await player.setQuality(selected as import("@vimeo/player").VimeoVideoQuality);
+            await player.setQuality(
+              selected as import("@vimeo/player").VimeoVideoQuality
+            );
             console.log(`Video quality set to: ${selected}`);
           } else {
-            console.warn("Selected quality not available:", selected, "Available:", qualityIds);
+            console.warn(
+              "Selected quality not available:",
+              selected,
+              "Available:",
+              qualityIds
+            );
           }
 
           //  Use the time stored at click time
-          const timeToSeek = pendingQualityChangeTimeRef.current ?? 0;
-          await player.setCurrentTime(timeToSeek);
-          setCurrentTime(timeToSeek);
+          const timeToSeek = pendingQualityChangeTimeRef.current;
+          if(timeToSeek){
+            await player.setCurrentTime(timeToSeek);
+            setCurrentTime(timeToSeek);
+          }
           //  Resume if it was playing
           if (wasPlayingRef.current) {
             await player.play();
@@ -380,7 +385,6 @@ const CustomVideoPlayer = () => {
           // Clear it after applying
           pendingQualityChangeTimeRef.current = null;
           wasPlayingRef.current = false;
-
         } catch (err) {
           console.error("Error applying video quality:", err);
         }
@@ -410,27 +414,14 @@ const CustomVideoPlayer = () => {
 
   // Update intervals when play state changes
   useEffect(() => {
-    if (
-      isPlayerReady &&
-      isPlaying &&
-      !isEnded &&
-      bibleVerseMarker &&
-      bibleVerseMarker?.length > 0
-    ) {
+    if (isPlayerReady && isPlaying && !isEnded) {
       setupIntervals();
     }
 
     return () => {
       clearIntervals();
     };
-  }, [
-    isPlaying,
-    isPlayerReady,
-    isEnded,
-    bibleVerseMarker,
-    setupIntervals,
-    clearIntervals,
-  ]);
+  }, [isPlaying, isPlayerReady, isEnded, setupIntervals, clearIntervals]);
 
   useEffect(() => {
     const handleSeekEvent = async (e: any) => {
@@ -482,7 +473,11 @@ const CustomVideoPlayer = () => {
       if (!isPlayerReady || !isVideoAvailable) return;
 
       // Mark user interaction for seek operations
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      if (
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight" ||
+        event.key === " "
+      ) {
         userInteractedRef.current = true;
       }
 
@@ -498,26 +493,30 @@ const CustomVideoPlayer = () => {
           const currentTime =
             (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
           const newTime = Math.max(0, currentTime - 10);
-          await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          vimeoPlayerRef.current?.setCurrentTime(newTime);
           setCurrentTime(newTime);
           if (isEnded) {
             setIsEnded(false);
           }
-          const newCurrentVerse = getCurrentVerseFromTime(newTime);
-          setCurrentPlayingVerse(newCurrentVerse);
+          if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
+            const newCurrentVerse = getCurrentVerseFromTime(newTime);
+            setCurrentPlayingVerse(newCurrentVerse);
+          }
           break;
         }
         case "ArrowRight": {
           const currentTime =
             (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
           const newTime = Math.min(duration, currentTime + 10);
-          await vimeoPlayerRef.current?.setCurrentTime(newTime);
+          vimeoPlayerRef.current?.setCurrentTime(newTime);
           setCurrentTime(newTime);
           if (isEnded) {
             setIsEnded(false);
           }
-          const newCurrentVerse = getCurrentVerseFromTime(newTime);
-          setCurrentPlayingVerse(newCurrentVerse);
+          if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
+            const newCurrentVerse = getCurrentVerseFromTime(newTime);
+            setCurrentPlayingVerse(newCurrentVerse);
+          }
           break;
         }
         default:
@@ -533,6 +532,7 @@ const CustomVideoPlayer = () => {
     isPlayerReady,
     duration,
     isEnded,
+    bibleVerseMarker,
     getCurrentVerseFromTime,
     setCurrentPlayingVerse,
     isVideoAvailable,
@@ -591,38 +591,6 @@ const CustomVideoPlayer = () => {
     vimeoPlayerRef.current.on("play", handlePlay);
     vimeoPlayerRef.current.on("pause", handlePause);
     vimeoPlayerRef.current.on("ended", handleEnded);
-  };
-  // Initialize Vimeo player
-  const initializeVimeoPlayer = () => {
-    if (
-      !playerRef.current ||
-      vimeoPlayerRef.current ||
-      !window.Vimeo ||
-      !currentVideoId
-    )
-      return;
-    try {
-      const options: VimeoPlayerOptions = {
-        id: currentVideoId,
-        controls: false,
-        responsive: true,
-        title: false,
-        byline: false,
-        portrait: false,
-        autopause: false,
-      };
-
-      vimeoPlayerRef.current = new Player(playerRef.current, options);
-
-      // Get video metadata
-      vimeoPlayerRef.current.ready().then(() => {
-        vimeoPlayerRef.current?.getDuration().then(setDuration);
-        setupEventListeners();
-        setIsPlayerReady(true);
-      });
-    } catch (error) {
-      console.error("Error initializing Vimeo player:", error);
-    }
   };
 
   const clearControlsTimeout = () => {
@@ -785,6 +753,59 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  const navigateToVerse = (direction: "forward" | "backward") => {
+    if (!vimeoPlayerRef.current) return;
+
+    userInteractedRef.current = true;
+
+    const verseTimes =
+      bibleVerseMarker &&
+      bibleVerseMarker.map((verse) => timeToSeconds(verse.time));
+
+    if (!verseTimes) return;
+
+    const nextVerseIndex = verseTimes.findIndex(
+      (verseTime) => verseTime > currentTime
+    );
+
+    const currentVerseIndex =
+      nextVerseIndex === -1 ? verseTimes.length - 1 : nextVerseIndex - 1;
+
+    let targetVerseIndex;
+    if (direction === "forward") {
+      targetVerseIndex =
+        nextVerseIndex === -1 ? verseTimes.length - 1 : nextVerseIndex;
+    } else {
+      targetVerseIndex = currentVerseIndex <= 0 ? 0 : currentVerseIndex - 1;
+    }
+
+    const nextVerse = bibleVerseMarker[targetVerseIndex];
+
+    if (nextVerse) {
+      const seekTime = timeToSeconds(nextVerse.time);
+      vimeoPlayerRef.current.setCurrentTime(seekTime);
+      setCurrentTime(seekTime);
+      setCurrentPlayingVerse(nextVerse.verse);
+
+      if (isEnded) {
+        setIsEnded(false);
+      }
+    }
+  };
+
+  const isFirstVerse = () => {
+    if (!bibleVerseMarker) return false;
+    return bibleVerseMarker[0].verse === currentPlayingVerse || currentTime === 0;
+  };
+
+  const isLastVerse = () => {
+    if (!bibleVerseMarker) return false;
+    return (
+      bibleVerseMarker[bibleVerseMarker.length - 1].verse ===
+      currentPlayingVerse || !(currentTime < duration) || isEnded
+    );
+  };
+
   // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!playerContainerRef.current) return;
@@ -837,12 +858,10 @@ const CustomVideoPlayer = () => {
           </button>
         )}
 
-
         <div
           ref={playerContainerRef}
           className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
           style={{ aspectRatio: "16/9" }}
-
           onClick={(e) => {
             const clickedInsideDrawer =
               containerRef.current?.contains(e.target as Node) ?? false;
@@ -913,8 +932,9 @@ const CustomVideoPlayer = () => {
               )}
               {/* Controls Overlay */}
               <div
-                className={`absolute inset-0 transition-opacity duration-300 ${showControls || isEnded ? "opacity-100" : "opacity-0"
-                  } z-20`}
+                className={`absolute inset-0 transition-opacity duration-300 ${
+                  showControls || isEnded ? "opacity-100" : "opacity-0"
+                } z-20`}
               >
                 {/* Bottom Controls */}
                 <div
@@ -946,8 +966,9 @@ const CustomVideoPlayer = () => {
                         return (
                           <div
                             key={verse.id}
-                            className={`absolute top-0 w-0.5 h-1 ${isPassed ? "bg-yellow-400" : "bg-black"
-                              }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
+                            className={`absolute top-0 w-0.5 h-1 ${
+                              isPassed ? "bg-yellow-400" : "bg-black"
+                            }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
                             style={{
                               left: `${versePosition}%`,
                               transform: "translateX(-50%)",
@@ -971,6 +992,25 @@ const CustomVideoPlayer = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       {/* Play/Pause/Replay Button */}
+                      {(bibleVerseMarker?.length ?? 0) > 0 &&
+                        !selectedChapter?.label.includes("Intro") && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigateToVerse("backward");
+                            }}
+                            className={`${
+                              isFirstVerse() || !isPlayerReady
+                                ? "text-gray-500 cursor-not-allowed"
+                                : "text-white hover:text-blue-400"
+                            }`}
+                            aria-label="Previous Verse"
+                            disabled={!isPlayerReady || isFirstVerse()}
+                            title={isFirstVerse() ? "" : "Previous Verse"}
+                          >
+                            <FilledSkipBackIcon size={24} />
+                          </button>
+                        )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -985,8 +1025,8 @@ const CustomVideoPlayer = () => {
                           isEnded && !(currentTime < duration)
                             ? "Replay"
                             : isPlaying
-                              ? "Pause"
-                              : "Play"
+                            ? "Pause"
+                            : "Play"
                         }
                         disabled={!isPlayerReady}
                       >
@@ -998,6 +1038,25 @@ const CustomVideoPlayer = () => {
                           <FilledPlayIcon size={24} />
                         )}
                       </button>
+                      {(bibleVerseMarker?.length ?? 0) > 0 &&
+                        !selectedChapter?.label.includes("Intro") && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigateToVerse("forward");
+                            }}
+                            className={`${
+                              isLastVerse() || !isPlayerReady
+                                ? "text-gray-500 cursor-not-allowed"
+                                : "text-white hover:text-blue-400"
+                            }`}
+                            aria-label="Next Verse"
+                            disabled={!isPlayerReady || isLastVerse()}
+                            title={isLastVerse() ? "" : "Next Verse"}
+                          >
+                            <FilledSkipForwardIcon size={24} />
+                          </button>
+                        )}
                       {/* Timer */}
                       <div className="text-white text-sm">
                         {formatTime(currentTime)} / {formatTime(duration)}
@@ -1005,8 +1064,9 @@ const CustomVideoPlayer = () => {
                     </div>
                     <div className="flex items-center space-x-4">
                       {/* Settings Button */}
-                      <div ref={containerRef}>
-                        <SettingsButton ref={settingsButtonRef}
+                      <div ref={containerRef} className="flex items-center">
+                        <SettingsButton
+                          ref={settingsButtonRef}
                           onClick={() => {
                             if (showSettingsMenu && !showQualityDrawer) {
                               setShowSettingsMenu(false);
@@ -1034,11 +1094,14 @@ const CustomVideoPlayer = () => {
                           availableQualities={availableQualities}
                           onSelect={async (quality) => {
                             if (vimeoPlayerRef.current) {
-                              const currentTime = await vimeoPlayerRef.current.getCurrentTime();
+                              const currentTime =
+                                await vimeoPlayerRef.current.getCurrentTime();
                               pendingQualityChangeTimeRef.current = currentTime;
-                              console.log("Saved time before quality switch:", currentTime);
-                              // 2. Save if it was playing
-                              const isActuallyPlaying = await vimeoPlayerRef.current.getPaused().then(p => !p);
+                              //Save if it was playing
+                              const isActuallyPlaying =
+                                await vimeoPlayerRef.current
+                                  .getPaused()
+                                  .then((p) => !p);
                               wasPlayingRef.current = isActuallyPlaying;
                             }
                             setSelectedQuality(quality);

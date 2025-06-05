@@ -101,7 +101,7 @@ const useThemeStore = create<ThemeStore>()(
     {
       name: "theme-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ currentTheme: state.currentTheme }),
+      partialize: (state) => ({ currentTheme: state.currentTheme, fontType:state.fontType,fontSize:state.fontSize }),
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.initializeTheme();
