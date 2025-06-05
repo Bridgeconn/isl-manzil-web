@@ -802,7 +802,7 @@ const CustomVideoPlayer = () => {
     if (!bibleVerseMarker) return false;
     return (
       bibleVerseMarker[bibleVerseMarker.length - 1].verse ===
-      currentPlayingVerse || currentTime === duration
+      currentPlayingVerse || !(currentTime < duration) || isEnded
     );
   };
 
