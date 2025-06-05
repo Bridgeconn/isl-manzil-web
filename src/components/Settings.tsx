@@ -27,7 +27,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
       </div>
 
       <div className="space-y-2 sm:space-y-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Choose Theme</h4>
+        <h4 className="text-base font-semibold text-gray-700 mb-3">Theme</h4>
 
         <div className="grid grid-cols-3 gap-2">
           {themes.map((theme) => (
