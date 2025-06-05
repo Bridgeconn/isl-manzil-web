@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
 import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
+import useThemeStore from "@/store/useThemeStore";
+
 
 const BibleVerseDisplay = ({setIsIntroDataAvailable}: {setIsIntroDataAvailable: (value: boolean) => void}) => {
   const {
@@ -10,6 +12,7 @@ const BibleVerseDisplay = ({setIsIntroDataAvailable}: {setIsIntroDataAvailable: 
     currentPlayingVerse,
     seekToVerse,
   } = useBibleStore();
+  const{fontType,fontSize}=useThemeStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -136,21 +139,27 @@ const BibleVerseDisplay = ({setIsIntroDataAvailable}: {setIsIntroDataAvailable: 
           {renderLoadingOrError()}
 
           {!isFetching && !error && verseData.length > 0 && (
+           
             <div
-              ref={containerRef}
-              className="flex flex-col h-full overflow-y-auto"
-              style={{ scrollBehavior: "smooth" }}
-            >
+  ref={containerRef}
+  className={`flex flex-col h-full overflow-y-auto ${
+    fontType === "serif" ? "font-serif" : "font-sans"
+  }`}
+  style={{
+    scrollBehavior: "smooth",
+    fontSize: `${fontSize}px`,
+  }}
+>
               <div
                 className="mb-2"
                 ref={(el) => setVerseRef(verseData[0]?.verse, el)}
                 id={`verse-${verseData[0]?.verse}`}
               >
-                <span className="text-4xl font-bold text-gray-800">
+                <span className="themed-text text-4xl font-bold text-gray-800">
                   {selectedChapter.value}
                 </span>
                 <span
-                  className={`antialiased tracking-wide font-normal font-roboto ml-2 cursor-pointer rounded transition-colors duration-300 ${
+                  className={`themed-text antialiased tracking-wide font-normal font-roboto ml-2 cursor-pointer rounded transition-colors duration-300 ${
                     isCurrentVerse(verseData[0]?.verse) ? "bg-blue-200" : ""
                   }`}
                   onClick={() => seekToVerse(verseData[0]?.verse)}
@@ -172,14 +181,14 @@ const BibleVerseDisplay = ({setIsIntroDataAvailable}: {setIsIntroDataAvailable: 
                         ref={(el) => setVerseRef(verseItem.verse, el)}
                       >
                         <span
-                          className={`font-semibold text-gray-500 text-sm mr-2 rounded transition-colors duration-300 ${
+                          className={`themed-text font-semibold text-gray-500 text-sm mr-2 rounded transition-colors duration-300 ${
                             isPlaying ? "bg-blue-200" : ""
                           }`}
                         >
                           {verseItem.verse}
                         </span>
                         <span
-                          className={`antialiased tracking-wide font-normal font-roboto rounded transition-colors duration-300 ${
+                          className={`themed-text antialiased tracking-wide font-normal font-roboto rounded transition-colors duration-300 ${
                             isPlaying ? "bg-blue-200" : ""
                           }`}
                         >

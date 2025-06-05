@@ -1,0 +1,120 @@
+import React from "react";
+import { X } from "lucide-react";
+import useThemeStore from "../store/useThemeStore";
+
+interface SettingsProps {
+  onClose: () => void;
+}
+
+const Settings: React.FC<SettingsProps> = ({ onClose }) => {
+  const { currentTheme, themes, fontType,
+  fontSize,
+  setFontType,
+  setFontSize, setTheme } = useThemeStore();
+  const percent = ((fontSize - 12) * 100) / (24 - 12);
+
+  return (
+    <div className="w-80 bg-white border border-gray-200 shadow-lg p-4 pt-2 relative z-50">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Settings</h3>
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Close settings"
+        >
+          <X size={20} className="text-gray-500" />
+        </button>
+      </div>
+
+      <div className="space-y-2 sm:space-y-4">
+        <h4 className="text-base font-semibold text-gray-700 mb-3">Theme</h4>
+
+        <div className="grid grid-cols-3 gap-2">
+          {themes.map((theme) => (
+            <button
+              key={theme.id}
+              onClick={() => setTheme(theme)}
+              className={`
+                relative p-1 border-2 transition-all duration-200
+                ${
+                  currentTheme?.id === theme.id
+                    ? "border-blue-500 ring-2 ring-blue-200"
+                    : "border-gray-200 hover:border-gray-300"
+                }
+              `}
+            >
+              <div className="space-y-2">
+                <div className="flex flex-row w-full border rounder-border">
+                  <div
+                    className="flex-1 h-6"
+                    style={{ backgroundColor: theme.backgroundColor }}
+                  />
+                  <div
+                    className="flex-1 h-6"
+                    style={{ backgroundColor: theme.textColor }}
+                  />
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+
+
+        <div className="pt-4 border-t border-gray-200"></div>
+      </div>
+
+      {/* Font Type Toggle */}
+<div className="mt-6">
+  <h4 className="text-sm font-medium text-gray-700 mb-2">Font Type:</h4>
+  <div className="flex items-center gap-4 mb-2">
+    <span className={`${fontType === "serif" ? "font-bold text-black-600" : ""}`}>
+      Serif
+    </span>
+    <button
+      onClick={() => setFontType(fontType === "serif" ? "sans" : "serif")}
+      className="relative w-10 h-4 bg-gray-300 rounded-full focus:outline-none"
+    >
+      <span
+        className={`absolute left-0 top-0 w-4 h-4 bg-white rounded-full shadow transform transition-transform ${
+          fontType === "sans" ? "translate-x-6" : ""
+        }`}
+      />
+    </button>
+    <span className={`${fontType === "sans" ? "font-bold text-black-600" : ""}`}>
+      Sans
+    </span>
+  </div>
+</div>
+
+{/* Font Size Slider */}
+<div className="mt-6">
+  <h4 className="text-sm font-medium text-gray-700 mb-2">Font Size:</h4>
+  <div className="flex items-center gap-3">
+    <span className="text-xs font-bold text-black-600">A-</span>
+   <input
+  type="range"
+  min={12}
+  max={24}
+  step={1}
+  
+  value={fontSize}
+  onChange={(e) => setFontSize(Number(e.target.value))}
+  className="w-full appearance-none rounded-full"
+  style={{
+    height: '4px',
+    background: `linear-gradient(to right, black ${percent}%,#9ca3af ${percent}%)`,
+  }}
+/>
+
+    <span className="text-lg font-bold text-black-600">A+</span>
+  </div>
+</div>
+
+
+
+    </div>
+  );
+};
+
+export default Settings;
