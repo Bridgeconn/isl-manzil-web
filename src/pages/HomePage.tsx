@@ -28,14 +28,14 @@ const HomePage: React.FC = () => {
   );
 
   const getLayoutClasses = () => {
-    if (isHorizontalLayout && showText && textPosition === "right") {
+    if (isHorizontalLayout && textPosition === "right") {
       return "flex gap-2 h-full px-2";
     }
     return `${textPosition === "below" ? "max-w-6xl" : ""} w-full mx-auto`;
   };
 
   const getVideoContainerClasses = () => {
-    if (isHorizontalLayout && showText && textPosition === "right") {
+    if (isHorizontalLayout && textPosition === "right") {
       return "flex-1";
     }
     if (isHorizontalLayout && !showText) {
@@ -48,7 +48,31 @@ const HomePage: React.FC = () => {
     if (isHorizontalLayout && showText && textPosition === "right") {
       return "verse-content-container h-[calc(100vh-180px)] bg-gray-50 border-2 rounded-md px-4 py-2";
     }
-    return "verse-content-container max-h-42 w-full sm:w-3/4 mx-auto my-2 bg-gray-50 border-2 rounded-md px-4 py-2";
+    const maxHeightClass = typeof window !== 'undefined' && window.innerHeight > 1000 ? "max-h-90" : "max-h-45";
+    
+    return `verse-content-container ${maxHeightClass} w-full sm:w-3/4 mx-auto my-2 bg-gray-50 border-2 rounded-md px-4 py-2`;
+  };
+
+  const getHorizontalTextContainerClasses = () => {
+    const baseClasses = "flex-shrink-0 transition-all duration-800 ease-in-out overflow-hidden";
+    
+    if (showText) {
+      return `${baseClasses} w-60 md:w-80 opacity-100`;
+    } else {
+      return `${baseClasses} w-0 opacity-0`;
+    }
+  };
+
+  const getVerticalTextContainerClasses = () => {
+    const baseClasses = "transition-all duration-800 ease-in-out overflow-hidden";
+    
+    if (showText) {
+      // Dynamic max-height based on viewport height
+      const maxHeightClass = typeof window !== 'undefined' && window.innerHeight > 1000 ? "max-h-96" : "max-h-48";
+      return `${baseClasses} ${maxHeightClass} opacity-100`;
+    } else {
+      return `${baseClasses} max-h-0 opacity-0`;
+    }
   };
 
   return (
@@ -60,18 +84,20 @@ const HomePage: React.FC = () => {
           <div className="flex flex-1 flex-wrap justify-end items-center gap-6 ml-2">
             <SelectViewContainer />
 
-            <LayoutControlButtons
-              showText={showText}
-              textPosition={textPosition}
-              canTogglePosition={canTogglePosition}
-              onToggleVisibility={toggleTextVisibility}
-              onTogglePosition={toggleTextPosition}
-            />
+            {canTogglePosition && (
+              <LayoutControlButtons
+                showText={showText}
+                textPosition={textPosition}
+                canTogglePosition={canTogglePosition}
+                onToggleVisibility={toggleTextVisibility}
+                onTogglePosition={toggleTextPosition}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      <div className={getLayoutClasses()}>
+      <div className={`${getLayoutClasses()} ${isHorizontalLayout && textPosition === "right" ? "transition-all duration-800 ease-in-out" : ""}`}>
         <div className={getVideoContainerClasses()}>
           <CustomVideoPlayer />
         </div>
@@ -83,28 +109,29 @@ const HomePage: React.FC = () => {
               toggleButton={toggleTextVisibility}
               isIntroDataAvailable={isIntroDataAvailable}
             />
-            {shouldShowContent && showText && (
+            {shouldShowContent && (
+              <div className={getVerticalTextContainerClasses()}>
               <div className={getVerseContentClasses()}>
                 <BibleVerseDisplay
                   setIsIntroDataAvailable={setIsIntroDataAvailable}
                 />
               </div>
+              </div>
             )}
           </>
         )}
 
-        {isHorizontalLayout &&
-          showText &&
-          textPosition === "right" &&
-          shouldShowContent && (
-            <div className="w-80 flex-shrink-0">
+        {isHorizontalLayout && textPosition === "right" && shouldShowContent && (
+          <div className={getHorizontalTextContainerClasses()}>
+            <div className="w-60 md:w-80 h-full">
               <div className={getVerseContentClasses()}>
                 <BibleVerseDisplay
                   setIsIntroDataAvailable={setIsIntroDataAvailable}
                 />
               </div>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </>
   );

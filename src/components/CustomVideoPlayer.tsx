@@ -861,7 +861,7 @@ const CustomVideoPlayer = () => {
 
         <div
           ref={playerContainerRef}
-          className={`relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden`}
+          className={`relative w-full sm:w-3/4 mx-auto rounded-lg overflow-hidden`}
           style={{ aspectRatio: "16/9" }}
           onClick={(e) => {
             const clickedInsideDrawer =

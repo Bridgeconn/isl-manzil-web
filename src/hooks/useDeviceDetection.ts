@@ -61,10 +61,10 @@ const getScreenType = (): ScreenInfo => {
   
   const shouldUseHorizontalLayout = () => {
     const isLandscape = width > height;
-    const isShortScreen = height <= 800;
+    // const isShortScreen = height <= 800;
     
 
-    return isLandscape || isShortScreen;
+    return isLandscape
   };
 
   const layoutMode: LayoutMode = shouldUseHorizontalLayout() ? "horizontal" : "vertical";

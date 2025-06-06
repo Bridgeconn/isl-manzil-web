@@ -19,7 +19,7 @@ const CustomLayoutIcons = {
         style={{ borderRadius: '2px' }}
       />
       <div 
-        className="bg-gray-500 flex-1"
+        className="bg-black flex-1"
         style={{ borderRadius: '2px' }}
       />
     </div>
@@ -36,7 +36,7 @@ const CustomLayoutIcons = {
         style={{ borderRadius: '2px' }}
       />
       <div 
-        className="bg-gray-500 flex-1"
+        className="bg-black flex-1"
         style={{ borderRadius: '2px' }}
       />
     </div>
@@ -60,21 +60,38 @@ const LayoutControlButtons: React.FC<LayoutControlButtonsProps> = ({
   className = "",
 }) => {
   return (
-    <div className={`flex items-center justify-end gap-4 ${className}`}>
-        <button
-          onClick={onTogglePosition}
-          className="flex items-center px-3 py-2  border text-white rounded-sm cursor-pointer transition-colors text-sm"
-          title={
-            textPosition === "right" ? "Move Text Below" : "Move Text Right"
-          }
-        >
-          {textPosition === "right" ? (
-            <CustomLayoutIcons.TextBelowIcon size={24} />
-          ) : (
-            <CustomLayoutIcons.TextRightIcon size={24} />
-          )}
-        </button>
-      {textPosition === "right" && <ButtonHide isVisible={showText} toggle={onToggleVisibility} />}
+    <div className={`flex items-center justify-end gap-2 ${className}`}>
+      {/* Text Right Button */}
+      <button
+        onClick={onTogglePosition}
+        className={`flex items-center justify-center w-8 h-8 rounded cursor-pointer transition-all duration-200 ${
+          textPosition === "right" 
+            ? "shadow-lg shadow-blue-500/50" 
+            : "hover:shadow-md hover:shadow-gray-400/30"
+        }`}
+        title="Move Text Right"
+        disabled={textPosition === "right"}
+      >
+        <CustomLayoutIcons.TextRightIcon size={16} />
+      </button>
+
+      {/* Text Below Button */}
+      <button
+        onClick={onTogglePosition}
+        className={`flex items-center justify-center w-8 h-8 rounded cursor-pointer transition-all duration-200 ${
+          textPosition === "below" 
+            ? "shadow-lg shadow-blue-500/50" 
+            : "hover:shadow-md hover:shadow-gray-400/30"
+        }`}
+        title="Move Text Below"
+        disabled={textPosition === "below"}
+      >
+        <CustomLayoutIcons.TextBelowIcon size={16} />
+      </button>
+
+      <div className={`${textPosition === "right" ? "visible" : "invisible"}`}>
+        <ButtonHide isVisible={showText} toggle={onToggleVisibility} />
+      </div>
     </div>
   );
 };

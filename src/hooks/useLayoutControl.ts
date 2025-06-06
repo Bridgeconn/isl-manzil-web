@@ -60,7 +60,7 @@ export const useLayoutControl = () => {
 
   const toggleTextPosition = () => {
     setLayoutState(prev => {
-      if (!prev.canTogglePosition || !prev.showText) return prev;
+      if (!prev.canTogglePosition) return prev;
       
       const newPosition = prev.textPosition === 'right' ? 'below' : 'right';
       return {
