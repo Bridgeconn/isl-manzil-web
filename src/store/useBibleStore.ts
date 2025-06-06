@@ -94,7 +94,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
 
     // If it's a single verse (no dash), check for exact match
     if (!trimmedRange.includes("-")) {
-      if (verseRange === "intro" && verseNumber === 0) {
+      if (verseRange === "Intro" && verseNumber === 0) {
         return true;
       }
       return parseInt(trimmedRange) === verseNumber;
@@ -338,7 +338,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
 
     const introChapter: ChapterOption = {
       value: 0,
-      label: "intro",
+      label: "Intro",
       isDisabled: !availableChapters.some((ch) => ch.value === 0),
     };
 
@@ -352,7 +352,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     const bookCodeUpper = bookCode.toUpperCase();
     const chapterIndex = chapter - 1;
 
-    if(chapterIndex < 0) {
+    if (chapterIndex < 0) {
       return [];
     }
 
@@ -367,7 +367,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
 
     const introVerse: VerseOption = {
       value: 0,
-      label: "intro",
+      label: "Intro",
     };
     return [introVerse, ...verses];
   },
@@ -404,7 +404,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       });
       return;
     }
-
 
     // Create unique request ID to track this specific request
     const requestId = `${selectedBook.value}-${
@@ -494,7 +493,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       if (!isIntroAvailable) {
         const introVerse = {
           id: 0,
-          verse: "intro",
+          verse: "Intro",
           time: "00:00:00:00",
         };
         set({
@@ -523,7 +522,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     );
     const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
 
-    // console.log("cleaned time", cleanedTime);
     if (marker) {
       const event = new CustomEvent("seek-to-verse", {
         detail: { time: cleanedTime },

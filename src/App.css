@@ -22,3 +22,12 @@
   flex-direction: column;
   overflow-y: auto;
 }
+
+.layout-main.theme-active {
+  background-color: var(--theme-bg-color);
+  /* color: var(--theme-text-color); */
+}
+
+.layout-main.theme-active .themed-text {
+  color: var(--theme-text-color) !important;
+}

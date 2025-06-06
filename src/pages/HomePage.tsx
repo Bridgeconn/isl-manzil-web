@@ -78,7 +78,7 @@ const HomePage: React.FC = () => {
 
         {(!isHorizontalLayout || textPosition === "below") && (
           <>
-            <Middlebar 
+            <Middlebar
               showVerse={showText}
               toggleButton={toggleTextVisibility}
               isIntroDataAvailable={isIntroDataAvailable}
@@ -93,15 +93,18 @@ const HomePage: React.FC = () => {
           </>
         )}
 
-        {isHorizontalLayout && showText && textPosition === "right" && shouldShowContent && (
-          <div className="w-80 flex-shrink-0">
-            <div className={getVerseContentClasses()}>
-              <BibleVerseDisplay
-                setIsIntroDataAvailable={setIsIntroDataAvailable}
-              />
+        {isHorizontalLayout &&
+          showText &&
+          textPosition === "right" &&
+          shouldShowContent && (
+            <div className="w-80 flex-shrink-0">
+              <div className={getVerseContentClasses()}>
+                <BibleVerseDisplay
+                  setIsIntroDataAvailable={setIsIntroDataAvailable}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </>
   );

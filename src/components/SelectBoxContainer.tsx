@@ -125,7 +125,7 @@ const SelectBoxContainer = () => {
 
     if (context === "value") {
       return (
-        <span className="text-[var(--indigo-color)] font-semibold">
+        <span className="themed-text text-[var(--indigo-color)] font-semibold">
           {option.label}
         </span>
       );
@@ -143,7 +143,7 @@ const SelectBoxContainer = () => {
           formatOptionLabel={formattedOptionLabel}
           onChange={handleBookChange}
           placeholder={isLoading ? "Loading books..." : "Select Book"}
-          zIndex="z-50"
+          zIndex="z-45"
         />
       </div>
 
@@ -166,7 +166,7 @@ const SelectBoxContainer = () => {
             formatOptionLabel={formattedOptionLabel}
             onChange={handleVerseChange}
             placeholder="Verse"
-            zIndex="z-30"
+            zIndex="z-35"
           />
         )}
       </div>
