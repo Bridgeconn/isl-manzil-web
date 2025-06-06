@@ -9,7 +9,7 @@ import Previous from "../assets/images/Previous.gif";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
-import LoopingGif from "./LoopingGif";
+import HoverControlledGif from "./HoverControlledGif";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -845,11 +845,12 @@ const CustomVideoPlayer = () => {
             className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
             title="Previous Chapter"
           >
-            <LoopingGif
+            <HoverControlledGif
               src={Previous}
               alt="Previous chapter"
               className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
               duration={2000}
+              loopCount={3}
             />
           </button>
         ) : (
@@ -860,7 +861,7 @@ const CustomVideoPlayer = () => {
 
         <div
           ref={playerContainerRef}
-          className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
+          className={`relative w-full sm:w-3/4 mx-auto rounded-lg overflow-hidden`}
           style={{ aspectRatio: "16/9" }}
           onClick={(e) => {
             const clickedInsideDrawer =
@@ -1143,11 +1144,12 @@ const CustomVideoPlayer = () => {
             className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
             title="Next Chapter"
           >
-            <LoopingGif
+            <HoverControlledGif
               src={Next}
               alt="Next chapter"
               className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
               duration={2000}
+              loopCount={3}
             />
           </button>
         ) : (

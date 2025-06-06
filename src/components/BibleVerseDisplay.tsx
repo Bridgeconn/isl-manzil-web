@@ -4,15 +4,14 @@ import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 import useThemeStore from "@/store/useThemeStore";
 
-
-const BibleVerseDisplay = ({setIsIntroDataAvailable}: {setIsIntroDataAvailable: (value: boolean) => void}) => {
-  const {
-    selectedBook,
-    selectedChapter,
-    currentPlayingVerse,
-    seekToVerse,
-  } = useBibleStore();
-  const{fontType,fontSize}=useThemeStore();
+const BibleVerseDisplay = ({
+  setIsIntroDataAvailable,
+}: {
+  setIsIntroDataAvailable: (value: boolean) => void;
+}) => {
+  const { selectedBook, selectedChapter, currentPlayingVerse, seekToVerse } =
+    useBibleStore();
+  const { fontType, fontSize } = useThemeStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -72,7 +71,7 @@ const BibleVerseDisplay = ({setIsIntroDataAvailable}: {setIsIntroDataAvailable: 
         const filePath = `/src/assets/data/books/${bookCode}/${chapterNum}.csv`;
 
         if (!csvFiles[filePath]) {
-          if(chapterNum === 0) {
+          if (chapterNum === 0) {
             setVerseData([]);
             setIsFetching(false);
             setIsIntroDataAvailable(false);
@@ -139,17 +138,16 @@ const BibleVerseDisplay = ({setIsIntroDataAvailable}: {setIsIntroDataAvailable: 
           {renderLoadingOrError()}
 
           {!isFetching && !error && verseData.length > 0 && (
-           
             <div
-  ref={containerRef}
-  className={`flex flex-col h-full overflow-y-auto ${
-    fontType === "serif" ? "font-serif" : "font-sans"
-  }`}
-  style={{
-    scrollBehavior: "smooth",
-    fontSize: `${fontSize}px`,
-  }}
->
+              ref={containerRef}
+              className={`flex flex-col h-full overflow-y-auto ${
+                fontType === "serif" ? "font-serif" : "font-sans"
+              }`}
+              style={{
+                scrollBehavior: "smooth",
+                fontSize: `${fontSize}px`,
+              }}
+            >
               <div
                 className="mb-2"
                 ref={(el) => setVerseRef(verseData[0]?.verse, el)}
