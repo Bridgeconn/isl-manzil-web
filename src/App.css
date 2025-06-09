@@ -31,3 +31,7 @@
 .layout-main.theme-active .themed-text {
   color: var(--theme-text-color) !important;
 }
+.text-themed {
+  font-size: var(--font-size);
+  font-family: var(--font-family);
+}

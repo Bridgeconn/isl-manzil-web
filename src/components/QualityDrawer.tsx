@@ -21,9 +21,9 @@ const QualityDrawer: React.FC<QualityDrawerProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="absolute py-1 max-h-70 bottom-22 overflow-y-auto pr-1  custom-scroll-black bottom-16 h-65 right-4 w-48 p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50">
+    <div className="absolute py-1 max-h-65 bottom-20 overflow-y-auto pr-1  custom-scroll-black bottom-16 h-auto right-4 w-48 p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50">
       <div>
-        <div className="flex  items-center mb-4">
+        <div className="flex  items-center mb-2">
           <ChevronLeft
             strokeWidth={2.5}
             size={20}
@@ -32,7 +32,7 @@ const QualityDrawer: React.FC<QualityDrawerProps> = ({
           />
           <span className="text-300 font-semibold ml-4 py-2 ">Quality</span>
         </div>
-        <div className="h-px bg-gray-600  w-full " />
+        <div className="h-px bg-gray-600  w-full mt-0.5" />
       </div>
       <div className="space-y-2">
         {availableQualities.map(({ id }) => {

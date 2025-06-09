@@ -126,6 +126,10 @@ const CustomVideoPlayer = () => {
     { id: string; label: string }[]
   >([]);
 
+  //versedemarcation
+
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+
   const [showShare, setShowShare] = useState(false);
   const HD_QUALITIES = ["1080p", "1440p", "2160p"];
   const isHDSelected = HD_QUALITIES.includes(selectedQuality);
@@ -1023,6 +1027,16 @@ const CustomVideoPlayer = () => {
                     ref={seekBarRef}
                     className="relative h-1 bg-gray-600 rounded-full mb-4 cursor-pointer"
                     onClick={handleSeekClick}
+                    onMouseMove={(e) => {
+                      const rect = seekBarRef.current?.getBoundingClientRect();
+                      if (rect) {
+                        const x = e.clientX - rect.left;
+                        const percent = x / rect.width;
+                        const time = percent * duration;
+                        setHoverTime(time);
+                      }
+                    }}
+                    onMouseLeave={() => setHoverTime(null)}
                   >
                     {/* Progress Bar */}
                     <div
@@ -1057,9 +1071,14 @@ const CustomVideoPlayer = () => {
                             onClick={(e) => handleVerseMarkerClick(verse, e)}
                           >
                             {/* Transparent area for hover + tooltip */}
+
                             <div
                               className="h-full cursor-pointer relative group"
-                              title={`Verse:${verse.verse} (${verse.time})`}
+                              title={`Verse:${verse.verse} (${
+                                hoverTime !== null
+                                  ? formatTime(hoverTime)
+                                  : verse.time
+                              })`}
                             >
                               {/* The original marker line */}
                               <div
@@ -1160,18 +1179,19 @@ const CustomVideoPlayer = () => {
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-2  ">
-                      <div>
+                    <div className="flex items-center gap-4   ">
+                      <div className="mt-2">
                         <button
                           onClick={() => setShowShare((prev) => !prev)}
-                          className="p-2 text-white hover:text-gray-300 mt-0.5 "
+                          className=" text-white hover:text-gray-300  "
                         >
-                          <Share2 strokeWidth={2.5} size={25} />
+                          <Share2 strokeWidth={2.5} size={23} />
                         </button>
                       </div>
                       {/* Settings Button */}
                       <div ref={containerRef} className="flex items-center">
-                        <div className="relative mt-1 mr-2">
+                        {/* <div className="relative "> */}
+                        <div className="mt-1 relative">
                           <SettingsButton
                             ref={settingsButtonRef}
                             onClick={() => {
@@ -1223,6 +1243,7 @@ const CustomVideoPlayer = () => {
                           onBackToSettings={handleChangeSettings}
                         />
                       </div>
+                      {/* </div> */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

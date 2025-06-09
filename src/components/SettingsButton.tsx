@@ -12,7 +12,7 @@ interface SettingsButtonProps {
 const SettingsButton = React.forwardRef<HTMLButtonElement, SettingsButtonProps>(
   ({ onClick, isDisabled }, ref) => {
     return (
-      <div >
+      <div>
         <button
           ref={ref}
           onClick={onClick}
@@ -20,8 +20,8 @@ const SettingsButton = React.forwardRef<HTMLButtonElement, SettingsButtonProps>(
           className="text-white hover:text-blue-400"
           title="Settings"
         >
-          {/* <Settings strokeWidth={2.5} size={25} /> */}
-           <FontAwesomeIcon icon={faGear}className="text-2xl" />
+          
+          <FontAwesomeIcon icon={faGear} className="text-[23px]" />
         </button>
       </div>
     );
