@@ -43,20 +43,16 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
             </div>
           ))}
         </div>
-        <div className="mr-4 h-10 flex-shrink-0">
+        <div className="mr-4 h-10 flex-shrink-0" ref={settingsRef}>
           <img
             src={SettingGif}
             alt="Settings"
             className="w-full h-full object-contain cursor-pointer"
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            onClick={() => setIsSettingsOpen((prev) => !prev)}
           />
-          
           {isSettingsOpen && (
-            <div
-              ref={settingsRef}
-              className="absolute top-full right-0 mt-2 z-50"
-            >
-              <Settings onClose={() => setIsSettingsOpen(false)} />
+            <div className="absolute top-full right-0 z-50">
+              <Settings />
             </div>
           )}
         </div>
