@@ -69,6 +69,7 @@ const CustomVideoPlayer = () => {
     selectedBook,
     selectedChapter,
     selectedVerse,
+    setVerse,
     loadVideoForCurrentSelection,
     bibleVerseMarker,
     findVerseMarkerForVerse,
@@ -97,6 +98,7 @@ const CustomVideoPlayer = () => {
   const prevSelectedVerse = useRef<number | null>(null);
   const prevSelectedChapter = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
+  const isManualSeekingRef = useRef<boolean>(false);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
@@ -125,6 +127,17 @@ const CustomVideoPlayer = () => {
     setShowQualityDrawer(false);
     setShowSettingsMenu(true);
   };
+
+  const updateVerseDropdown = useCallback((verseNumber: string | number) => {
+    isManualSeekingRef.current = true;
+    setVerse({ 
+      value: ["Intro", "0"].includes(verseNumber.toString()) ? 0 : Number(verseNumber), 
+      label: verseNumber.toString() 
+    });
+    setTimeout(() => {
+      isManualSeekingRef.current = false;
+    }, 300);
+  }, [setVerse]);
 
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -183,6 +196,7 @@ const CustomVideoPlayer = () => {
 
           if (currentVerse && currentVerse !== currentPlayingVerse) {
             setCurrentPlayingVerse(currentVerse);
+            updateVerseDropdown(currentVerse);
           }
         } catch (error) {
           console.error("Error tracking verse:", error);
@@ -196,6 +210,7 @@ const CustomVideoPlayer = () => {
     bibleVerseMarker,
     getCurrentVerseFromTime,
     currentPlayingVerse,
+    updateVerseDropdown,
     setCurrentPlayingVerse,
     clearIntervals,
   ]);
@@ -231,7 +246,7 @@ const CustomVideoPlayer = () => {
   // Effect to handle selectedVerse changes
   useEffect(() => {
     const handleVerseChange = async () => {
-      if (!selectedVerse || !isPlayerReady) {
+      if (!selectedVerse || !isPlayerReady || isManualSeekingRef.current) {
         return;
       }
       const currentBook = selectedBook?.value ?? null;
@@ -439,6 +454,10 @@ const CustomVideoPlayer = () => {
           const newCurrentVerse = getCurrentVerseFromTime(seconds);
           setCurrentPlayingVerse(newCurrentVerse);
 
+          if (newCurrentVerse) {
+            updateVerseDropdown(newCurrentVerse);
+          }
+
           if (isEnded) {
             setIsEnded(false);
           }
@@ -501,6 +520,9 @@ const CustomVideoPlayer = () => {
           if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
             const newCurrentVerse = getCurrentVerseFromTime(newTime);
             setCurrentPlayingVerse(newCurrentVerse);
+            if (newCurrentVerse) {
+              updateVerseDropdown(newCurrentVerse);
+            }
           }
           break;
         }
@@ -516,6 +538,9 @@ const CustomVideoPlayer = () => {
           if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
             const newCurrentVerse = getCurrentVerseFromTime(newTime);
             setCurrentPlayingVerse(newCurrentVerse);
+            if(newCurrentVerse) {
+              updateVerseDropdown(newCurrentVerse);
+            }
           }
           break;
         }
@@ -535,6 +560,7 @@ const CustomVideoPlayer = () => {
     bibleVerseMarker,
     getCurrentVerseFromTime,
     setCurrentPlayingVerse,
+    updateVerseDropdown,
     isVideoAvailable,
   ]);
 
@@ -706,6 +732,10 @@ const CustomVideoPlayer = () => {
     const newCurrentVerse = getCurrentVerseFromTime(seekTime);
     setCurrentPlayingVerse(newCurrentVerse);
 
+    if(newCurrentVerse) {
+      updateVerseDropdown(newCurrentVerse);
+    }
+
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
@@ -747,6 +777,8 @@ const CustomVideoPlayer = () => {
     // Update current verse based on clicked marker
     setCurrentPlayingVerse(verse.verse);
 
+    updateVerseDropdown(verse.verse);
+
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
@@ -786,6 +818,12 @@ const CustomVideoPlayer = () => {
       vimeoPlayerRef.current.setCurrentTime(seekTime);
       setCurrentTime(seekTime);
       setCurrentPlayingVerse(nextVerse.verse);
+      setVerse({
+        value: ["Intro", "0"].includes(nextVerse.verse)
+          ? 0
+          : Number(nextVerse.verse),
+        label: nextVerse.verse.toString(),
+      })
 
       if (isEnded) {
         setIsEnded(false);
