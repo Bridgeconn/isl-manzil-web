@@ -10,6 +10,7 @@ import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
 import HoverControlledGif from "./HoverControlledGif";
+import useDeviceDetection from "@/hooks/useDeviceDetection";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -78,6 +79,8 @@ const CustomVideoPlayer = () => {
     currentPlayingVerse,
     isVideoLoading,
   } = useBibleStore();
+
+  const { shouldUseMobileBottomBar } = useDeviceDetection();
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -278,7 +281,13 @@ const CustomVideoPlayer = () => {
 
   // Handle video ID changes
   useEffect(() => {
-    if (!currentVideoId || !playerRef.current || isVideoLoading || !isVideoAvailable) return;
+    if (
+      !currentVideoId ||
+      !playerRef.current ||
+      isVideoLoading ||
+      !isVideoAvailable
+    )
+      return;
 
     const loadNewVideo = async () => {
       try {
@@ -373,7 +382,7 @@ const CustomVideoPlayer = () => {
 
           //  Use the time stored at click time
           const timeToSeek = pendingQualityChangeTimeRef.current;
-          if(timeToSeek){
+          if (timeToSeek) {
             await player.setCurrentTime(timeToSeek);
             setCurrentTime(timeToSeek);
           }
@@ -795,14 +804,18 @@ const CustomVideoPlayer = () => {
 
   const isFirstVerse = () => {
     if (!bibleVerseMarker) return false;
-    return bibleVerseMarker[0].verse === currentPlayingVerse || currentTime === 0;
+    return (
+      bibleVerseMarker[0].verse === currentPlayingVerse || currentTime === 0
+    );
   };
 
   const isLastVerse = () => {
     if (!bibleVerseMarker) return false;
     return (
       bibleVerseMarker[bibleVerseMarker.length - 1].verse ===
-      currentPlayingVerse || !(currentTime < duration) || isEnded
+        currentPlayingVerse ||
+      !(currentTime < duration) ||
+      isEnded
     );
   };
 
@@ -837,31 +850,32 @@ const CustomVideoPlayer = () => {
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-2">
+    <div className="w-full max-w-6xl mx-auto sm:px-2">
       <div className="flex items-center justify-center w-full">
-        {canGoPrevious ? (
-          <button
-            onClick={() => navigateToChapter("previous")}
-            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
-            title="Previous Chapter"
-          >
-            <HoverControlledGif
-              src={Previous}
-              alt="Previous chapter"
-              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-              duration={2000}
-              loopCount={3}
-            />
-          </button>
-        ) : (
-          <button className="p-1">
-            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
-          </button>
-        )}
+        {!shouldUseMobileBottomBar &&
+          (canGoPrevious ? (
+            <button
+              onClick={() => navigateToChapter("previous")}
+              className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+              title="Previous Chapter"
+            >
+              <HoverControlledGif
+                src={Previous}
+                alt="Previous chapter"
+                className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+                duration={2000}
+                loopCount={3}
+              />
+            </button>
+          ) : (
+            <button className="p-1">
+              <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
+            </button>
+          ))}
 
         <div
           ref={playerContainerRef}
-          className={`relative w-full sm:w-3/4 mx-auto rounded-lg overflow-hidden`}
+          className={`relative w-full md:w-3/4 mx-auto overflow-hidden`}
           style={{ aspectRatio: "16/9" }}
           onClick={(e) => {
             const clickedInsideDrawer =
@@ -1138,25 +1152,26 @@ const CustomVideoPlayer = () => {
             </>
           )}
         </div>
-        {canGoNext ? (
-          <button
-            onClick={() => navigateToChapter("next")}
-            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
-            title="Next Chapter"
-          >
-            <HoverControlledGif
-              src={Next}
-              alt="Next chapter"
-              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-              duration={2000}
-              loopCount={3}
-            />
-          </button>
-        ) : (
-          <button className="p-1">
-            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
-          </button>
-        )}
+        {!shouldUseMobileBottomBar &&
+          (canGoNext ? (
+            <button
+              onClick={() => navigateToChapter("next")}
+              className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+              title="Next Chapter"
+            >
+              <HoverControlledGif
+                src={Next}
+                alt="Next chapter"
+                className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
+                duration={2000}
+                loopCount={3}
+              />
+            </button>
+          ) : (
+            <button className="p-1">
+              <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
+            </button>
+          ))}
       </div>
     </div>
   );
