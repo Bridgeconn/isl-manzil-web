@@ -1,6 +1,8 @@
 // In SettingsButton.tsx
 import React from "react";
-import { Settings } from "lucide-react";
+// import { Settings } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGear } from "@fortawesome/free-solid-svg-icons";
 
 interface SettingsButtonProps {
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -10,7 +12,7 @@ interface SettingsButtonProps {
 const SettingsButton = React.forwardRef<HTMLButtonElement, SettingsButtonProps>(
   ({ onClick, isDisabled }, ref) => {
     return (
-      <div className="mt-1.25">
+      <div >
         <button
           ref={ref}
           onClick={onClick}
@@ -18,7 +20,8 @@ const SettingsButton = React.forwardRef<HTMLButtonElement, SettingsButtonProps>(
           className="text-white hover:text-blue-400"
           title="Settings"
         >
-          <Settings strokeWidth={2.5} size={25} />
+          {/* <Settings strokeWidth={2.5} size={25} /> */}
+           <FontAwesomeIcon icon={faGear}className="text-2xl" />
         </button>
       </div>
     );

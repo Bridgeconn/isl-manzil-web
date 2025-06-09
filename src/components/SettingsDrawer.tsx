@@ -17,20 +17,21 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="absolute bottom-16 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-48 p-3 z-50">
+    <div className="absolute bottom-22 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-48 p-3 z-50">
       <div className="flex justify-between items-center mb-4">
         <span className="text-lg font-semibold">Settings</span>
         <button onClick={onClose} className="text-white">
           ✕
         </button>
       </div>
+      
       <div className="space-y-2">
         <div
           className="flex justify-between items-center cursor-pointer hover:bg-gray-700 p-2 rounded"
           onClick={onOpenQualityDrawer}
         >
           <div className="flex items-center gap-2">
-            <SlidersHorizontal size={20} className="text-gray-400" />
+            <SlidersHorizontal strokeWidth={2.5} size={20}  className="text-white-400" />
             <span className="text-white text-sm font-medium leading-none">
               Quality
             </span>

@@ -127,6 +127,9 @@ const CustomVideoPlayer = () => {
   >([]);
 
   const [showShare, setShowShare] = useState(false);
+  const HD_QUALITIES = ["1080p", "1440p", "2160p"];
+  const isHDSelected = HD_QUALITIES.includes(selectedQuality);
+
   // const [shareUrl, setShareUrl] = useState<string>("");
 
   const BASE_URL =
@@ -165,6 +168,7 @@ const CustomVideoPlayer = () => {
       setCurrentVideoId(null);
       loadVideoForCurrentSelection();
       getBibleVerseMarker();
+      setSelectedQuality("Auto");
     }
   }, [
     selectedBook,
@@ -338,7 +342,13 @@ const CustomVideoPlayer = () => {
 
   // Handle video ID changes
   useEffect(() => {
-    if (!currentVideoId || !playerRef.current || isVideoLoading || !isVideoAvailable) return;
+    if (
+      !currentVideoId ||
+      !playerRef.current ||
+      isVideoLoading ||
+      !isVideoAvailable
+    )
+      return;
 
     const loadNewVideo = async () => {
       try {
@@ -416,6 +426,7 @@ const CustomVideoPlayer = () => {
           const qualities = await player.getQualities();
           const qualityIds = qualities.map((q) => q.id);
           setAvailableQualities(qualities);
+          console.log("available", availableQualities);
           const selected = selectedQuality.toLowerCase();
           if (qualityIds.includes(selected)) {
             await player.setQuality(
@@ -433,7 +444,7 @@ const CustomVideoPlayer = () => {
 
           //  Use the time stored at click time
           const timeToSeek = pendingQualityChangeTimeRef.current;
-          if(timeToSeek){
+          if (timeToSeek) {
             await player.setCurrentTime(timeToSeek);
             setCurrentTime(timeToSeek);
           }
@@ -780,7 +791,6 @@ const CustomVideoPlayer = () => {
     }
   };
 
-  // For dragging
   const handleSeekMouseDown = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (isVideoAvailable) {
@@ -855,14 +865,18 @@ const CustomVideoPlayer = () => {
 
   const isFirstVerse = () => {
     if (!bibleVerseMarker) return false;
-    return bibleVerseMarker[0].verse === currentPlayingVerse || currentTime === 0;
+    return (
+      bibleVerseMarker[0].verse === currentPlayingVerse || currentTime === 0
+    );
   };
 
   const isLastVerse = () => {
     if (!bibleVerseMarker) return false;
     return (
       bibleVerseMarker[bibleVerseMarker.length - 1].verse ===
-      currentPlayingVerse || !(currentTime < duration) || isEnded
+        currentPlayingVerse ||
+      !(currentTime < duration) ||
+      isEnded
     );
   };
 
@@ -1016,28 +1030,52 @@ const CustomVideoPlayer = () => {
                       style={{ width: `${progressPercent}%` }}
                     ></div>
                     {/* Verse markers */}
+
                     {bibleVerseMarker &&
                       bibleVerseMarker.length > 0 &&
-                      bibleVerseMarker.map((verse: VerseMarkerType) => {
+                      bibleVerseMarker.map((verse: VerseMarkerType, index) => {
                         const verseTimeInSeconds = timeToSeconds(verse.time);
                         const versePosition =
                           (verseTimeInSeconds / duration) * 100;
+                        const nextVerseTime = bibleVerseMarker[index + 1]
+                          ? timeToSeconds(bibleVerseMarker[index + 1].time)
+                          : duration;
+                        const nextVersePosition =
+                          (nextVerseTime / duration) * 100;
+
+                        const segmentWidth = nextVersePosition - versePosition;
                         const isPassed = currentTime >= verseTimeInSeconds;
+
                         return (
                           <div
                             key={verse.id}
-                            className={`absolute top-0 w-0.5 h-1 ${
-                              isPassed ? "bg-yellow-400" : "bg-black"
-                            }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
+                            className="absolute top-0 h-full z-10 group"
                             style={{
                               left: `${versePosition}%`,
-                              transform: "translateX(-50%)",
+                              width: `${segmentWidth}%`,
                             }}
                             onClick={(e) => handleVerseMarkerClick(verse, e)}
-                            title={`Verse:${verse.verse} (${verse.time})`}
-                          ></div>
+                          >
+                            {/* Transparent area for hover + tooltip */}
+                            <div
+                              className="h-full cursor-pointer relative group"
+                              title={`Verse:${verse.verse} (${verse.time})`}
+                            >
+                              {/* The original marker line */}
+                              <div
+                                className={`absolute top-0 h-1 w-0.5 ${
+                                  isPassed ? "bg-yellow-400" : "bg-black"
+                                } group-hover:w-1 transition-all duration-200`}
+                                style={{
+                                  left: "0%",
+                                  transform: "translateX(-50%)",
+                                }}
+                              ></div>
+                            </div>
+                          </div>
                         );
                       })}
+
                     {/* Current Time Indicator */}
                     <div
                       className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
@@ -1122,29 +1160,38 @@ const CustomVideoPlayer = () => {
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4 mt-2 ">
-                      <button
-                        onClick={() => setShowShare((prev) => !prev)}
-                        className="p-2 text-white hover:text-gray-300 "
-                      >
-                        <Share2 strokeWidth={2.5} size={24} />
-                      </button>
+                    <div className="flex items-center gap-2 mt-2  ">
+                      <div>
+                        <button
+                          onClick={() => setShowShare((prev) => !prev)}
+                          className="p-2 text-white hover:text-gray-300 mt-0.5 "
+                        >
+                          <Share2 strokeWidth={2.5} size={25} />
+                        </button>
+                      </div>
                       {/* Settings Button */}
                       <div ref={containerRef} className="flex items-center">
-                        <SettingsButton
-                          ref={settingsButtonRef}
-                          onClick={() => {
-                            if (showSettingsMenu && !showQualityDrawer) {
-                              setShowSettingsMenu(false);
-                            } else if (showQualityDrawer) {
-                              setShowSettingsMenu(false);
-                              setShowQualityDrawer(false);
-                            } else {
-                              setShowSettingsMenu(true);
-                            }
-                          }}
-                          isDisabled={!isPlayerReady}
-                        />
+                        <div className="relative mt-1 mr-2">
+                          <SettingsButton
+                            ref={settingsButtonRef}
+                            onClick={() => {
+                              if (showSettingsMenu && !showQualityDrawer) {
+                                setShowSettingsMenu(false);
+                              } else if (showQualityDrawer) {
+                                setShowSettingsMenu(false);
+                                setShowQualityDrawer(false);
+                              } else {
+                                setShowSettingsMenu(true);
+                              }
+                            }}
+                            isDisabled={!isPlayerReady}
+                          />
+                          {isHDSelected && (
+                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-bold px-0.25 py-0.5 rounded leading-none">
+                              HD
+                            </span>
+                          )}
+                        </div>
                         <SettingsDrawer
                           isVisible={showSettingsMenu}
                           onClose={() => setShowSettingsMenu(false)}
