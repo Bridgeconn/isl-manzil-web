@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
 import SettingsButton from "../components/SettingsButton";
 import SettingsDrawer from "../components/SettingsDrawer";
 import QualityDrawer from "../components/QualityDrawer";
@@ -875,32 +875,23 @@ const CustomVideoPlayer = () => {
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-2">
-      <div className="flex items-center justify-center w-full">
+    <div className="w-full max-w-5xl mx-auto px-2">
+      <div className="flex items-end justify-center gap-2 w-full">
         {canGoPrevious ? (
           <button
             onClick={() => navigateToChapter("previous")}
-            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            className="mb-3.5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
             title="Previous Chapter"
-          >
-            <HoverControlledGif
-              src={Previous}
-              alt="Previous chapter"
-              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-              duration={2000}
-              loopCount={3}
-            />
+            >
+            <ChevronLeft strokeWidth={2.5} size={25} />
           </button>
         ) : (
-          <button className="p-1">
-            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
-          </button>
+          <div className="w-6 h-6 mb-3" />
         )}
-
         <div
           ref={playerContainerRef}
-          className={`relative w-full sm:w-3/4 mx-auto rounded-lg overflow-hidden`}
-          style={{ aspectRatio: "16/9" }}
+          className={`relative w-full max-w-4xl mx-auto rounded-lg overflow-hidden`}
+          style={{ aspectRatio: "16/9", maxHeight: "75vh" }}
           onClick={(e) => {
             const clickedInsideDrawer =
               containerRef.current?.contains(e.target as Node) ?? false;
@@ -1179,21 +1170,13 @@ const CustomVideoPlayer = () => {
         {canGoNext ? (
           <button
             onClick={() => navigateToChapter("next")}
-            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            className="mb-3.5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
             title="Next Chapter"
           >
-            <HoverControlledGif
-              src={Next}
-              alt="Next chapter"
-              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-              duration={2000}
-              loopCount={3}
-            />
+            <ChevronRight strokeWidth={2.5} size={25} />
           </button>
         ) : (
-          <button className="p-1">
-            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
-          </button>
+          <div className="w-6 h-6 mb-3" />
         )}
       </div>
     </div>

@@ -14,7 +14,7 @@ const Middlebar = ({ showVerse, toggleButton, isIntroDataAvailable }: MiddleBarP
   }
   
   return (
-    <div className="w-full sm:w-3/4 mx-auto bg-gray-100 flex justify-start  py-2 px-4 mt-2 gap-2 items-center rounded-md">
+    <div className="w-full max-w-4xl mx-auto bg-gray-100 flex justify-start  py-2 px-4 mt-2 gap-2 items-center rounded-md">
       <ButtonHide isVisible={showVerse} toggle={toggleButton} />
       {showVerse ? (
         selectedBook && selectedChapter ? (
