@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import Logo from "../../assets/images/ISLV_Logo.svg";
 import useBibleStore from "@/store/useBibleStore";
 import { useChapterNavigation } from "@/hooks/useChapterNavigation";
 import MobileBookDrawer from "../MobileBookDrawer";
+import MobileMenuDrawer from "../MobileMenuDrawer";
 
 interface MobileBottomBarProps {
   className?: string;
@@ -16,6 +17,28 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (
+        isMenuDrawerOpen &&
+        settingsRef.current &&
+        !settingsRef.current.contains(target) &&
+        settingsButtonRef.current &&
+        !settingsButtonRef.current.contains(target)
+      ) {
+        setIsMenuDrawerOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuDrawerOpen]);
 
   return (
     <>
@@ -73,13 +96,21 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           </button>
         </div>
 
-        <button className="p-2 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105 rounded-lg hover:bg-gray-100/50">
+        <button
+          ref={settingsButtonRef}
+          className="p-2 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105 rounded-lg hover:bg-gray-100/50"
+          onClick={() => setIsMenuDrawerOpen((prev) => !prev)}
+        >
           <Menu size={24} />
         </button>
       </div>
       <MobileBookDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+      />
+      <MobileMenuDrawer
+        open={isMenuDrawerOpen}
+        onClose={() => setIsMenuDrawerOpen(false)}
       />
     </>
   );
