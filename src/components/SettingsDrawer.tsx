@@ -7,6 +7,7 @@ interface SettingsDrawerProps {
   selectedQuality: string;
   onOpenQualityDrawer: () => void;
 }
+
 const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   isVisible,
   onClose,
@@ -26,7 +27,6 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           ✕
         </button>
       </div>
-
       <div className="space-y-2">
         <div
           className="flex justify-between items-center cursor-pointer hover:bg-gray-700 p-2 rounded"

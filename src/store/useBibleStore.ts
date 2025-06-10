@@ -531,8 +531,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       console.warn(`No timestamp found for verse ${verse}`);
     }
   },
-
- 
 }));
 
 export default useBibleStore;

@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import SettingsButton from "../components/SettingsButton";
 import SharePopup from "../components/SharePopUp";
-
 import SettingsDrawer from "../components/SettingsDrawer";
 import QualityDrawer from "../components/QualityDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
@@ -129,7 +128,6 @@ const CustomVideoPlayer = () => {
   //versedemarcation
 
   const [hoverTime, setHoverTime] = useState<number | null>(null);
-
   const [showShare, setShowShare] = useState(false);
   const HD_QUALITIES = ["1080p", "1440p", "2160p"];
   const isHDSelected = HD_QUALITIES.includes(selectedQuality);
@@ -430,7 +428,6 @@ const CustomVideoPlayer = () => {
           const qualities = await player.getQualities();
           const qualityIds = qualities.map((q) => q.id);
           setAvailableQualities(qualities);
-          console.log("available", availableQualities);
           const selected = selectedQuality.toLowerCase();
           if (qualityIds.includes(selected)) {
             await player.setQuality(
@@ -1044,7 +1041,6 @@ const CustomVideoPlayer = () => {
                       style={{ width: `${progressPercent}%` }}
                     ></div>
                     {/* Verse markers */}
-
                     {bibleVerseMarker &&
                       bibleVerseMarker.length > 0 &&
                       bibleVerseMarker.map((verse: VerseMarkerType, index) => {
@@ -1059,7 +1055,6 @@ const CustomVideoPlayer = () => {
 
                         const segmentWidth = nextVersePosition - versePosition;
                         const isPassed = currentTime >= verseTimeInSeconds;
-
                         return (
                           <div
                             key={verse.id}
@@ -1071,7 +1066,6 @@ const CustomVideoPlayer = () => {
                             onClick={(e) => handleVerseMarkerClick(verse, e)}
                           >
                             {/* Transparent area for hover + tooltip */}
-
                             <div
                               className="h-full cursor-pointer relative group"
                               title={`Verse:${verse.verse} (${
@@ -1094,7 +1088,6 @@ const CustomVideoPlayer = () => {
                           </div>
                         );
                       })}
-
                     {/* Current Time Indicator */}
                     <div
                       className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
@@ -1190,7 +1183,6 @@ const CustomVideoPlayer = () => {
                       </div>
                       {/* Settings Button */}
                       <div ref={containerRef} className="flex items-center">
-                        {/* <div className="relative "> */}
                         <div className="mt-1 relative">
                           <SettingsButton
                             ref={settingsButtonRef}
@@ -1243,7 +1235,6 @@ const CustomVideoPlayer = () => {
                           onBackToSettings={handleChangeSettings}
                         />
                       </div>
-                      {/* </div> */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
