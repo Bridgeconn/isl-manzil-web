@@ -4,12 +4,9 @@ import SettingsButton from "../components/SettingsButton";
 import SettingsDrawer from "../components/SettingsDrawer";
 import QualityDrawer from "../components/QualityDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
-import Next from "../assets/images/Next.gif";
-import Previous from "../assets/images/Previous.gif";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
-import HoverControlledGif from "./HoverControlledGif";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
