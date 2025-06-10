@@ -198,6 +198,7 @@ const CustomVideoPlayer = () => {
 
   const updateVerseDropdown = useCallback(
     (verseNumber: string | number) => {
+      if (isManualSeekingRef.current) return;
       isManualSeekingRef.current = true;
       setVerse({
         value: ["Intro", "0"].includes(verseNumber.toString())
@@ -261,7 +262,8 @@ const CustomVideoPlayer = () => {
         isPlaying &&
         !isEnded &&
         bibleVerseMarker &&
-        bibleVerseMarker?.length > 0
+        bibleVerseMarker?.length > 0 &&
+        !isManualSeekingRef.current
       ) {
         try {
           const time = await vimeoPlayerRef.current.getCurrentTime();
@@ -652,7 +654,12 @@ const CustomVideoPlayer = () => {
     };
 
     const handleMouseUp = () => {
-      isDraggingRef.current = false;
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setTimeout(() => {
+          isManualSeekingRef.current = false;
+        }, 500);
+      }
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -798,6 +805,7 @@ const CustomVideoPlayer = () => {
 
     // Mark as user interaction
     userInteractedRef.current = true;
+    isManualSeekingRef.current = true;
 
     const rect = seekBarRef.current.getBoundingClientRect();
     const offsetX = clientX - rect.left;
@@ -812,17 +820,26 @@ const CustomVideoPlayer = () => {
     setCurrentPlayingVerse(newCurrentVerse);
 
     if (newCurrentVerse) {
-      updateVerseDropdown(newCurrentVerse);
+      setVerse({
+        value: ["Intro", "0"].includes(newCurrentVerse.toString())
+          ? 0
+          : Number(newCurrentVerse),
+        label: newCurrentVerse.toString(),
+      });
     }
 
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
     }
+    setTimeout(() => {
+      isManualSeekingRef.current = false;
+    }, 500);
   };
 
   // Handle click on seek bar
   const handleSeekClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
     event.stopPropagation();
     if (isVideoAvailable) {
       handleSeekPosition(event.clientX);
@@ -833,6 +850,8 @@ const CustomVideoPlayer = () => {
     event.stopPropagation();
     if (isVideoAvailable) {
       isDraggingRef.current = true;
+      isManualSeekingRef.current = true;
+      userInteractedRef.current = true;
     }
   };
 
@@ -841,11 +860,13 @@ const CustomVideoPlayer = () => {
     verse: VerseMarkerType,
     event: React.MouseEvent
   ) => {
+    event.preventDefault();
     event.stopPropagation();
     if (!vimeoPlayerRef.current || !isPlayerReady || !isVideoAvailable) return;
 
     // Mark as user interaction
     userInteractedRef.current = true;
+    isManualSeekingRef.current = true;
 
     const seekTime = timeToSeconds(verse.time);
 
@@ -855,17 +876,25 @@ const CustomVideoPlayer = () => {
     // Update current verse based on clicked marker
     setCurrentPlayingVerse(verse.verse);
 
-    updateVerseDropdown(verse.verse);
+    setVerse({
+      value: ["Intro", "0"].includes(verse.verse.toString())
+        ? 0
+        : Number(verse.verse),
+      label: verse.verse.toString(),
+    });
 
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
     }
+    setTimeout(() => {
+      isManualSeekingRef.current = false;
+    }, 500);
   };
 
   const navigateToVerse = (direction: "forward" | "backward") => {
     if (!vimeoPlayerRef.current) return;
-
+    isManualSeekingRef.current = true;
     userInteractedRef.current = true;
 
     const verseTimes =
@@ -906,6 +935,9 @@ const CustomVideoPlayer = () => {
       if (isEnded) {
         setIsEnded(false);
       }
+      setTimeout(() => {
+        isManualSeekingRef.current = false;
+      }, 500);
     }
   };
 
@@ -1066,12 +1098,27 @@ const CustomVideoPlayer = () => {
                       const rect = seekBarRef.current?.getBoundingClientRect();
                       if (rect) {
                         const x = e.clientX - rect.left;
-                        const percent = x / rect.width;
+                        const percent = Math.max(
+                          0,
+                          Math.min(1, x / rect.width)
+                        );
                         const time = percent * duration;
                         setHoverTime(time);
                       }
                     }}
                     onMouseLeave={() => setHoverTime(null)}
+                    title={
+                      hoverTime !== null
+                        ? (() => {
+                            const currentVerse =
+                              getCurrentVerseFromTime(hoverTime);
+                            const verseText = currentVerse
+                              ? `Verse ${currentVerse}`
+                              : "Intro";
+                            return `${verseText} - ${formatTime(hoverTime)}`;
+                          })()
+                        : ""
+                    }
                   >
                     {/* Progress Bar */}
                     <div
@@ -1081,49 +1128,26 @@ const CustomVideoPlayer = () => {
                     {/* Verse markers */}
                     {bibleVerseMarker &&
                       bibleVerseMarker.length > 0 &&
-                      bibleVerseMarker.map((verse: VerseMarkerType, index) => {
+                      bibleVerseMarker.map((verse: VerseMarkerType) => {
                         const verseTimeInSeconds = timeToSeconds(verse.time);
                         const versePosition =
                           (verseTimeInSeconds / duration) * 100;
-                        const nextVerseTime = bibleVerseMarker[index + 1]
-                          ? timeToSeconds(bibleVerseMarker[index + 1].time)
-                          : duration;
-                        const nextVersePosition =
-                          (nextVerseTime / duration) * 100;
-
-                        const segmentWidth = nextVersePosition - versePosition;
                         const isPassed = currentTime >= verseTimeInSeconds;
                         return (
                           <div
                             key={verse.id}
-                            className="absolute top-0 h-full z-10 group"
+                            className={`absolute top-0 w-0.5 h-1 ${
+                              isPassed ? "bg-yellow-400" : "bg-black"
+                            }  cursor-pointer z-10 hover:w-1.5 transition-all duration-200 ease-in-out`}
                             style={{
                               left: `${versePosition}%`,
-                              width: `${segmentWidth}%`,
+                              transform: "translateX(-50%)",
                             }}
                             onClick={(e) => handleVerseMarkerClick(verse, e)}
-                          >
-                            {/* Transparent area for hover + tooltip */}
-                            <div
-                              className="h-full cursor-pointer relative group"
-                              title={`Verse:${verse.verse} (${
-                                hoverTime !== null
-                                  ? formatTime(hoverTime)
-                                  : verse.time
-                              })`}
-                            >
-                              {/* The original marker line */}
-                              <div
-                                className={`absolute top-0 h-1 w-0.5 ${
-                                  isPassed ? "bg-yellow-400" : "bg-black"
-                                } group-hover:w-1 transition-all duration-200`}
-                                style={{
-                                  left: "0%",
-                                  transform: "translateX(-50%)",
-                                }}
-                              ></div>
-                            </div>
-                          </div>
+                            title={`Verse ${verse.verse} - ${formatTime(
+                              verseTimeInSeconds
+                            )}`}
+                          ></div>
                         );
                       })}
                     {/* Current Time Indicator */}
