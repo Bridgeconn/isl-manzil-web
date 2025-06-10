@@ -21,7 +21,7 @@ const QualityDrawer: React.FC<QualityDrawerProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="absolute py-1 max-h-65 overflow-y-auto pr-1  custom-scroll-black bottom-16 h-auto right-4 w-48 p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50">
+    <div className="absolute py-1 max-h-65 overflow-y-auto pr-1  custom-scroll-black bottom-18 h-auto right-4 w-48 p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50">
       <div>
         <div className="flex  items-center mb-2">
           <ChevronLeft
