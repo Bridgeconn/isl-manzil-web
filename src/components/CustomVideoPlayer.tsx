@@ -1168,7 +1168,9 @@ const CustomVideoPlayer = () => {
                           </button>
                         )}
                       {/* Timer */}
-                      <div className="text-white text-sm">
+                      <div
+                        className="text-white text-sm"
+                        style={{ userSelect: "none" }}>
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
