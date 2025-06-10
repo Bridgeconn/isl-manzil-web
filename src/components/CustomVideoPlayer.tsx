@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import {
+import { ChevronLeft, ChevronRight,
   RefreshCw,
   Maximize,
   Minimize,
@@ -12,12 +12,9 @@ import SharePopup from "../components/SharePopUp";
 import SettingsDrawer from "../components/SettingsDrawer";
 import QualityDrawer from "../components/QualityDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
-import Next from "../assets/images/Next.gif";
-import Previous from "../assets/images/Previous.gif";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
-import LoopingGif from "./LoopingGif";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -80,6 +77,7 @@ const CustomVideoPlayer = () => {
     selectedBook,
     selectedChapter,
     selectedVerse,
+    setVerse,
     loadVideoForCurrentSelection,
     bibleVerseMarker,
     findVerseMarkerForVerse,
@@ -108,6 +106,7 @@ const CustomVideoPlayer = () => {
   const prevSelectedVerse = useRef<number | null>(null);
   const prevSelectedChapter = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
+  const isManualSeekingRef = useRef<boolean>(false);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
@@ -192,6 +191,17 @@ const CustomVideoPlayer = () => {
     setShowSettingsMenu(true);
   };
 
+  const updateVerseDropdown = useCallback((verseNumber: string | number) => {
+    isManualSeekingRef.current = true;
+    setVerse({ 
+      value: ["Intro", "0"].includes(verseNumber.toString()) ? 0 : Number(verseNumber), 
+      label: verseNumber.toString() 
+    });
+    setTimeout(() => {
+      isManualSeekingRef.current = false;
+    }, 300);
+  }, [setVerse]);
+
   useEffect(() => {
     if (selectedBook && selectedChapter) {
       setCurrentVideoId(null);
@@ -249,6 +259,7 @@ const CustomVideoPlayer = () => {
 
           if (currentVerse && currentVerse !== currentPlayingVerse) {
             setCurrentPlayingVerse(currentVerse);
+            updateVerseDropdown(currentVerse);
           }
         } catch (error) {
           console.error("Error tracking verse:", error);
@@ -262,6 +273,7 @@ const CustomVideoPlayer = () => {
     bibleVerseMarker,
     getCurrentVerseFromTime,
     currentPlayingVerse,
+    updateVerseDropdown,
     setCurrentPlayingVerse,
     clearIntervals,
   ]);
@@ -297,7 +309,7 @@ const CustomVideoPlayer = () => {
   // Effect to handle selectedVerse changes
   useEffect(() => {
     const handleVerseChange = async () => {
-      if (!selectedVerse || !isPlayerReady) {
+      if (!selectedVerse || !isPlayerReady || isManualSeekingRef.current) {
         return;
       }
       const currentBook = selectedBook?.value ?? null;
@@ -511,6 +523,10 @@ const CustomVideoPlayer = () => {
           const newCurrentVerse = getCurrentVerseFromTime(seconds);
           setCurrentPlayingVerse(newCurrentVerse);
 
+          if (newCurrentVerse) {
+            updateVerseDropdown(newCurrentVerse);
+          }
+
           if (isEnded) {
             setIsEnded(false);
           }
@@ -573,6 +589,9 @@ const CustomVideoPlayer = () => {
           if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
             const newCurrentVerse = getCurrentVerseFromTime(newTime);
             setCurrentPlayingVerse(newCurrentVerse);
+            if (newCurrentVerse) {
+              updateVerseDropdown(newCurrentVerse);
+            }
           }
           break;
         }
@@ -588,6 +607,9 @@ const CustomVideoPlayer = () => {
           if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
             const newCurrentVerse = getCurrentVerseFromTime(newTime);
             setCurrentPlayingVerse(newCurrentVerse);
+            if(newCurrentVerse) {
+              updateVerseDropdown(newCurrentVerse);
+            }
           }
           break;
         }
@@ -607,6 +629,7 @@ const CustomVideoPlayer = () => {
     bibleVerseMarker,
     getCurrentVerseFromTime,
     setCurrentPlayingVerse,
+    updateVerseDropdown,
     isVideoAvailable,
   ]);
 
@@ -778,6 +801,10 @@ const CustomVideoPlayer = () => {
     const newCurrentVerse = getCurrentVerseFromTime(seekTime);
     setCurrentPlayingVerse(newCurrentVerse);
 
+    if(newCurrentVerse) {
+      updateVerseDropdown(newCurrentVerse);
+    }
+
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
@@ -818,6 +845,8 @@ const CustomVideoPlayer = () => {
     // Update current verse based on clicked marker
     setCurrentPlayingVerse(verse.verse);
 
+    updateVerseDropdown(verse.verse);
+
     // If video was ended, update state
     if (isEnded) {
       setIsEnded(false);
@@ -857,6 +886,12 @@ const CustomVideoPlayer = () => {
       vimeoPlayerRef.current.setCurrentTime(seekTime);
       setCurrentTime(seekTime);
       setCurrentPlayingVerse(nextVerse.verse);
+      setVerse({
+        value: ["Intro", "0"].includes(nextVerse.verse)
+          ? 0
+          : Number(nextVerse.verse),
+        label: nextVerse.verse.toString(),
+      })
 
       if (isEnded) {
         setIsEnded(false);
@@ -912,31 +947,23 @@ const CustomVideoPlayer = () => {
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-2">
-      <div className="flex items-center justify-center w-full">
+    <div className="w-full max-w-5xl mx-auto px-2">
+      <div className="flex items-end justify-center gap-2 w-full">
         {canGoPrevious ? (
           <button
             onClick={() => navigateToChapter("previous")}
-            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            className="mb-5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
             title="Previous Chapter"
-          >
-            <LoopingGif
-              src={Previous}
-              alt="Previous chapter"
-              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-              duration={2000}
-            />
+            >
+            <ChevronLeft strokeWidth={2.5} size={25} />
           </button>
         ) : (
-          <button className="p-1">
-            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
-          </button>
+          <div className="w-6 h-6 mb-3" />
         )}
-
         <div
           ref={playerContainerRef}
-          className="relative w-full sm:w-3/4 mx-auto bg-black rounded-lg overflow-hidden"
-          style={{ aspectRatio: "16/9" }}
+          className={`relative w-full max-w-4xl mx-auto rounded-lg overflow-hidden`}
+          style={{ aspectRatio: "16/9", maxHeight: "75vh" }}
           onClick={(e) => {
             const clickedInsideDrawer =
               containerRef.current?.contains(e.target as Node) ?? false;
@@ -1022,7 +1049,7 @@ const CustomVideoPlayer = () => {
                   {/* Seekbar with sections */}
                   <div
                     ref={seekBarRef}
-                    className="relative h-1 bg-gray-600 rounded-full mb-4 cursor-pointer"
+                    className="relative h-1 bg-gray-600 rounded-full mb-2 cursor-pointer"
                     onClick={handleSeekClick}
                     onMouseMove={(e) => {
                       const rect = seekBarRef.current?.getBoundingClientRect();
@@ -1275,20 +1302,13 @@ const CustomVideoPlayer = () => {
         {canGoNext ? (
           <button
             onClick={() => navigateToChapter("next")}
-            className={`transition-all duration-200 rounded-full p-1 cursor-pointer hover:scale-110 hover:bg-gray-100`}
+            className="mb-5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
             title="Next Chapter"
           >
-            <LoopingGif
-              src={Next}
-              alt="Next chapter"
-              className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20"
-              duration={2000}
-            />
+            <ChevronRight strokeWidth={2.5} size={25} />
           </button>
         ) : (
-          <button className="p-1">
-            <div className="w-10 h-10 md:w-15 md:h-15 lg:w-20 lg:h-20" />
-          </button>
+          <div className="w-6 h-6 mb-3" />
         )}
       </div>
     </div>

@@ -352,7 +352,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     const bookCodeUpper = bookCode.toUpperCase();
     const chapterIndex = chapter - 1;
 
-    if(chapterIndex < 0) {
+    if (chapterIndex < 0) {
       return [];
     }
 
@@ -405,10 +405,10 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       return;
     }
 
-
     // Create unique request ID to track this specific request
-    const requestId = `${selectedBook.value}-${selectedChapter.value
-      }-${Date.now()}`;
+    const requestId = `${selectedBook.value}-${
+      selectedChapter.value
+    }-${Date.now()}`;
 
     set({
       isVideoLoading: true,
