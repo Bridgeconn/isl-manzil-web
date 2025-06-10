@@ -153,7 +153,7 @@ const BibleVerseDisplay = ({
                 ref={(el) => setVerseRef(verseData[0]?.verse, el)}
                 id={`verse-${verseData[0]?.verse}`}
               >
-                <span className="themed-text text-themed font-bold text-gray-800">
+                <span style={{ fontSize: "1.6em" }} className="themed-text text-themed font-bold text-gray-800">
                   {selectedChapter.value}
                 </span>
                 <span
