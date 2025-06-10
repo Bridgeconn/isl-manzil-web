@@ -32,8 +32,8 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
 
   return (
     <nav className="w-full bg-[var(--ribbon-color)] min-h-12 flex justify-between items-center">
-      <div className="relative max-w-6xl w-full mx-auto flex flex-1 gap-8 justify-between">
-        <div className="max-w-5xl w-full ml-24 flex items-center justify-start gap-8 flex-grow flex-wrap">
+      <div className="relative max-w-7xl w-full mx-auto flex flex-1 gap-8 justify-between">
+        <div className="max-w-7xl w-full ml-24 flex items-center justify-start gap-8 flex-grow flex-wrap">
           {items.map((item) => (
             <div
               key={item.name}

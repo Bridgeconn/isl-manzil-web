@@ -41,9 +41,9 @@ const HomePage: React.FC = () => {
       return "flex flex-col h-full";
     }
     if (isHorizontalLayout && textPosition === "right") {
-      return "flex gap-2 h-full px-2";
+      return "flex gap-2 h-full p-2";
     }
-    return `${textPosition === "below" ? "max-w-6xl" : ""} w-full mx-auto`;
+    return `${textPosition === "below" ? "max-w-7xl" : ""} w-full mx-auto`;
   };
 
   const getVideoContainerClasses = () => {
@@ -65,22 +65,22 @@ const HomePage: React.FC = () => {
   const getVerseContentClasses = () => {
     if (shouldUseMobileBottomBar) {
       if (isMobileLandscape && showText && textPosition === "right") {
-        return "verse-content-container h-[calc(100vh-100px)] bg-gray-50 border-2 px-4 py-2";
+        return "verse-content-container h-[calc(100vh-65px)] bg-gray-50 border-2 pl-4 py-2";
       }
       if (isMobilePortrait) {
-        return "verse-content-container h-full w-full bg-gray-50 border-2 px-4 py-2";
+        return "verse-content-container h-full w-full bg-gray-50 border-2 pl-4 py-2";
       }
     }
     if (isHorizontalLayout && showText && textPosition === "right") {
-      return "verse-content-container h-[calc(100vh-180px)] bg-gray-50 border-2 px-4 py-2";
+      return "verse-content-container h-[calc(100vh-180px)] bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin";
     }
     const maxHeightClass = typeof window !== 'undefined' && window.innerHeight > 1000 ? "max-h-90" : "max-h-45";
     
-    return `verse-content-container ${maxHeightClass} w-full sm:w-3/4 mx-auto my-2 bg-gray-50 border-2 px-4 py-2`;
+    return `verse-content-container ${maxHeightClass} w-full max-w-4xl mx-auto my-2 bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin`;
   };
 
   const getHorizontalTextContainerClasses = () => {
-    const baseClasses = "flex-shrink-0 transition-all duration-800 ease-in-out overflow-hidden";
+    const baseClasses = "flex-shrink-0 transition-all duration-800 ease-in-out overflow-hidden custom-scroll-ultra-thin";
     if (shouldUseMobileBottomBar && isMobileLandscape) {
       if (showText) {
         return `${baseClasses} w-auto opacity-100`;
@@ -90,14 +90,14 @@ const HomePage: React.FC = () => {
     }
     
     if (showText) {
-      return `${baseClasses} w-60 md:w-80 opacity-100`;
+      return `${baseClasses} w-60 md:w-90 opacity-100`;
     } else {
       return `${baseClasses} w-0 opacity-0`;
     }
   };
 
   const getVerticalTextContainerClasses = () => {
-    const baseClasses = "transition-all duration-800 ease-in-out overflow-hidden";
+    const baseClasses = "transition-all duration-800 ease-in-out overflow-hidden custom-scroll-ultra-thin";
     if (shouldUseMobileBottomBar && isMobilePortrait) {
       if (showText) {
         return `${baseClasses} h-full opacity-100`;
@@ -117,8 +117,8 @@ const HomePage: React.FC = () => {
   return (
     <>
     {!shouldUseMobileBottomBar && (
-      <div className="w-full bg-gray-100 mt-1 mb-4 py-1">
-        <div className="max-w-6xl mx-auto w-full flex justify-between items-center">
+      <div className="w-full bg-gray-100 mt-1 mb-2">
+        <div className="max-w-7xl mx-auto w-full flex justify-between items-center px-2">
           <SelectBoxContainer />
 
           <div className="flex flex-1 flex-wrap justify-end items-center gap-2 ml-1">
@@ -166,7 +166,7 @@ const HomePage: React.FC = () => {
 
         {isHorizontalLayout && textPosition === "right" && shouldShowContent && (
           <div className={getHorizontalTextContainerClasses()}>
-            <div className={shouldUseMobileBottomBar ? "w-48 sm:w-60 h-full" : "w-60 md:w-80 h-full"}>
+            <div className={shouldUseMobileBottomBar ? "w-48 sm:w-60 sm:py-2 h-full" : "w-60 md:w-90 h-full"}>
               <div className={getVerseContentClasses()}>
                 <BibleVerseDisplay
                   setIsIntroDataAvailable={setIsIntroDataAvailable}

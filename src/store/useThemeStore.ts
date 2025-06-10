@@ -11,10 +11,10 @@ export interface ThemeOption {
 interface ThemeStore {
   currentTheme: ThemeOption | null;
   themes: ThemeOption[];
-  fontType:"serif"|"sans";
-  fontSize:number;
+  fontType: "serif" | "sans";
+  fontSize: number;
   setTheme: (theme: ThemeOption) => void;
-  setFontType:(type:"serif"|"sans")=>void;
+  setFontType: (type: "serif" | "sans") => void;
   setFontSize: (size: number) => void;
   applyTheme: () => void;
   initializeTheme: () => void;
@@ -47,47 +47,49 @@ const useThemeStore = create<ThemeStore>()(
       currentTheme: null,
       themes: themes,
 
-  fontType: "serif",
-  fontSize: 16,
+      fontType: "serif",
+      fontSize: 16,
 
-  setTheme: (theme: ThemeOption) => {
-    set({ currentTheme: theme });
-    get().applyTheme();
-  },
+      setTheme: (theme: ThemeOption) => {
+        set({ currentTheme: theme });
+        get().applyTheme();
+      },
 
-  setFontType:(type)=> {
-    set({fontType:type});
-    get().applyTheme();
-    
-  },
+      setFontType: (type) => {
+        set({ fontType: type });
+        get().applyTheme();
+      },
 
-  setFontSize:(size)=>{
+      setFontSize: (size) => {
+        set({ fontSize: size });
+        get().applyTheme();
+      },
 
-    set({fontSize:size});
-    get().applyTheme();
-  },
-
-  applyTheme: () => {
-    const { currentTheme,fontType,fontSize } = get();
-    const root = document.documentElement;
-    const mainElement = document.querySelector('.layout-main');
+      applyTheme: () => {
+        const { currentTheme, fontType, fontSize } = get();
+        const root = document.documentElement;
+        const mainElement = document.querySelector(".layout-main");
 
         if (currentTheme) {
-          root.style.setProperty("--theme-bg-color", currentTheme.backgroundColor);
+          root.style.setProperty(
+            "--theme-bg-color",
+            currentTheme.backgroundColor
+          );
           root.style.setProperty("--theme-text-color", currentTheme.textColor);
-          mainElement?.classList.add('theme-active');
+          mainElement?.classList.add("theme-active");
         } else {
-          mainElement?.classList.remove('theme-active');
+          mainElement?.classList.remove("theme-active");
           root.style.removeProperty("--theme-bg-color");
           root.style.removeProperty("--theme-text-color");
         }
-     const fontFamily =
-    fontType === "serif"
-      ? 'Helvetica, Arial, sans-serif'
-      : 'Roboto, "Noto Sans", sans-serif';
 
-  root.style.setProperty("--font-family", fontFamily);
-  root.style.setProperty("--font-size", `${fontSize}px`);
+        const fontFamily =
+          fontType === "serif"
+            ? 'Georgia, Cambria, "Times New Roman", Times, serif'
+            : 'Roboto, "Noto Sans", Helvetica, Arial, sans-serif';
+
+        root.style.setProperty("--font-family", fontFamily);
+        root.style.setProperty("--font-size", `${fontSize}px`);
       },
 
       initializeTheme: () => {
@@ -101,7 +103,11 @@ const useThemeStore = create<ThemeStore>()(
     {
       name: "theme-storage",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ currentTheme: state.currentTheme, fontType:state.fontType,fontSize:state.fontSize }),
+      partialize: (state) => ({
+        currentTheme: state.currentTheme,
+        fontType: state.fontType,
+        fontSize: state.fontSize,
+      }),
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.initializeTheme();
