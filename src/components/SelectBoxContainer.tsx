@@ -135,7 +135,7 @@ const SelectBoxContainer = () => {
   };
 
   return (
-    <div className="flex flex-1 flex-col sm:flex-row gap-4">
+    <div className="flex flex-1 flex-col sm:flex-row gap-2">
       <div className="flex-2 max-w-[220px]">
         <Dropdown
           options={availableData.books}

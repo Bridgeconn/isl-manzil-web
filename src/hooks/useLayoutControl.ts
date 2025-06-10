@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useDeviceDetection } from './useDeviceDetection';
+import { useState, useEffect } from "react";
+import { useDeviceDetection } from "./useDeviceDetection";
 
-export type TextPosition = 'below' | 'right' | 'hidden';
+export type TextPosition = "below" | "right" | "hidden";
 
 interface LayoutControlState {
   textPosition: TextPosition;
@@ -11,61 +11,84 @@ interface LayoutControlState {
 }
 
 export const useLayoutControl = () => {
-  const { shouldUseHorizontalLayout, isTabletLandscape } = useDeviceDetection();
-  
+  const {
+    shouldUseHorizontalLayout,
+    isTabletLandscape,
+    deviceType,
+    isMobileLandscape,
+    isMobilePortrait,
+  } = useDeviceDetection();
+
   const [layoutState, setLayoutState] = useState<LayoutControlState>(() => ({
-    textPosition: shouldUseHorizontalLayout || isTabletLandscape ? 'right' : 'below',
+    textPosition:
+      shouldUseHorizontalLayout || isTabletLandscape ? "right" : "below",
     showText: true,
     isHorizontalLayout: shouldUseHorizontalLayout,
-    canTogglePosition: shouldUseHorizontalLayout,
+    canTogglePosition: shouldUseHorizontalLayout && deviceType !== "mobile",
   }));
 
   useEffect(() => {
-    setLayoutState(prev => {
+    setLayoutState((prev) => {
       let newTextPosition = prev.textPosition;
-      
-      if (shouldUseHorizontalLayout) {
-        if (prev.textPosition === 'below' && prev.showText) {
-          newTextPosition = 'right';
+      let canTogglePosition =
+        shouldUseHorizontalLayout && deviceType !== "mobile";
+
+      if (deviceType === "mobile") {
+        if (isMobileLandscape) {
+          newTextPosition = "right";
+        } else if (isMobilePortrait) {
+          newTextPosition = "below";
         }
+        canTogglePosition = false;
       } else {
-        if (prev.textPosition === 'right') {
-          newTextPosition = 'below';
+        if (shouldUseHorizontalLayout) {
+          if (prev.textPosition === "below" && prev.showText) {
+            newTextPosition = "right";
+          }
+        } else {
+          if (prev.textPosition === "right") {
+            newTextPosition = "below";
+          }
         }
       }
-      
+
       return {
         ...prev,
         isHorizontalLayout: shouldUseHorizontalLayout,
-        canTogglePosition: shouldUseHorizontalLayout,
+        canTogglePosition,
         textPosition: newTextPosition,
       };
     });
-  }, [shouldUseHorizontalLayout]);
+  }, [
+    shouldUseHorizontalLayout,
+    deviceType,
+    isMobileLandscape,
+    isMobilePortrait,
+  ]);
 
   const toggleTextVisibility = () => {
-    setLayoutState(prev => ({
+    setLayoutState((prev) => ({
       ...prev,
       showText: !prev.showText,
     }));
   };
 
   const setTextPosition = (position: TextPosition) => {
-    setLayoutState(prev => ({
+    setLayoutState((prev) => ({
       ...prev,
       textPosition: position,
-      showText: position !== 'hidden'
+      showText: position !== "hidden",
     }));
   };
 
   const toggleTextPosition = () => {
-    setLayoutState(prev => {
+    setLayoutState((prev) => {
       if (!prev.canTogglePosition) return prev;
-      
-      const newPosition = prev.textPosition === 'right' ? 'below' : 'right';
+
+      const newPosition = prev.textPosition === "right" ? "below" : "right";
       return {
         ...prev,
-        textPosition: newPosition
+        textPosition: newPosition,
       };
     });
   };

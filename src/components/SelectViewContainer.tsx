@@ -260,7 +260,7 @@ const SelectViewContainer = () => {
 
   return (
     <div className="relative">
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         <button
           className={`border border-gray-300 p-2 rounded cursor-pointer hover:bg-gray-100`}
           onClick={() => openDialog("grid")}

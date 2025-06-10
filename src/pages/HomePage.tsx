@@ -7,10 +7,16 @@ import SelectViewContainer from "@/components/SelectViewContainer";
 import LayoutControlButtons from "@/components/LayoutControlButtons";
 import useBibleStore from "@/store/useBibleStore";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 const HomePage: React.FC = () => {
   const { selectedBook, selectedChapter } = useBibleStore();
   const [isIntroDataAvailable, setIsIntroDataAvailable] = useState(false);
+  const { 
+    shouldUseMobileBottomBar, 
+    isMobilePortrait, 
+    isMobileLandscape 
+  } = useDeviceDetection();
 
   const {
     showText,
@@ -28,6 +34,12 @@ const HomePage: React.FC = () => {
   );
 
   const getLayoutClasses = () => {
+    if (shouldUseMobileBottomBar) {
+      if (isMobileLandscape) {
+        return "flex gap-2 h-full px-2";
+      }
+      return "flex flex-col h-full";
+    }
     if (isHorizontalLayout && textPosition === "right") {
       return "flex gap-2 h-full p-2";
     }
@@ -35,6 +47,12 @@ const HomePage: React.FC = () => {
   };
 
   const getVideoContainerClasses = () => {
+    if (shouldUseMobileBottomBar) {
+      if (isMobileLandscape) {
+        return "flex-1";
+      }
+      return "w-full";
+    }
     if (isHorizontalLayout && textPosition === "right") {
       return "flex-1";
     }
@@ -45,6 +63,14 @@ const HomePage: React.FC = () => {
   };
 
   const getVerseContentClasses = () => {
+    if (shouldUseMobileBottomBar) {
+      if (isMobileLandscape && showText && textPosition === "right") {
+        return "verse-content-container h-[calc(100vh-65px)] bg-gray-50 border-2 pl-4 py-2";
+      }
+      if (isMobilePortrait) {
+        return "verse-content-container h-full w-full bg-gray-50 border-2 pl-4 py-2";
+      }
+    }
     if (isHorizontalLayout && showText && textPosition === "right") {
       return "verse-content-container h-[calc(100vh-180px)] bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin";
     }
@@ -55,6 +81,13 @@ const HomePage: React.FC = () => {
 
   const getHorizontalTextContainerClasses = () => {
     const baseClasses = "flex-shrink-0 transition-all duration-800 ease-in-out overflow-hidden custom-scroll-ultra-thin";
+    if (shouldUseMobileBottomBar && isMobileLandscape) {
+      if (showText) {
+        return `${baseClasses} w-auto opacity-100`;
+      } else {
+        return `${baseClasses} w-0 opacity-0`;
+      }
+    }
     
     if (showText) {
       return `${baseClasses} w-60 md:w-90 opacity-100`;
@@ -65,7 +98,13 @@ const HomePage: React.FC = () => {
 
   const getVerticalTextContainerClasses = () => {
     const baseClasses = "transition-all duration-800 ease-in-out overflow-hidden custom-scroll-ultra-thin";
-    
+    if (shouldUseMobileBottomBar && isMobilePortrait) {
+      if (showText) {
+        return `${baseClasses} h-full opacity-100`;
+      } else {
+        return `${baseClasses} max-h-0 opacity-0`;
+      }
+    }
     if (showText) {
       // Dynamic max-height based on viewport height
       const maxHeightClass = typeof window !== 'undefined' && window.innerHeight > 1000 ? "max-h-96" : "max-h-48";
@@ -77,11 +116,12 @@ const HomePage: React.FC = () => {
 
   return (
     <>
+    {!shouldUseMobileBottomBar && (
       <div className="w-full bg-gray-100 mt-1 mb-2">
         <div className="max-w-7xl mx-auto w-full flex justify-between items-center px-2">
           <SelectBoxContainer />
 
-          <div className="flex flex-1 flex-wrap justify-end items-center gap-6 ml-2">
+          <div className="flex flex-1 flex-wrap justify-end items-center gap-2 ml-1">
             <SelectViewContainer />
 
             {canTogglePosition && (
@@ -96,6 +136,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </div>
+    )}
 
       <div className={`${getLayoutClasses()} ${isHorizontalLayout && textPosition === "right" ? "transition-all duration-800 ease-in-out" : ""}`}>
         <div className={getVideoContainerClasses()}>
@@ -104,11 +145,13 @@ const HomePage: React.FC = () => {
 
         {(!isHorizontalLayout || textPosition === "below") && (
           <>
-            <Middlebar
-              showVerse={showText}
-              toggleButton={toggleTextVisibility}
-              isIntroDataAvailable={isIntroDataAvailable}
-            />
+          {!shouldUseMobileBottomBar && (
+              <Middlebar
+                showVerse={showText}
+                toggleButton={toggleTextVisibility}
+                isIntroDataAvailable={isIntroDataAvailable}
+              />
+            )}
             {shouldShowContent && (
               <div className={getVerticalTextContainerClasses()}>
               <div className={getVerseContentClasses()}>
@@ -123,7 +166,7 @@ const HomePage: React.FC = () => {
 
         {isHorizontalLayout && textPosition === "right" && shouldShowContent && (
           <div className={getHorizontalTextContainerClasses()}>
-            <div className="w-60 md:w-90 h-full">
+            <div className={shouldUseMobileBottomBar ? "w-48 sm:w-60 sm:py-2 h-full" : "w-60 md:w-90 h-full"}>
               <div className={getVerseContentClasses()}>
                 <BibleVerseDisplay
                   setIsIntroDataAvailable={setIsIntroDataAvailable}

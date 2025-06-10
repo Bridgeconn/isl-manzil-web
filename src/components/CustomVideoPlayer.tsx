@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight,
+import {
+  ChevronLeft,
+  ChevronRight,
   RefreshCw,
   Maximize,
   Minimize,
@@ -15,6 +17,7 @@ import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
+import useDeviceDetection from "@/hooks/useDeviceDetection";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -87,6 +90,8 @@ const CustomVideoPlayer = () => {
     currentPlayingVerse,
     isVideoLoading,
   } = useBibleStore();
+
+  const { shouldUseMobileBottomBar } = useDeviceDetection();
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -191,16 +196,21 @@ const CustomVideoPlayer = () => {
     setShowSettingsMenu(true);
   };
 
-  const updateVerseDropdown = useCallback((verseNumber: string | number) => {
-    isManualSeekingRef.current = true;
-    setVerse({ 
-      value: ["Intro", "0"].includes(verseNumber.toString()) ? 0 : Number(verseNumber), 
-      label: verseNumber.toString() 
-    });
-    setTimeout(() => {
-      isManualSeekingRef.current = false;
-    }, 300);
-  }, [setVerse]);
+  const updateVerseDropdown = useCallback(
+    (verseNumber: string | number) => {
+      isManualSeekingRef.current = true;
+      setVerse({
+        value: ["Intro", "0"].includes(verseNumber.toString())
+          ? 0
+          : Number(verseNumber),
+        label: verseNumber.toString(),
+      });
+      setTimeout(() => {
+        isManualSeekingRef.current = false;
+      }, 300);
+    },
+    [setVerse]
+  );
 
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -607,7 +617,7 @@ const CustomVideoPlayer = () => {
           if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
             const newCurrentVerse = getCurrentVerseFromTime(newTime);
             setCurrentPlayingVerse(newCurrentVerse);
-            if(newCurrentVerse) {
+            if (newCurrentVerse) {
               updateVerseDropdown(newCurrentVerse);
             }
           }
@@ -801,7 +811,7 @@ const CustomVideoPlayer = () => {
     const newCurrentVerse = getCurrentVerseFromTime(seekTime);
     setCurrentPlayingVerse(newCurrentVerse);
 
-    if(newCurrentVerse) {
+    if (newCurrentVerse) {
       updateVerseDropdown(newCurrentVerse);
     }
 
@@ -891,7 +901,7 @@ const CustomVideoPlayer = () => {
           ? 0
           : Number(nextVerse.verse),
         label: nextVerse.verse.toString(),
-      })
+      });
 
       if (isEnded) {
         setIsEnded(false);
@@ -947,23 +957,24 @@ const CustomVideoPlayer = () => {
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-2">
+    <div className="w-full max-w-5xl mx-auto sm:mt-2 md:px-2">
       <div className="flex items-end justify-center gap-2 w-full">
-        {canGoPrevious ? (
-          <button
-            onClick={() => navigateToChapter("previous")}
-            className="mb-5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
-            title="Previous Chapter"
+        {!shouldUseMobileBottomBar &&
+          (canGoPrevious ? (
+            <button
+              onClick={() => navigateToChapter("previous")}
+              className="mb-5.5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
+              title="Previous Chapter"
             >
-            <ChevronLeft strokeWidth={2.5} size={25} />
-          </button>
-        ) : (
-          <div className="w-6 h-6 mb-3" />
-        )}
+              <ChevronLeft strokeWidth={2.5} size={25} />
+            </button>
+          ) : (
+            <div className="w-6 h-6 mb-3" />
+          ))}
         <div
           ref={playerContainerRef}
-          className={`relative w-full max-w-4xl mx-auto rounded-lg overflow-hidden`}
-          style={{ aspectRatio: "16/9", maxHeight: "75vh" }}
+          className={`relative w-full max-w-4xl mx-auto overflow-hidden`}
+          style={{ aspectRatio: "16/9", maxHeight: "80vh" }}
           onClick={(e) => {
             const clickedInsideDrawer =
               containerRef.current?.contains(e.target as Node) ?? false;
@@ -980,13 +991,13 @@ const CustomVideoPlayer = () => {
         >
           {(isVideoLoading || !isPlayerReady) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
-              <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
-              <div className="text-white text-lg">Loading video...</div>
+              <Loader2 className="w-8 h-8sm:w-12 sm:h-12 text-white animate-spin mb-2 sm:mb-4" />
+              <div className="text-white sm:text-lg">Loading video...</div>
             </div>
           )}
           {showComingSoon && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 z-10">
-              <Clock className="w-16 h-16 text-blue-400 mb-2 sm:mb-6" />
+              <Clock className="w-8 h-8 sm:w-16 sm:h-16 text-blue-400 mb-2 sm:mb-6" />
               <div className="text-white text-xl sm:text-2xl font-bold mb-2">
                 Video Coming Soon
               </div>
@@ -1009,13 +1020,13 @@ const CustomVideoPlayer = () => {
               {/* Play/Pause/Replay Bezel Effect */}
               {showPlayBezel && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                  <div className="bg-black bg-opacity-50 rounded-full p-6">
+                  <div className="bg-black bg-opacity-50 rounded-full p-4 sm:p-6">
                     {isEnded && !(currentTime < duration) ? (
-                      <RefreshCw size={48} className="text-white" />
+                      <RefreshCw className="text-white w-8 h-8 sm:w-12 sm:h-12" />
                     ) : lastAction === "pause" ? (
-                      <FilledPauseIcon size={48} className="text-white" />
+                      <FilledPauseIcon className="text-white w-8 h-8 sm:w-12 sm:h-12" />
                     ) : (
-                      <FilledPlayIcon size={48} className="text-white pl-1" />
+                      <FilledPlayIcon className="text-white w-8 h-8 sm:w-12 sm:h-12 pl-1" />
                     )}
                   </div>
                 </div>
@@ -1197,7 +1208,8 @@ const CustomVideoPlayer = () => {
                       {/* Timer */}
                       <div
                         className="text-white text-sm"
-                        style={{ userSelect: "none" }}>
+                        style={{ userSelect: "none" }}
+                      >
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
@@ -1299,17 +1311,18 @@ const CustomVideoPlayer = () => {
             </>
           )}
         </div>
-        {canGoNext ? (
-          <button
-            onClick={() => navigateToChapter("next")}
-            className="mb-5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
-            title="Next Chapter"
-          >
-            <ChevronRight strokeWidth={2.5} size={25} />
-          </button>
-        ) : (
-          <div className="w-6 h-6 mb-3" />
-        )}
+        {!shouldUseMobileBottomBar &&
+          (canGoNext ? (
+            <button
+              onClick={() => navigateToChapter("next")}
+              className="mb-5.5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
+              title="Next Chapter"
+            >
+              <ChevronRight strokeWidth={2.5} size={25} />
+            </button>
+          ) : (
+            <div className="w-6 h-6 mb-3" />
+          ))}
       </div>
     </div>
   );
