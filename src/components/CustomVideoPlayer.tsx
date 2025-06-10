@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { RefreshCw, Maximize, Minimize, Loader2, Clock } from "lucide-react";
+import {
+  RefreshCw,
+  Maximize,
+  Minimize,
+  Loader2,
+  Clock,
+  Share2,
+} from "lucide-react";
 import SettingsButton from "../components/SettingsButton";
+import SharePopup from "../components/SharePopUp";
 import SettingsDrawer from "../components/SettingsDrawer";
 import QualityDrawer from "../components/QualityDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
@@ -64,6 +72,9 @@ const CustomVideoPlayer = () => {
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
   const {
+    availableData,
+    setBook,
+    setChapter,
     currentVideoId,
     setCurrentVideoId,
     selectedBook,
@@ -113,6 +124,61 @@ const CustomVideoPlayer = () => {
   const [availableQualities, setAvailableQualities] = useState<
     { id: string; label: string }[]
   >([]);
+
+  //versedemarcation
+
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const [showShare, setShowShare] = useState(false);
+  const HD_QUALITIES = ["1080p", "1440p", "2160p"];
+  const isHDSelected = HD_QUALITIES.includes(selectedQuality);
+
+  // const [shareUrl, setShareUrl] = useState<string>("");
+
+  const BASE_URL =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:5173";
+
+  const shareUrl =
+    selectedBook?.value && selectedChapter?.value
+      ? `${BASE_URL}/watch/${selectedBook.value}/${selectedChapter.value}`
+      : BASE_URL;
+
+  useEffect(() => {
+    const pathParts = window.location.pathname.split("/");
+    const bookCode = pathParts[2];
+    const chapterNumber = pathParts[3];
+
+    if (!bookCode || !chapterNumber || availableData.books.length === 0) return;
+
+    const matchedBook = availableData.books.find((b) => b.value === bookCode);
+    const chapterList = matchedBook
+      ? availableData.chapters[matchedBook.value]
+      : [];
+    const matchedChapter = chapterList.find(
+      (c) => String(c.value) === String(chapterNumber)
+    );
+
+    if (matchedBook && matchedChapter) {
+      setBook(matchedBook);
+      setChapter(matchedChapter);
+    }
+  }, [availableData.books, availableData.chapters, setBook, setChapter]);
+
+  useEffect(() => {
+    if (selectedBook && selectedChapter) {
+      setCurrentVideoId(null);
+      loadVideoForCurrentSelection();
+      getBibleVerseMarker();
+      setSelectedQuality("Auto");
+    }
+  }, [
+    selectedBook,
+    selectedChapter,
+    setCurrentVideoId,
+    loadVideoForCurrentSelection,
+    getBibleVerseMarker,
+  ]);
 
   const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
   const showComingSoon =
@@ -278,7 +344,13 @@ const CustomVideoPlayer = () => {
 
   // Handle video ID changes
   useEffect(() => {
-    if (!currentVideoId || !playerRef.current || isVideoLoading || !isVideoAvailable) return;
+    if (
+      !currentVideoId ||
+      !playerRef.current ||
+      isVideoLoading ||
+      !isVideoAvailable
+    )
+      return;
 
     const loadNewVideo = async () => {
       try {
@@ -373,7 +445,7 @@ const CustomVideoPlayer = () => {
 
           //  Use the time stored at click time
           const timeToSeek = pendingQualityChangeTimeRef.current;
-          if(timeToSeek){
+          if (timeToSeek) {
             await player.setCurrentTime(timeToSeek);
             setCurrentTime(timeToSeek);
           }
@@ -720,7 +792,6 @@ const CustomVideoPlayer = () => {
     }
   };
 
-  // For dragging
   const handleSeekMouseDown = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (isVideoAvailable) {
@@ -795,14 +866,18 @@ const CustomVideoPlayer = () => {
 
   const isFirstVerse = () => {
     if (!bibleVerseMarker) return false;
-    return bibleVerseMarker[0].verse === currentPlayingVerse || currentTime === 0;
+    return (
+      bibleVerseMarker[0].verse === currentPlayingVerse || currentTime === 0
+    );
   };
 
   const isLastVerse = () => {
     if (!bibleVerseMarker) return false;
     return (
       bibleVerseMarker[bibleVerseMarker.length - 1].verse ===
-      currentPlayingVerse || !(currentTime < duration) || isEnded
+        currentPlayingVerse ||
+      !(currentTime < duration) ||
+      isEnded
     );
   };
 
@@ -949,6 +1024,16 @@ const CustomVideoPlayer = () => {
                     ref={seekBarRef}
                     className="relative h-1 bg-gray-600 rounded-full mb-4 cursor-pointer"
                     onClick={handleSeekClick}
+                    onMouseMove={(e) => {
+                      const rect = seekBarRef.current?.getBoundingClientRect();
+                      if (rect) {
+                        const x = e.clientX - rect.left;
+                        const percent = x / rect.width;
+                        const time = percent * duration;
+                        setHoverTime(time);
+                      }
+                    }}
+                    onMouseLeave={() => setHoverTime(null)}
                   >
                     {/* Progress Bar */}
                     <div
@@ -958,24 +1043,49 @@ const CustomVideoPlayer = () => {
                     {/* Verse markers */}
                     {bibleVerseMarker &&
                       bibleVerseMarker.length > 0 &&
-                      bibleVerseMarker.map((verse: VerseMarkerType) => {
+                      bibleVerseMarker.map((verse: VerseMarkerType, index) => {
                         const verseTimeInSeconds = timeToSeconds(verse.time);
                         const versePosition =
                           (verseTimeInSeconds / duration) * 100;
+                        const nextVerseTime = bibleVerseMarker[index + 1]
+                          ? timeToSeconds(bibleVerseMarker[index + 1].time)
+                          : duration;
+                        const nextVersePosition =
+                          (nextVerseTime / duration) * 100;
+
+                        const segmentWidth = nextVersePosition - versePosition;
                         const isPassed = currentTime >= verseTimeInSeconds;
                         return (
                           <div
                             key={verse.id}
-                            className={`absolute top-0 w-0.5 h-1 ${
-                              isPassed ? "bg-yellow-400" : "bg-black"
-                            }  cursor-pointer z-10 hover:w-1 transition-all duration-200`}
+                            className="absolute top-0 h-full z-10 group"
                             style={{
                               left: `${versePosition}%`,
-                              transform: "translateX(-50%)",
+                              width: `${segmentWidth}%`,
                             }}
                             onClick={(e) => handleVerseMarkerClick(verse, e)}
-                            title={`Verse:${verse.verse} (${verse.time})`}
-                          ></div>
+                          >
+                            {/* Transparent area for hover + tooltip */}
+                            <div
+                              className="h-full cursor-pointer relative group"
+                              title={`Verse:${verse.verse} (${
+                                hoverTime !== null
+                                  ? formatTime(hoverTime)
+                                  : verse.time
+                              })`}
+                            >
+                              {/* The original marker line */}
+                              <div
+                                className={`absolute top-0 h-1 w-0.5 ${
+                                  isPassed ? "bg-yellow-400" : "bg-black"
+                                } group-hover:w-1 transition-all duration-200`}
+                                style={{
+                                  left: "0%",
+                                  transform: "translateX(-50%)",
+                                }}
+                              ></div>
+                            </div>
+                          </div>
                         );
                       })}
                     {/* Current Time Indicator */}
@@ -1058,27 +1168,44 @@ const CustomVideoPlayer = () => {
                           </button>
                         )}
                       {/* Timer */}
-                      <div className="text-white text-sm">
+                      <div
+                        className="text-white text-sm"
+                        style={{ userSelect: "none" }}>
                         {formatTime(currentTime)} / {formatTime(duration)}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center gap-4   ">
+                      <div className="mt-2">
+                        <button
+                          onClick={() => setShowShare((prev) => !prev)}
+                          className=" text-white hover:text-gray-300  "
+                        >
+                          <Share2 strokeWidth={2.5} size={23} />
+                        </button>
+                      </div>
                       {/* Settings Button */}
                       <div ref={containerRef} className="flex items-center">
-                        <SettingsButton
-                          ref={settingsButtonRef}
-                          onClick={() => {
-                            if (showSettingsMenu && !showQualityDrawer) {
-                              setShowSettingsMenu(false);
-                            } else if (showQualityDrawer) {
-                              setShowSettingsMenu(false);
-                              setShowQualityDrawer(false);
-                            } else {
-                              setShowSettingsMenu(true);
-                            }
-                          }}
-                          isDisabled={!isPlayerReady}
-                        />
+                        <div className="mt-1 relative">
+                          <SettingsButton
+                            ref={settingsButtonRef}
+                            onClick={() => {
+                              if (showSettingsMenu && !showQualityDrawer) {
+                                setShowSettingsMenu(false);
+                              } else if (showQualityDrawer) {
+                                setShowSettingsMenu(false);
+                                setShowQualityDrawer(false);
+                              } else {
+                                setShowSettingsMenu(true);
+                              }
+                            }}
+                            isDisabled={!isPlayerReady}
+                          />
+                          {isHDSelected && (
+                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-bold px-0.25 py-0.5 rounded leading-none">
+                              HD
+                            </span>
+                          )}
+                        </div>
                         <SettingsDrawer
                           isVisible={showSettingsMenu}
                           onClose={() => setShowSettingsMenu(false)}
@@ -1125,11 +1252,19 @@ const CustomVideoPlayer = () => {
                         disabled={!isPlayerReady}
                       >
                         {isFullscreen ? (
-                          <Minimize size={24} />
+                          <Minimize strokeWidth={2.5} size={24} />
                         ) : (
-                          <Maximize size={24} />
+                          <Maximize strokeWidth={2.5} size={24} />
                         )}
                       </button>
+                      {showShare && (
+                        <div className="absolute bottom-5 right-6 ">
+                          <SharePopup
+                            shareUrl={shareUrl}
+                            onClose={() => setShowShare(false)}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

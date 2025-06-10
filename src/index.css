@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -75,8 +75,8 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
-  --ribbon-color: #CD9F46;
-  --indigo-color: #5D6697;
+  --ribbon-color: #cd9f46;
+  --indigo-color: #5d6697;
 }
 
 .dark {
@@ -124,15 +124,29 @@
 
 @layer utilities {
   .font-roboto {
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
   }
-
 }
-
-
-
 
 /* Optional: Smooth hover effect */
 input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.1);
 }
+
+.custom-scroll-black {
+  scrollbar-color: grey transparent; /* Firefox */
+}
+
+.custom-scroll-black::-webkit-scrollbar {
+  width: 2px;
+}
+
+.custom-scroll-black::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scroll-black::-webkit-scrollbar-thumb {
+  background-color: black transparent;
+  border-radius: 4px;
+}
+
