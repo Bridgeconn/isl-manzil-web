@@ -1092,7 +1092,7 @@ const CustomVideoPlayer = () => {
                   {/* Seekbar with sections */}
                   <div
                     ref={seekBarRef}
-                    className="relative h-1 bg-gray-600 rounded-full mb-2 cursor-pointer"
+                    className="relative h-1 bg-gray-600 rounded-full mb-1 md:mb-2 cursor-pointer"
                     onClick={handleSeekClick}
                     onMouseMove={(e) => {
                       const rect = seekBarRef.current?.getBoundingClientRect();
