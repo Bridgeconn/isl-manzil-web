@@ -6,7 +6,6 @@ import {
   WhatsappShareButton,
   LinkedinShareButton,
   TwitterShareButton,
-  EmailShareButton,
   XIcon,
 } from "react-share";
 
@@ -78,7 +77,11 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
         {/* Share Icons */}
         <div className="flex justify-center gap-4">
           <FacebookShareButton url={shareUrl}>
-            <FacebookIcon size={32} round />
+            <FacebookIcon
+              className="w-8 h-8 rounded-full overflow-hidden inline-block"
+              size={32}
+              round
+            />
           </FacebookShareButton>
           <WhatsappShareButton url={shareUrl}>
             <WhatsappIcon size={32} round />
@@ -86,9 +89,16 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
           <TwitterShareButton url={shareUrl}>
             <XIcon size={32} round />
           </TwitterShareButton>
-          <EmailShareButton url={shareUrl}>
+          <a
+            href={`mailto:?subject=Check this out&body=${encodeURIComponent(
+              shareUrl
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-8 h-8 rounded-full overflow-hidden inline-block"
+          >
             <EmailIcon size={32} round />
-          </EmailShareButton>
+          </a>
           <LinkedinShareButton url={shareUrl}>
             <LinkedinIcon size={32} round />
           </LinkedinShareButton>
