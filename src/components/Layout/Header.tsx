@@ -34,7 +34,7 @@ const Header = () => {
     // },
   ];
   return (
-    <header className="w-full sticky top-0 left-0 right-0 bg-white z-50">
+    <header className="w-full sticky top-0 left-0 right-0 bg-white z-10">
       {/* Header content container */}
       <div className="max-w-7xl mx-auto flex py-1 items-end relative">
         {/* Left Logo */}
