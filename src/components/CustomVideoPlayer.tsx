@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -112,6 +112,7 @@ const CustomVideoPlayer = () => {
   const prevSelectedChapter = useRef<number | null>(null);
   const userInteractedRef = useRef<boolean>(false);
   const isManualSeekingRef = useRef<boolean>(false);
+  const shareRef = useRef<HTMLDivElement>(null);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
@@ -128,6 +129,7 @@ const CustomVideoPlayer = () => {
   const [availableQualities, setAvailableQualities] = useState<
     { id: string; label: string }[]
   >([]);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
 
   //versedemarcation
 
@@ -143,10 +145,11 @@ const CustomVideoPlayer = () => {
       ? window.location.origin
       : "http://localhost:5173";
 
-  const shareUrl =
-    selectedBook?.value && selectedChapter?.value
-      ? `${BASE_URL}/watch/${selectedBook.value}/${selectedChapter.value}`
-      : BASE_URL;
+  const shareUrl = useMemo(() => {
+    return selectedBook?.value && selectedChapter?.value
+      ? `${BASE_URL}/bible/${selectedBook.value}/${selectedChapter.value}`
+      : `${BASE_URL}/bible`;
+  }, [selectedBook, selectedChapter]);
 
   useEffect(() => {
     const pathParts = window.location.pathname.split("/");
@@ -489,24 +492,38 @@ const CustomVideoPlayer = () => {
     fetchAndApplyVideoQuality();
   }, [selectedQuality, isPlayerReady]);
 
+  // Modified useEffect for handling outside clicks
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        if (showSettingsMenu || showQualityDrawer) {
-          setShowSettingsMenu(false);
-          setShowQualityDrawer(false);
-          skipNextClickRef.current = true; // prevent toggle on same click
-        }
+      const target = event.target as Node;
+
+      const clickedOutsideSettings =
+        containerRef.current && !containerRef.current.contains(target);
+
+      const clickedOutsideShare =
+        shareRef.current && !shareRef.current.contains(target);
+
+      const clickedOnShareButton =
+        shareButtonRef.current && shareButtonRef.current.contains(target);
+
+      // Close settings-related drawers
+      if ((showSettingsMenu || showQualityDrawer) && clickedOutsideSettings) {
+        setShowSettingsMenu(false);
+        setShowQualityDrawer(false);
+        skipNextClickRef.current = true; // prevent toggle on same click
+      }
+
+      // Close share popup (but not if clicking on the share button itself)
+      if (showShare && clickedOutsideShare && !clickedOnShareButton) {
+        setShowShare(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
-  }, [showSettingsMenu, showQualityDrawer]);
+  }, [showSettingsMenu, showQualityDrawer, showShare]);
 
   // Update intervals when play state changes
   useEffect(() => {
@@ -761,6 +778,9 @@ const CustomVideoPlayer = () => {
   // Toggle play/pause
   const togglePlay = () => {
     if (!vimeoPlayerRef.current || !isPlayerReady) return;
+    if (showShare || showSettingsMenu || showQualityDrawer) {
+      return;
+    }
 
     const newIsPlaying = !isPlaying;
     if (newIsPlaying) {
@@ -1240,8 +1260,22 @@ const CustomVideoPlayer = () => {
                     <div className="flex items-center gap-4   ">
                       <div className="mt-2">
                         <button
-                          onClick={() => setShowShare((prev) => !prev)}
-                          className=" text-white hover:text-gray-300  "
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+
+                            // Only skip if share popup is currently open and we flagged to skip
+
+                            if (showSettingsMenu || showQualityDrawer) {
+                              setShowSettingsMenu(false);
+                              setShowQualityDrawer(false);
+                              setShowShare(true);
+                            } else {
+                              // Normal toggle behavior when settings is closed
+                              setShowShare((prev) => !prev);
+                            }
+                          }}
+                          className="text-white hover:text-blue-400"
                         >
                           <Share2 strokeWidth={2.5} size={23} />
                         </button>
@@ -1252,7 +1286,13 @@ const CustomVideoPlayer = () => {
                           <SettingsButton
                             ref={settingsButtonRef}
                             onClick={() => {
-                              if (showSettingsMenu && !showQualityDrawer) {
+                              if (showShare) {
+                                setShowShare(false);
+                                setShowSettingsMenu(true);
+                              } else if (
+                                showSettingsMenu &&
+                                !showQualityDrawer
+                              ) {
                                 setShowSettingsMenu(false);
                               } else if (showQualityDrawer) {
                                 setShowSettingsMenu(false);
@@ -1321,7 +1361,10 @@ const CustomVideoPlayer = () => {
                         )}
                       </button>
                       {showShare && (
-                        <div className="absolute bottom-5 right-6 ">
+                        <div
+                          ref={shareRef}
+                          className="absolute bottom-5 right-6 "
+                        >
                           <SharePopup
                             shareUrl={shareUrl}
                             onClose={() => setShowShare(false)}
