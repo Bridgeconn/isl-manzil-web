@@ -516,10 +516,11 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
   seekToVerse: async (verse: string) => {
     const { bibleVerseMarker } = get();
-
+    verse = verse.toString().includes('-') ? verse.toString().replace('-', '_') : verse.toString();
     const marker = bibleVerseMarker?.find(
       (v) => v.verse.toString().trim() === verse.toString().trim()
     );
+    console.log("marker", marker);
     const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
 
     if (marker) {
