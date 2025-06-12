@@ -18,7 +18,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
   return (
     <div
-      className="absolute bottom-15 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-45 md:w-48 p-3 z-50"
+      className="absolute bottom-10 md:bottom-12 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-45 md:w-48 p-3 z-50"
       style={{}}
     >
       <div className="flex justify-between items-center mb-4">

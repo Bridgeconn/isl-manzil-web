@@ -91,7 +91,7 @@ const CustomVideoPlayer = () => {
     isVideoLoading,
   } = useBibleStore();
 
-  const { shouldUseMobileBottomBar } = useDeviceDetection();
+  const { deviceType, shouldUseMobileBottomBar } = useDeviceDetection();
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -129,6 +129,7 @@ const CustomVideoPlayer = () => {
   const [availableQualities, setAvailableQualities] = useState<
     { id: string; label: string }[]
   >([]);
+  const [isLandscapeMode, setIsLandscapeMode] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
 
   //versedemarcation
@@ -229,6 +230,50 @@ const CustomVideoPlayer = () => {
     loadVideoForCurrentSelection,
     getBibleVerseMarker,
   ]);
+
+  // Replace the existing orientation detection useEffect with this:
+  useEffect(() => {
+    const checkOrientation = () => {
+      // Use a more stable check for mobile devices
+      const isMobile = shouldUseMobileBottomBar;
+      
+      const isLandscape =
+        isMobile &&
+        window.innerWidth > window.innerHeight &&
+        window.innerWidth / window.innerHeight > 1.2;
+
+      setIsLandscapeMode(isLandscape);
+    };
+
+    // Debounce the orientation check to prevent rapid state changes
+    let orientationTimeout: number;
+
+    const debouncedCheckOrientation = () => {
+      clearTimeout(orientationTimeout);
+      orientationTimeout = window.setTimeout(checkOrientation, 150);
+    };
+
+    checkOrientation();
+
+    // Listen for orientation changes with debouncing
+    const handleOrientationChange = () => {
+      // Add a longer delay for orientation change events
+      setTimeout(debouncedCheckOrientation, 200);
+    };
+
+    const handleResize = () => {
+      debouncedCheckOrientation();
+    };
+
+    window.addEventListener("orientationchange", handleOrientationChange);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      clearTimeout(orientationTimeout);
+      window.removeEventListener("orientationchange", handleOrientationChange);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [shouldUseMobileBottomBar]);
 
   // Helper function to clear all intervals
   const clearIntervals = useCallback(() => {
@@ -1008,6 +1053,8 @@ const CustomVideoPlayer = () => {
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  console.log("is landscape", isLandscapeMode);
+
   return (
     <div className="w-full max-w-5xl mx-auto sm:mt-2 md:px-2">
       <div className="flex items-end justify-center gap-2 w-full">
@@ -1025,8 +1072,24 @@ const CustomVideoPlayer = () => {
           ))}
         <div
           ref={playerContainerRef}
-          className={`relative w-full max-w-4xl mx-auto overflow-hidden`}
-          style={{ aspectRatio: "16/9", maxHeight: "80vh" }}
+          className={`relative w-full max-w-4xl mx-auto overflow-hidden ${
+            isFullscreen &&
+            (shouldUseMobileBottomBar || deviceType === "tablet")
+              ? "h-screen flex flex-col justify-center bg-black"
+              : ""
+          }`}
+          style={{
+            aspectRatio:
+              isFullscreen &&
+              (shouldUseMobileBottomBar || deviceType === "tablet")
+                ? "unset"
+                : "16/9",
+            maxHeight:
+              isFullscreen &&
+              (shouldUseMobileBottomBar || deviceType === "tablet")
+                ? "100vh"
+                : "80vh",
+          }}
           onClick={(e) => {
             const clickedInsideDrawer =
               containerRef.current?.contains(e.target as Node) ?? false;
@@ -1065,312 +1128,343 @@ const CustomVideoPlayer = () => {
           {isVideoAvailable && (
             <>
               {/* Vimeo Player Container */}
-              <div className="w-full h-full">
-                <div ref={playerRef} className="w-full h-full" />
-              </div>
-
-              {/* Play/Pause/Replay Bezel Effect */}
-              {showPlayBezel && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                  <div className="bg-black bg-opacity-50 rounded-full p-4 sm:p-6">
-                    {isEnded && !(currentTime < duration) ? (
-                      <RefreshCw className="text-white w-8 h-8 sm:w-12 sm:h-12" />
-                    ) : lastAction === "pause" ? (
-                      <FilledPauseIcon className="text-white w-8 h-8 sm:w-12 sm:h-12" />
-                    ) : (
-                      <FilledPlayIcon className="text-white w-8 h-8 sm:w-12 sm:h-12 pl-1" />
-                    )}
-                  </div>
-                </div>
-              )}
-              {/* Video Ended Overlay */}
-              {isEnded && !(currentTime < duration) && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-                  <button
-                    onClick={replayVideo}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"
-                  >
-                    <RefreshCw size={24} />
-                    <span>Replay</span>
-                  </button>
-                </div>
-              )}
-              {/* Controls Overlay */}
               <div
-                className={`absolute inset-0 transition-opacity duration-300 ${
-                  showControls || isEnded ? "opacity-100" : "opacity-0"
-                } z-20`}
-              >
-                {/* Bottom Controls */}
-                <div
-                  ref={controlsRef}
-                  className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 pointer-events-auto"
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseEnter={handleControlsMouseEnter}
-                  onMouseLeave={handleControlsMouseLeave}
-                >
-                  {/* Seekbar with sections */}
-                  <div
-                    ref={seekBarRef}
-                    className="relative h-1 bg-gray-600 rounded-full mb-1 md:mb-2 cursor-pointer"
-                    onClick={handleSeekClick}
-                    onMouseMove={(e) => {
-                      const rect = seekBarRef.current?.getBoundingClientRect();
-                      if (rect) {
-                        const x = e.clientX - rect.left;
-                        const percent = Math.max(
-                          0,
-                          Math.min(1, x / rect.width)
-                        );
-                        const time = percent * duration;
-                        setHoverTime(time);
+                className={`${
+                  isFullscreen && (shouldUseMobileBottomBar || deviceType === "tablet")
+                    ? "relative mx-auto bg-black"
+                    : "w-full h-full"
+                }`}
+                style={{
+                  ...(isFullscreen &&
+                  shouldUseMobileBottomBar ||
+                  deviceType === "tablet"
+                  
+                    ? {
+                        aspectRatio: "16/9",
+                        maxHeight: "100vh",
+                        width: "100%",
                       }
-                    }}
-                    onMouseLeave={() => setHoverTime(null)}
-                    title={
-                      hoverTime !== null
-                        ? (() => {
-                            const currentVerse =
-                              getCurrentVerseFromTime(hoverTime);
-                            const verseText = currentVerse
-                              ? `Verse ${currentVerse}`
-                              : "Intro";
-                            return `${verseText} - ${formatTime(hoverTime)}`;
-                          })()
-                        : ""
-                    }
-                  >
-                    {/* Progress Bar */}
-                    <div
-                      className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full"
-                      style={{ width: `${progressPercent}%` }}
-                    ></div>
-                    {/* Verse markers */}
-                    {bibleVerseMarker &&
-                      bibleVerseMarker.length > 0 &&
-                      bibleVerseMarker.map((verse: VerseMarkerType) => {
-                        const verseTimeInSeconds = timeToSeconds(verse.time);
-                        const versePosition =
-                          (verseTimeInSeconds / duration) * 100;
-                        const isPassed = currentTime >= verseTimeInSeconds;
-                        return (
-                          <div
-                            key={verse.id}
-                            className={`absolute top-0 w-0.5 h-1 ${
-                              isPassed ? "bg-yellow-400" : "bg-black"
-                            }  cursor-pointer z-10 hover:w-1.5 transition-all duration-200 ease-in-out`}
-                            style={{
-                              left: `${versePosition}%`,
-                              transform: "translateX(-50%)",
-                            }}
-                            onClick={(e) => handleVerseMarkerClick(verse, e)}
-                            title={`Verse ${verse.verse} - ${formatTime(
-                              verseTimeInSeconds
-                            )}`}
-                          ></div>
-                        );
-                      })}
-                    {/* Current Time Indicator */}
-                    <div
-                      className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
-                      style={{
-                        left: `${progressPercent}%`,
-                        transform: "translateX(-50%)",
-                      }}
-                      onMouseDown={handleSeekMouseDown}
-                    ></div>
-                  </div>
-                  {/* Control Buttons */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {/* Play/Pause/Replay Button */}
-                      {(bibleVerseMarker?.length ?? 0) > 0 &&
-                        !selectedChapter?.label.includes("Intro") && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigateToVerse("backward");
-                            }}
-                            className={`${
-                              isFirstVerse() || !isPlayerReady
-                                ? "text-gray-500 cursor-not-allowed"
-                                : "text-white hover:text-blue-400"
-                            }`}
-                            aria-label="Previous Verse"
-                            disabled={!isPlayerReady || isFirstVerse()}
-                            title={isFirstVerse() ? "" : "Previous Verse"}
-                          >
-                            <FilledSkipBackIcon size={24} />
-                          </button>
-                        )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isEnded && !(currentTime < duration)) {
-                            replayVideo(e);
-                          } else {
-                            togglePlay();
-                          }
-                        }}
-                        className="text-white hover:text-blue-400"
-                        aria-label={
-                          isEnded && !(currentTime < duration)
-                            ? "Replay"
-                            : isPlaying
-                            ? "Pause"
-                            : "Play"
-                        }
-                        disabled={!isPlayerReady}
-                      >
-                        {isEnded && !(currentTime < duration) ? (
-                          <RefreshCw size={24} />
-                        ) : isPlaying ? (
-                          <FilledPauseIcon size={24} />
-                        ) : (
-                          <FilledPlayIcon size={24} />
-                        )}
-                      </button>
-                      {(bibleVerseMarker?.length ?? 0) > 0 &&
-                        !selectedChapter?.label.includes("Intro") && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigateToVerse("forward");
-                            }}
-                            className={`${
-                              isLastVerse() || !isPlayerReady
-                                ? "text-gray-500 cursor-not-allowed"
-                                : "text-white hover:text-blue-400"
-                            }`}
-                            aria-label="Next Verse"
-                            disabled={!isPlayerReady || isLastVerse()}
-                            title={isLastVerse() ? "" : "Next Verse"}
-                          >
-                            <FilledSkipForwardIcon size={24} />
-                          </button>
-                        )}
-                      {/* Timer */}
-                      <div
-                        className="text-white text-sm"
-                        style={{ userSelect: "none" }}
-                      >
-                        {formatTime(currentTime)} / {formatTime(duration)}
-                      </div>
+                    : {
+                        aspectRatio: "16/9",
+                        maxHeight: "100%",
+                        width: "100%",
+                      }),
+                }}
+              >
+                <div className="w-full h-full">
+                  <div ref={playerRef} className="w-full h-full" />
+                </div>
+
+                {/* Play/Pause/Replay Bezel Effect */}
+                {showPlayBezel && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                    <div className="bg-black bg-opacity-50 rounded-full p-4 sm:p-6">
+                      {isEnded && !(currentTime < duration) ? (
+                        <RefreshCw className="text-white w-8 h-8 sm:w-12 sm:h-12" />
+                      ) : lastAction === "pause" ? (
+                        <FilledPauseIcon className="text-white w-8 h-8 sm:w-12 sm:h-12" />
+                      ) : (
+                        <FilledPlayIcon className="text-white w-8 h-8 sm:w-12 sm:h-12 pl-1" />
+                      )}
                     </div>
-                    <div className="flex items-center gap-4   ">
-                      <div className="mt-2">
+                  </div>
+                )}
+                {/* Video Ended Overlay */}
+                {isEnded && !(currentTime < duration) && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+                    <button
+                      onClick={replayVideo}
+                      className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"
+                    >
+                      <RefreshCw size={24} />
+                      <span>Replay</span>
+                    </button>
+                  </div>
+                )}
+                {/* Controls Overlay */}
+                <div
+                  className={`absolute inset-0 z-20
+                transition-opacity duration-300 ${
+                  showControls || isEnded ? "opacity-100" : "opacity-0"
+                }`}
+                >
+                  {/* Bottom Controls */}
+                  <div
+                    ref={controlsRef}
+                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2 md:p-4 pointer-events-auto"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseEnter={handleControlsMouseEnter}
+                    onMouseLeave={handleControlsMouseLeave}
+                  >
+                    {/* Seekbar with sections */}
+                    <div
+                      ref={seekBarRef}
+                      className="relative h-1 bg-gray-600 rounded-full mb-1 md:mb-2 cursor-pointer"
+                      onClick={handleSeekClick}
+                      onMouseMove={(e) => {
+                        const rect =
+                          seekBarRef.current?.getBoundingClientRect();
+                        if (rect) {
+                          const x = e.clientX - rect.left;
+                          const percent = Math.max(
+                            0,
+                            Math.min(1, x / rect.width)
+                          );
+                          const time = percent * duration;
+                          setHoverTime(time);
+                        }
+                      }}
+                      onMouseLeave={() => setHoverTime(null)}
+                      title={
+                        hoverTime !== null
+                          ? (() => {
+                              const currentVerse =
+                                getCurrentVerseFromTime(hoverTime);
+                              const verseText = currentVerse
+                                ? `Verse ${currentVerse}`
+                                : "Intro";
+                              return `${verseText} - ${formatTime(hoverTime)}`;
+                            })()
+                          : ""
+                      }
+                    >
+                      {/* Progress Bar */}
+                      <div
+                        className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full"
+                        style={{ width: `${progressPercent}%` }}
+                      ></div>
+                      {/* Verse markers */}
+                      {bibleVerseMarker &&
+                        bibleVerseMarker.length > 0 &&
+                        bibleVerseMarker.map((verse: VerseMarkerType) => {
+                          const verseTimeInSeconds = timeToSeconds(verse.time);
+                          const versePosition =
+                            (verseTimeInSeconds / duration) * 100;
+                          const isPassed = currentTime >= verseTimeInSeconds;
+                          return (
+                            <div
+                              key={verse.id}
+                              className={`absolute top-0 w-0.5 h-1 ${
+                                isPassed ? "bg-yellow-400" : "bg-black"
+                              }  cursor-pointer z-10 hover:w-1.5 transition-all duration-200 ease-in-out`}
+                              style={{
+                                left: `${versePosition}%`,
+                                transform: "translateX(-50%)",
+                              }}
+                              onClick={(e) => handleVerseMarkerClick(verse, e)}
+                              title={`Verse ${verse.verse} - ${formatTime(
+                                verseTimeInSeconds
+                              )}`}
+                            ></div>
+                          );
+                        })}
+                      {/* Current Time Indicator */}
+                      <div
+                        className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
+                        style={{
+                          left: `${progressPercent}%`,
+                          transform: "translateX(-50%)",
+                        }}
+                        onMouseDown={handleSeekMouseDown}
+                      ></div>
+                    </div>
+                    {/* Control Buttons */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {/* Play/Pause/Replay Button */}
+                        {(bibleVerseMarker?.length ?? 0) > 0 &&
+                          !selectedChapter?.label.includes("Intro") && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigateToVerse("backward");
+                              }}
+                              className={`${
+                                isFirstVerse() || !isPlayerReady
+                                  ? "text-gray-500 cursor-not-allowed"
+                                  : "text-white hover:text-blue-400"
+                              }`}
+                              aria-label="Previous Verse"
+                              disabled={!isPlayerReady || isFirstVerse()}
+                              title={isFirstVerse() ? "" : "Previous Verse"}
+                            >
+                              <FilledSkipBackIcon size={24} />
+                            </button>
+                          )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            e.preventDefault();
-
-                            // Only skip if share popup is currently open and we flagged to skip
-
-                            if (showSettingsMenu || showQualityDrawer) {
-                              setShowSettingsMenu(false);
-                              setShowQualityDrawer(false);
-                              setShowShare(true);
+                            if (isEnded && !(currentTime < duration)) {
+                              replayVideo(e);
                             } else {
-                              // Normal toggle behavior when settings is closed
-                              setShowShare((prev) => !prev);
+                              togglePlay();
                             }
                           }}
                           className="text-white hover:text-blue-400"
+                          aria-label={
+                            isEnded && !(currentTime < duration)
+                              ? "Replay"
+                              : isPlaying
+                              ? "Pause"
+                              : "Play"
+                          }
+                          disabled={!isPlayerReady}
                         >
-                          <Share2 strokeWidth={2.5} size={23} />
+                          {isEnded && !(currentTime < duration) ? (
+                            <RefreshCw size={24} />
+                          ) : isPlaying ? (
+                            <FilledPauseIcon size={24} />
+                          ) : (
+                            <FilledPlayIcon size={24} />
+                          )}
                         </button>
+                        {(bibleVerseMarker?.length ?? 0) > 0 &&
+                          !selectedChapter?.label.includes("Intro") && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigateToVerse("forward");
+                              }}
+                              className={`${
+                                isLastVerse() || !isPlayerReady
+                                  ? "text-gray-500 cursor-not-allowed"
+                                  : "text-white hover:text-blue-400"
+                              }`}
+                              aria-label="Next Verse"
+                              disabled={!isPlayerReady || isLastVerse()}
+                              title={isLastVerse() ? "" : "Next Verse"}
+                            >
+                              <FilledSkipForwardIcon size={24} />
+                            </button>
+                          )}
+                        {/* Timer */}
+                        <div
+                          className="text-white text-sm"
+                          style={{ userSelect: "none" }}
+                        >
+                          {formatTime(currentTime)} / {formatTime(duration)}
+                        </div>
                       </div>
-                      {/* Settings Button */}
-                      <div ref={containerRef} className="flex items-center">
-                        <div className="mt-1 relative">
-                          <SettingsButton
-                            ref={settingsButtonRef}
-                            onClick={() => {
-                              if (showShare) {
-                                setShowShare(false);
-                                setShowSettingsMenu(true);
-                              } else if (
-                                showSettingsMenu &&
-                                !showQualityDrawer
-                              ) {
-                                setShowSettingsMenu(false);
-                              } else if (showQualityDrawer) {
+                      <div className="flex items-center gap-4   ">
+                        <div className="mt-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+
+                              // Only skip if share popup is currently open and we flagged to skip
+
+                              if (showSettingsMenu || showQualityDrawer) {
                                 setShowSettingsMenu(false);
                                 setShowQualityDrawer(false);
+                                setShowShare(true);
                               } else {
-                                setShowSettingsMenu(true);
+                                // Normal toggle behavior when settings is closed
+                                setShowShare((prev) => !prev);
                               }
                             }}
-                            isDisabled={!isPlayerReady}
-                          />
-                          {isHDSelected && (
-                            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-bold px-0.25 py-0.5 rounded leading-none">
-                              HD
-                            </span>
-                          )}
+                            className="text-white hover:text-blue-400"
+                          >
+                            <Share2 strokeWidth={2.5} size={23} />
+                          </button>
                         </div>
-                        <SettingsDrawer
-                          isVisible={showSettingsMenu}
-                          onClose={() => setShowSettingsMenu(false)}
-                          selectedQuality={selectedQuality}
-                          onOpenQualityDrawer={() => {
-                            setShowSettingsMenu(false);
-                            setShowQualityDrawer(true);
+                        {/* Settings Button */}
+                        <div ref={containerRef} className="flex items-center">
+                          <div className="mt-1 relative">
+                            <SettingsButton
+                              ref={settingsButtonRef}
+                              onClick={() => {
+                                if (showShare) {
+                                  setShowShare(false);
+                                  setShowSettingsMenu(true);
+                                } else if (
+                                  showSettingsMenu &&
+                                  !showQualityDrawer
+                                ) {
+                                  setShowSettingsMenu(false);
+                                } else if (showQualityDrawer) {
+                                  setShowSettingsMenu(false);
+                                  setShowQualityDrawer(false);
+                                } else {
+                                  setShowSettingsMenu(true);
+                                }
+                              }}
+                              isDisabled={!isPlayerReady}
+                            />
+                            {isHDSelected && (
+                              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-bold px-0.25 py-0.5 rounded leading-none">
+                                HD
+                              </span>
+                            )}
+                          </div>
+                          <SettingsDrawer
+                            isVisible={showSettingsMenu}
+                            onClose={() => setShowSettingsMenu(false)}
+                            selectedQuality={selectedQuality}
+                            onOpenQualityDrawer={() => {
+                              setShowSettingsMenu(false);
+                              setShowQualityDrawer(true);
+                            }}
+                          />
+                          <QualityDrawer
+                            isVisible={showQualityDrawer}
+                            selectedQuality={selectedQuality}
+                            availableQualities={availableQualities}
+                            onSelect={async (quality) => {
+                              if (vimeoPlayerRef.current) {
+                                const currentTime =
+                                  await vimeoPlayerRef.current.getCurrentTime();
+                                pendingQualityChangeTimeRef.current =
+                                  currentTime;
+                                //Save if it was playing
+                                const isActuallyPlaying =
+                                  await vimeoPlayerRef.current
+                                    .getPaused()
+                                    .then((p) => !p);
+                                wasPlayingRef.current = isActuallyPlaying;
+                              }
+                              setSelectedQuality(quality);
+                            }}
+                            onClose={() => setShowQualityDrawer(false)}
+                            onBackToSettings={handleChangeSettings}
+                          />
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFullscreen();
                           }}
-                        />
-                        <QualityDrawer
-                          isVisible={showQualityDrawer}
-                          selectedQuality={selectedQuality}
-                          availableQualities={availableQualities}
-                          onSelect={async (quality) => {
-                            if (vimeoPlayerRef.current) {
-                              const currentTime =
-                                await vimeoPlayerRef.current.getCurrentTime();
-                              pendingQualityChangeTimeRef.current = currentTime;
-                              //Save if it was playing
-                              const isActuallyPlaying =
-                                await vimeoPlayerRef.current
-                                  .getPaused()
-                                  .then((p) => !p);
-                              wasPlayingRef.current = isActuallyPlaying;
-                            }
-                            setSelectedQuality(quality);
-                          }}
-                          onClose={() => setShowQualityDrawer(false)}
-                          onBackToSettings={handleChangeSettings}
-                        />
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFullscreen();
-                        }}
-                        className="text-white hover:text-blue-400"
-                        aria-label={
-                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
-                        }
-                        title={
-                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
-                        }
-                        disabled={!isPlayerReady}
-                      >
-                        {isFullscreen ? (
-                          <Minimize strokeWidth={2.5} size={24} />
-                        ) : (
-                          <Maximize strokeWidth={2.5} size={24} />
-                        )}
-                      </button>
-                      {showShare && (
-                        <div
-                          ref={shareRef}
-                          className="absolute bottom-5 right-6 "
+                          className="text-white hover:text-blue-400"
+                          aria-label={
+                            isFullscreen
+                              ? "Exit fullscreen"
+                              : "Enter fullscreen"
+                          }
+                          title={
+                            isFullscreen
+                              ? "Exit fullscreen"
+                              : "Enter fullscreen"
+                          }
+                          disabled={!isPlayerReady}
                         >
-                          <SharePopup
-                            shareUrl={shareUrl}
-                            onClose={() => setShowShare(false)}
-                          />
-                        </div>
-                      )}
+                          {isFullscreen ? (
+                            <Minimize strokeWidth={2.5} size={24} />
+                          ) : (
+                            <Maximize strokeWidth={2.5} size={24} />
+                          )}
+                        </button>
+                        {showShare && (
+                          <div
+                            ref={shareRef}
+                            className="absolute bottom-5 right-6 "
+                          >
+                            <SharePopup
+                              shareUrl={shareUrl}
+                              onClose={() => setShowShare(false)}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

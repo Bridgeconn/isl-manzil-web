@@ -53,7 +53,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
         </div>
       )}
 
-      <div className="absolute bottom-11 right-2 sm:right-4 w-58 sm:w-68 bg-white border border-gray-200 rounded-lg shadow-xl p-3 sm:p-4 z-50">
+      <div className="absolute bottom-6 md:bottom-8 right-2 sm:right-4 w-58 sm:w-68 bg-white border border-gray-200 rounded-lg shadow-xl p-3 sm:p-4 z-50">
         {/* URL Display */}
         <div className="mb-3 sm:mb-5 text-center text-xs sm:text-sm text-gray-800 break-words">
           <a href={shareUrl} className="text-blue-600 underline">
