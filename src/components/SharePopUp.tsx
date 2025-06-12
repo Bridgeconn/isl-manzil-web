@@ -32,10 +32,10 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
   return (
     <>
       {copied && (
-        <div className="fixed top-18 left-1/2 transform -translate-x-1/2 bg-green-700 text-white px-4 py-2 rounded-md shadow-md flex items-center gap-2 z-[60]">
+        <div className="fixed top-2 sm:top-6 md:top-8 left-1/2 transform -translate-x-1/2 bg-green-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-md shadow-md flex items-center gap-1 sm:gap-2 z-90">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-5 h-5 text-white"
+            className="w-4 h-4 sm:w-5 sm:h-5 text-white"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -45,21 +45,16 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
           >
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          <span className="font-medium">Copied</span>
-          <button onClick={() => setCopied(false)} className="ml-2">
-            <X size={16} className="text-white hover:text-gray-300" />
+          <span className="font-medium text-sm sm:text-base">Copied</span>
+          <button onClick={() => setCopied(false)} className="ml-1 sm:ml-2">
+            <X size={14} className="sm:w-4 sm:h-4 text-white hover:text-gray-300" />
           </button>
         </div>
       )}
 
-      <div className="absolute bottom-14 right-4 w-68 bg-white border border-gray-200 rounded-lg shadow-xl p-4 z-50">
-        {/* <div className="flex justify-between items-center mb-3 ">
-          <span className="text-lg ml-6 font-semibold text-black-600">Share</span>
-          <button onClick={onClose} aria-label="Close share popup">
-            <X size={18} />
-          </button>
-        </div> */}
-        <div className="mb-5 text-center text-sm text-gray-800 break-words">
+      <div className="absolute bottom-6 md:bottom-8 right-2 sm:right-4 w-58 sm:w-68 bg-white border border-gray-200 rounded-lg shadow-xl p-3 sm:p-4 z-50">
+        {/* URL Display */}
+        <div className="mb-3 sm:mb-5 text-center text-xs sm:text-sm text-gray-800 break-words">
           <a href={shareUrl} className="text-blue-600 underline">
             {shareUrl}
           </a>
@@ -68,14 +63,14 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
         {/* Copy Button */}
         <button
           onClick={copyToClipboard}
-          className=" flex items-center justify-center gap-2 text-sm border rounded px-3 py-2 mx-auto text-gray-700 hover:bg-gray-100 mb-4"
+          className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm border rounded px-2 sm:px-3 py-1.5 sm:py-2 mx-auto text-gray-700 hover:bg-gray-100 mb-3 sm:mb-4"
         >
-          <Copy strokeWidth={2} className="text-gray-600" />
+          <Copy strokeWidth={2} className="text-gray-600 w-3 h-3 sm:w-4 sm:h-4" />
           Copy To Clipboard
         </button>
 
         {/* Share Icons */}
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-2 sm:gap-4">
           <FacebookShareButton url={shareUrl}>
             <FacebookIcon
               className="w-8 h-8 rounded-full overflow-hidden inline-block"
@@ -84,10 +79,10 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
             />
           </FacebookShareButton>
           <WhatsappShareButton url={shareUrl}>
-            <WhatsappIcon size={32} round />
+            <WhatsappIcon size={28} className="sm:w-8 sm:h-8" round />
           </WhatsappShareButton>
           <TwitterShareButton url={shareUrl}>
-            <XIcon size={32} round />
+            <XIcon size={28} className="sm:w-8 sm:h-8" round />
           </TwitterShareButton>
           <a
             href={`mailto:?subject=Check this out&body=${encodeURIComponent(
@@ -100,7 +95,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
             <EmailIcon size={32} round />
           </a>
           <LinkedinShareButton url={shareUrl}>
-            <LinkedinIcon size={32} round />
+            <LinkedinIcon size={28} className="sm:w-8 sm:h-8" round />
           </LinkedinShareButton>
         </div>
       </div>

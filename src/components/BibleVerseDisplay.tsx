@@ -140,7 +140,7 @@ const BibleVerseDisplay = ({
           {!isFetching && !error && verseData.length > 0 && (
             <div
               ref={containerRef}
-              className={`flex flex-col h-full overflow-y-auto custom-scroll-ultra-thin ${
+              className={`flex flex-col h-full overflow-y-auto custom-scroll-ultra-thin pr-3 ${
                 fontType === "serif" ? "font-serif" : "font-sans"
               }`}
               style={{
