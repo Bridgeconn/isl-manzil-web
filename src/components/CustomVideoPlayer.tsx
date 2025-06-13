@@ -7,7 +7,6 @@ import {
   Minimize,
   Loader2,
   Clock,
-  Share2,
   Loader,
   Download,
 } from "lucide-react";
@@ -21,6 +20,8 @@ import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
 import { useVimeoDownload } from "@/hooks/useVimeoDownload";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -1426,7 +1427,7 @@ const CustomVideoPlayer = () => {
                               ref={downloadDropdownRef}
                             >
                               <div className="p-3">
-                                <div className="text-white text-sm font-medium mb-2 border-b border-gray-600 pb-2">
+                                <div className="text-white font-semibold mb-2 border-b border-gray-600 pb-2">
                                   Download Options
                                 </div>
 
@@ -1460,7 +1461,6 @@ const CustomVideoPlayer = () => {
                                         </div>
                                         <Download
                                           size={16}
-                                          className="text-gray-400"
                                         />
                                       </button>
                                     ))}
@@ -1476,7 +1476,7 @@ const CustomVideoPlayer = () => {
                             </div>
                           )}
                         </div>
-                        <div className="mt-2">
+                        <div className="mt-1">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1499,8 +1499,12 @@ const CustomVideoPlayer = () => {
                               }
                             }}
                             className="text-white hover:text-blue-400"
+                            title="Share"
                           >
-                            <Share2 strokeWidth={2.5} size={23} />
+                            <FontAwesomeIcon
+                              icon={faShareNodes}
+                              className="w-6 h-8 text-[25px]"
+                            />
                           </button>
                         </div>
                         {/* Settings Button */}
