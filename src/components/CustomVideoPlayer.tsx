@@ -1109,7 +1109,7 @@ const CustomVideoPlayer = () => {
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="w-full max-w-5xl mx-auto md:px-2">
+    <div className="w-full max-w-5xl mx-auto">
       <div className="flex items-end justify-center gap-2 w-full">
         {!shouldUseMobileBottomBar &&
           (canGoPrevious ? (
