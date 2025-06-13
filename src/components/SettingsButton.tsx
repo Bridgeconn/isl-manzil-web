@@ -20,8 +20,7 @@ const SettingsButton = React.forwardRef<HTMLButtonElement, SettingsButtonProps>(
           className="text-white hover:text-blue-400"
           title="Settings"
         >
-          
-          <FontAwesomeIcon icon={faGear} className="text-[23px]" />
+          <FontAwesomeIcon icon={faGear} className="text-[24px]" />
         </button>
       </div>
     );

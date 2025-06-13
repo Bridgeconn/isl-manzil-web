@@ -7,7 +7,8 @@ import {
   Minimize,
   Loader2,
   Clock,
-  Share2,
+  Loader,
+  Download,
 } from "lucide-react";
 import SettingsButton from "../components/SettingsButton";
 import SharePopup from "../components/SharePopUp";
@@ -18,6 +19,9 @@ import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
+import { useVimeoDownload } from "@/hooks/useVimeoDownload";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -92,6 +96,8 @@ const CustomVideoPlayer = () => {
   } = useBibleStore();
 
   const { deviceType, shouldUseMobileBottomBar } = useDeviceDetection();
+  const { getDownloadOptions, downloadVideo, error, loading } =
+    useVimeoDownload();
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -129,8 +135,13 @@ const CustomVideoPlayer = () => {
   const [availableQualities, setAvailableQualities] = useState<
     { id: string; label: string }[]
   >([]);
-  const [isLandscapeMode, setIsLandscapeMode] = useState(false);
+  const [isSmallerScreen, setIsSmallerScreen] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
+
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  const [downloadOptions, setDownloadOptions] = useState([]);
+
+  const downloadDropdownRef = useRef<HTMLDivElement>(null);
 
   //versedemarcation
 
@@ -231,18 +242,13 @@ const CustomVideoPlayer = () => {
     getBibleVerseMarker,
   ]);
 
-  // Replace the existing orientation detection useEffect with this:
   useEffect(() => {
     const checkOrientation = () => {
-      // Use a more stable check for mobile devices
-      const isMobile = shouldUseMobileBottomBar;
-      
-      const isLandscape =
-        isMobile &&
-        window.innerWidth > window.innerHeight &&
-        window.innerWidth / window.innerHeight > 1.2;
 
-      setIsLandscapeMode(isLandscape);
+      const isSmallerScreen =
+        ["tablet", "laptop", "desktop"].includes(deviceType) &&
+        window.innerWidth > window.innerHeight && window.innerHeight < 600;
+      setIsSmallerScreen(isSmallerScreen);
     };
 
     // Debounce the orientation check to prevent rapid state changes
@@ -273,7 +279,7 @@ const CustomVideoPlayer = () => {
       window.removeEventListener("orientationchange", handleOrientationChange);
       window.removeEventListener("resize", handleResize);
     };
-  }, [shouldUseMobileBottomBar]);
+  }, [deviceType, isSmallerScreen]);
 
   // Helper function to clear all intervals
   const clearIntervals = useCallback(() => {
@@ -539,7 +545,7 @@ const CustomVideoPlayer = () => {
 
   // Modified useEffect for handling outside clicks
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
 
       const clickedOutsideSettings =
@@ -548,27 +554,44 @@ const CustomVideoPlayer = () => {
       const clickedOutsideShare =
         shareRef.current && !shareRef.current.contains(target);
 
+      const clickedOutsideDownload =
+        downloadDropdownRef.current &&
+        !downloadDropdownRef.current.contains(target);
+
       const clickedOnShareButton =
         shareButtonRef.current && shareButtonRef.current.contains(target);
 
-      // Close settings-related drawers
+      const clickedOnSettingsButton =
+        settingsButtonRef.current && settingsButtonRef.current.contains(target);
+
       if ((showSettingsMenu || showQualityDrawer) && clickedOutsideSettings) {
         setShowSettingsMenu(false);
         setShowQualityDrawer(false);
-        skipNextClickRef.current = true; // prevent toggle on same click
+        skipNextClickRef.current = true;
       }
 
-      // Close share popup (but not if clicking on the share button itself)
       if (showShare && clickedOutsideShare && !clickedOnShareButton) {
         setShowShare(false);
+      }
+
+      if (
+        showDownloadDropdown &&
+        (clickedOutsideDownload ||
+          clickedOnShareButton ||
+          clickedOnSettingsButton)
+      ) {
+        setShowDownloadDropdown(false);
       }
     };
 
     document.addEventListener("click", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
     return () => {
       document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
-  }, [showSettingsMenu, showQualityDrawer, showShare]);
+  }, [showSettingsMenu, showQualityDrawer, showShare, showDownloadDropdown]);
+
 
   // Update intervals when play state changes
   useEffect(() => {
@@ -1038,6 +1061,38 @@ const CustomVideoPlayer = () => {
     setIsFullscreen(!isFullscreen);
   };
 
+  const handleFetchDownloadLinks = async () => {
+    if (showDownloadDropdown) {
+      setShowDownloadDropdown(false);
+      return;
+    }
+
+    if (downloadOptions.length > 0) {
+      setShowDownloadDropdown(true);
+      return;
+    }
+
+    try {
+      const result = await getDownloadOptions(currentVideoId);
+      setDownloadOptions(result.options || []);
+      setShowDownloadDropdown(true);
+    } catch (err) {
+      console.error("Failed to fetch download links:", err);
+    }
+  };
+
+  const handleDownloadVideo = async (option: any) => {
+    try {
+      const filename = `${selectedBook?.label || "video"}_Chapter_${
+        selectedChapter?.label || "1"
+      }_${option.quality}.${option.format || "mp4"}`;
+      setShowDownloadDropdown(false);
+      await downloadVideo(option.link, filename);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
+  };
+
   // Handle controls area mouse events
   const handleControlsMouseEnter = () => {
     setShowControls(true);
@@ -1053,10 +1108,8 @@ const CustomVideoPlayer = () => {
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  console.log("is landscape", isLandscapeMode);
-
   return (
-    <div className="w-full max-w-5xl mx-auto sm:mt-2 md:px-2">
+    <div className="w-full max-w-5xl mx-auto">
       <div className="flex items-end justify-center gap-2 w-full">
         {!shouldUseMobileBottomBar &&
           (canGoPrevious ? (
@@ -1074,19 +1127,18 @@ const CustomVideoPlayer = () => {
           ref={playerContainerRef}
           className={`relative w-full max-w-4xl mx-auto overflow-hidden ${
             isFullscreen &&
-            (shouldUseMobileBottomBar || deviceType === "tablet")
+            (shouldUseMobileBottomBar ||
+              ["tablet", "laptop"].includes(deviceType))
               ? "h-screen flex flex-col justify-center bg-black"
               : ""
           }`}
           style={{
             aspectRatio:
-              isFullscreen &&
-              (shouldUseMobileBottomBar || deviceType === "tablet")
-                ? "unset"
-                : "16/9",
+              isFullscreen || shouldUseMobileBottomBar ? "unset" : "16/9",
             maxHeight:
               isFullscreen &&
-              (shouldUseMobileBottomBar || deviceType === "tablet")
+              (shouldUseMobileBottomBar ||
+                ["tablet", "laptop"].includes(deviceType))
                 ? "100vh"
                 : "80vh",
           }}
@@ -1130,25 +1182,20 @@ const CustomVideoPlayer = () => {
               {/* Vimeo Player Container */}
               <div
                 className={`${
-                  isFullscreen && (shouldUseMobileBottomBar || deviceType === "tablet")
+                  isFullscreen &&
+                  (shouldUseMobileBottomBar ||
+                    ["tablet", "laptop"].includes(deviceType))
                     ? "relative mx-auto bg-black"
                     : "w-full h-full"
                 }`}
                 style={{
-                  ...(isFullscreen &&
-                  shouldUseMobileBottomBar ||
-                  deviceType === "tablet"
-                  
+                  ...(isFullscreen || shouldUseMobileBottomBar
                     ? {
                         aspectRatio: "16/9",
                         maxHeight: "100vh",
-                        width: "100%",
+                        width: isSmallerScreen ? "80%" : "100%",
                       }
-                    : {
-                        aspectRatio: "16/9",
-                        maxHeight: "100%",
-                        width: "100%",
-                      }),
+                    : {}),
                 }}
               >
                 <div className="w-full h-full">
@@ -1191,7 +1238,7 @@ const CustomVideoPlayer = () => {
                   {/* Bottom Controls */}
                   <div
                     ref={controlsRef}
-                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2 md:p-4 pointer-events-auto"
+                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 md:p-4 pointer-events-auto"
                     onClick={(e) => e.stopPropagation()}
                     onMouseEnter={handleControlsMouseEnter}
                     onMouseLeave={handleControlsMouseLeave}
@@ -1345,8 +1392,91 @@ const CustomVideoPlayer = () => {
                           {formatTime(currentTime)} / {formatTime(duration)}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4   ">
-                        <div className="mt-2">
+                      <div className="flex items-center gap-4">
+                        <div className="relative mt-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              if (
+                                showSettingsMenu ||
+                                showShare ||
+                                showQualityDrawer
+                              ) {
+                                setShowSettingsMenu(false);
+                                setShowShare(false);
+                                setShowQualityDrawer(false);
+                              }
+                              handleFetchDownloadLinks();
+                            }}
+                            disabled={loading || !currentVideoId}
+                            className="text-white hover:text-blue-400"
+                            title="Download Video"
+                          >
+                            {loading ? (
+                              <Loader className="animate-spin" size={24} />
+                            ) : (
+                              <Download strokeWidth={2.5} size={24} />
+                            )}
+                          </button>
+
+                          {/* Download Dropdown */}
+                          {showDownloadDropdown && (
+                            <div
+                              className="absolute bottom-full right-0 bg-black border border-gray-600 rounded-lg shadow-lg min-w-50 max-w-80 z-50"
+                              ref={downloadDropdownRef}
+                            >
+                              <div className="p-3">
+                                <div className="text-white font-semibold mb-2 border-b border-gray-600 pb-2">
+                                  Download Options
+                                </div>
+
+                                {downloadOptions.length === 0 ? (
+                                  <div className="text-gray-400 text-sm py-2">
+                                    No download options available
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1 max-h-25 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
+                                    {downloadOptions.map((option : { quality: string; width?: number; height?: number; format?: string }, index) => (
+                                      <button
+                                        key={index}
+                                        onClick={() =>
+                                          handleDownloadVideo(option)
+                                        }
+                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
+                                      >
+                                        <div className="font-medium flex flex-col">
+                                          <span>
+                                            {option.quality || "Unknown"}
+                                            {option.width && option.height && (
+                                              <span className="text-gray-400 ml-1">
+                                                ({option.width}×{option.height})
+                                              </span>
+                                            )}
+                                          </span>
+                                          <span>
+                                            {option.format?.toUpperCase() ||
+                                              "MP4"}
+                                          </span>
+                                        </div>
+                                        <Download
+                                          size={16}
+                                        />
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {error && (
+                                  <div className="text-red-400 text-xs mt-2 p-2 bg-red-900/20 rounded">
+                                    {error}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-1">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1354,9 +1484,14 @@ const CustomVideoPlayer = () => {
 
                               // Only skip if share popup is currently open and we flagged to skip
 
-                              if (showSettingsMenu || showQualityDrawer) {
+                              if (
+                                showSettingsMenu ||
+                                showQualityDrawer ||
+                                showDownloadDropdown
+                              ) {
                                 setShowSettingsMenu(false);
                                 setShowQualityDrawer(false);
+                                setShowDownloadDropdown(false);
                                 setShowShare(true);
                               } else {
                                 // Normal toggle behavior when settings is closed
@@ -1364,8 +1499,12 @@ const CustomVideoPlayer = () => {
                               }
                             }}
                             className="text-white hover:text-blue-400"
+                            title="Share"
                           >
-                            <Share2 strokeWidth={2.5} size={23} />
+                            <FontAwesomeIcon
+                              icon={faShareNodes}
+                              className="w-6 h-8 text-[25px]"
+                            />
                           </button>
                         </div>
                         {/* Settings Button */}
@@ -1374,8 +1513,9 @@ const CustomVideoPlayer = () => {
                             <SettingsButton
                               ref={settingsButtonRef}
                               onClick={() => {
-                                if (showShare) {
+                                if (showShare || showDownloadDropdown) {
                                   setShowShare(false);
+                                  setShowDownloadDropdown(false);
                                   setShowSettingsMenu(true);
                                 } else if (
                                   showSettingsMenu &&
