@@ -7,7 +7,6 @@ import {
   Minimize,
   Loader2,
   Clock,
-  Share2,
 } from "lucide-react";
 import SettingsButton from "../components/SettingsButton";
 import SharePopup from "../components/SharePopUp";
@@ -18,6 +17,8 @@ import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import { useChapterNavigation } from "../hooks/useChapterNavigation";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -236,7 +237,7 @@ const CustomVideoPlayer = () => {
     const checkOrientation = () => {
       // Use a more stable check for mobile devices
       const isMobile = shouldUseMobileBottomBar;
-      
+
       const isLandscape =
         isMobile &&
         window.innerWidth > window.innerHeight &&
@@ -1130,15 +1131,14 @@ const CustomVideoPlayer = () => {
               {/* Vimeo Player Container */}
               <div
                 className={`${
-                  isFullscreen && (shouldUseMobileBottomBar || deviceType === "tablet")
+                  isFullscreen &&
+                  (shouldUseMobileBottomBar || deviceType === "tablet")
                     ? "relative mx-auto bg-black"
                     : "w-full h-full"
                 }`}
                 style={{
-                  ...(isFullscreen &&
-                  shouldUseMobileBottomBar ||
+                  ...((isFullscreen && shouldUseMobileBottomBar) ||
                   deviceType === "tablet"
-                  
                     ? {
                         aspectRatio: "16/9",
                         maxHeight: "100vh",
@@ -1346,7 +1346,7 @@ const CustomVideoPlayer = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-4   ">
-                        <div className="mt-2">
+                        <div className="mt-1">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1364,8 +1364,12 @@ const CustomVideoPlayer = () => {
                               }
                             }}
                             className="text-white hover:text-blue-400"
+                            title="Share"
                           >
-                            <Share2 strokeWidth={2.5} size={23} />
+                            <FontAwesomeIcon
+                              icon={faShareNodes}
+                              className="w-6 h-8 text-[25px]"
+                            />
                           </button>
                         </div>
                         {/* Settings Button */}
