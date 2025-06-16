@@ -29,6 +29,8 @@ const SelectViewContainer = () => {
     initializeAvailableData,
     getAvailableChaptersForBook,
     getAvailableVersesForBookAndChapter,
+    bibleVerseMarker,
+    getBibleVerseMarker,
   } = useBibleStore();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -53,6 +55,12 @@ const SelectViewContainer = () => {
     }
   }, [selectedBook, getAvailableChaptersForBook]);
 
+  useEffect(() => {
+    if (selectedBook && selectedChapter) {
+      getBibleVerseMarker();
+    }
+  }, [selectedBook, selectedChapter, getBibleVerseMarker]);
+
   // Update verse options when selected book or chapter changes
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -64,7 +72,12 @@ const SelectViewContainer = () => {
     } else {
       setVerseOptions([]);
     }
-  }, [selectedBook, selectedChapter, getAvailableVersesForBookAndChapter]);
+  }, [
+    selectedBook,
+    selectedChapter,
+    bibleVerseMarker,
+    getAvailableVersesForBookAndChapter,
+  ]);
 
   const openDialog = (type: DropdownType) => {
     setViewMode(type);
@@ -94,7 +107,7 @@ const SelectViewContainer = () => {
     };
 
     setChapter(chapter as ChapterOption);
-    if(chapter.value !== 0) {
+    if (chapter.value !== 0) {
       setActiveView("verse");
       return;
     }

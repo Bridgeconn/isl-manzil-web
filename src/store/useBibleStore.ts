@@ -146,11 +146,16 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     }
   },
 
-  setChapter: (chapter: ChapterOption | null) => {
-    set({ selectedChapter: chapter, currentPlayingVerse: null });
+  setChapter: async (chapter: ChapterOption | null) => {
+    set({
+      selectedChapter: chapter,
+      currentPlayingVerse: null,
+      bibleVerseMarker: [],
+    });
 
     // Auto-set first verse when chapter changes
     if (chapter && get().selectedBook) {
+      await get().getBibleVerseMarker();
       const availableVerses = get().getAvailableVersesForBookAndChapter(
         get().selectedBook!.value,
         chapter.value
@@ -349,6 +354,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     bookCode: string,
     chapter: number
   ): VerseOption[] => {
+    const { bibleVerseMarker } = get();
     const bookCodeUpper = bookCode.toUpperCase();
     const chapterIndex = chapter - 1;
 
@@ -360,6 +366,67 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       typedVersificationData.maxVerses[bookCodeUpper]?.[chapterIndex] || "0"
     );
 
+    if (bibleVerseMarker && bibleVerseMarker.length > 0) {
+      const verseOptions: VerseOption[] = [];
+      const processedVerses = new Set<number>();
+
+      bibleVerseMarker.forEach((marker) => {
+        const verseStr = marker.verse.toString().trim();
+
+        if (verseStr === "Intro" || verseStr === "0") {
+          return;
+        }
+
+        if (verseStr.includes("-") || verseStr.includes("_")) {
+          const separator = verseStr.includes("-") ? "-" : "_";
+          const [startStr, endStr] = verseStr.split(separator);
+          const start = parseInt(startStr.trim());
+          const end = parseInt(endStr.trim());
+
+          if (!isNaN(start) && !isNaN(end)) {
+            verseOptions.push({
+              value: start,
+              label: verseStr,
+            });
+
+            // Mark all verses in this range as processed
+            for (let i = start; i <= end; i++) {
+              processedVerses.add(i);
+            }
+          }
+        } else {
+          // Single verse
+          const verseNum = parseInt(verseStr);
+          if (!isNaN(verseNum) && !processedVerses.has(verseNum)) {
+            verseOptions.push({
+              value: verseNum,
+              label: verseStr,
+            });
+            processedVerses.add(verseNum);
+          }
+        }
+      });
+
+      verseOptions.sort((a, b) => a.value - b.value);
+
+      const hasIntroMarker = bibleVerseMarker.some(
+        (marker) =>
+          marker.verse.toString().trim() === "Intro" ||
+          marker.verse.toString().trim() === "0"
+      );
+
+      if (hasIntroMarker) {
+        const introVerse: VerseOption = {
+          value: 0,
+          label: "Intro",
+        };
+        return [introVerse, ...verseOptions];
+      }
+
+      return verseOptions;
+    }
+
+    // if no bibleVerseMarker data, fall back to generating all verses
     const verses: VerseOption[] = Array.from({ length: maxVerses }, (_, i) => ({
       value: i + 1,
       label: `${i + 1}`,
@@ -369,6 +436,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       value: 0,
       label: "Intro",
     };
+
     return [introVerse, ...verses];
   },
 
@@ -516,7 +584,9 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
   seekToVerse: async (verse: string) => {
     const { bibleVerseMarker } = get();
-    verse = verse.toString().includes('-') ? verse.toString().replace('-', '_') : verse.toString();
+    verse = verse.toString().includes("-")
+      ? verse.toString().replace("-", "_")
+      : verse.toString();
     const marker = bibleVerseMarker?.find(
       (v) => v.verse.toString().trim() === verse.toString().trim()
     );

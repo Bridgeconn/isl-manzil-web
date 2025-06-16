@@ -511,7 +511,6 @@ const CustomVideoPlayer = () => {
             await player.setQuality(
               selected as import("@vimeo/player").VimeoVideoQuality
             );
-            console.log(`Video quality set to: ${selected}`);
           } else {
             console.warn(
               "Selected quality not available:",

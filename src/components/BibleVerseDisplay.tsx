@@ -34,7 +34,19 @@ const BibleVerseDisplay = ({
     if (!currentPlayingVerse || !verseData.length) return;
 
     const scrollToVerse = () => {
-      const verseElement = verseRefs.current[currentPlayingVerse];
+      const normalizedCurrentVerse = currentPlayingVerse.includes("-")
+        ? currentPlayingVerse.replace("-", "_")
+        : currentPlayingVerse;
+      let verseElement = verseRefs.current[normalizedCurrentVerse];
+
+      if (!verseElement && normalizedCurrentVerse.includes("_")) {
+        const firstVerse = normalizedCurrentVerse.split("_")[0];
+        verseElement = verseRefs.current[firstVerse];
+      }
+
+      if (!verseElement) {
+        verseElement = verseRefs.current[currentPlayingVerse];
+      }
 
       if (verseElement) {
         verseElement.scrollIntoView({
@@ -121,14 +133,59 @@ const BibleVerseDisplay = ({
   };
 
   const isCurrentVerse = (verseNumber: string | number): boolean => {
-    return currentPlayingVerse === verseNumber.toString();
+    console.log("is current verse", verseNumber, currentPlayingVerse);
+
+    if (!currentPlayingVerse) return false;
+
+    const normalizedVerseNumber = verseNumber.toString().includes("-")
+      ? verseNumber.toString().replace("-", "_")
+      : verseNumber.toString();
+
+    const normalizedCurrentPlaying = currentPlayingVerse.includes("-")
+      ? currentPlayingVerse.replace("-", "_")
+      : currentPlayingVerse;
+
+    if (normalizedCurrentPlaying === normalizedVerseNumber) return true;
+
+    // If currentPlayingVerse is a range, check if the current verse falls within that range
+    if (normalizedCurrentPlaying.includes("_")) {
+      const rangeParts = normalizedCurrentPlaying.split("_");
+      if (rangeParts.length === 2) {
+        const startVerse = parseInt(rangeParts[0]);
+        const endVerse = parseInt(rangeParts[1]);
+
+        if (!normalizedVerseNumber.includes("_")) {
+          const currentVerseNum = parseInt(normalizedVerseNumber);
+          if (
+            !isNaN(startVerse) &&
+            !isNaN(endVerse) &&
+            !isNaN(currentVerseNum)
+          ) {
+            return currentVerseNum >= startVerse && currentVerseNum <= endVerse;
+          }
+        }
+      }
+    }
+
+    const currentVerseParts = normalizedCurrentPlaying.split("_");
+    if (
+      currentVerseParts.length > 2 ||
+      !normalizedCurrentPlaying.includes("_")
+    ) {
+      return currentVerseParts.includes(normalizedVerseNumber);
+    }
+
+    return false;
   };
 
   const setVerseRef = (
     verseNumber: string | number,
     element: HTMLDivElement | null
   ) => {
-    verseRefs.current[verseNumber.toString()] = element;
+    const normalizedVerseNumber = verseNumber.toString().includes("-")
+      ? verseNumber.toString().replace("-", "_")
+      : verseNumber.toString();
+    verseRefs.current[normalizedVerseNumber] = element;
   };
 
   return (
@@ -153,7 +210,10 @@ const BibleVerseDisplay = ({
                 ref={(el) => setVerseRef(verseData[0]?.verse, el)}
                 id={`verse-${verseData[0]?.verse}`}
               >
-                <span style={{ fontSize: "1.6em" }} className="themed-text text-themed font-bold text-gray-800">
+                <span
+                  style={{ fontSize: "1.6em" }}
+                  className="themed-text text-themed font-bold text-gray-800"
+                >
                   {selectedChapter.value}
                 </span>
                 <span
