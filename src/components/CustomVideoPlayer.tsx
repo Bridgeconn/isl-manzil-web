@@ -190,6 +190,9 @@ const CustomVideoPlayer = () => {
       loadVideoForCurrentSelection();
       getBibleVerseMarker();
       setSelectedQuality("Auto");
+
+      setShowDownloadDropdown(false);
+      setDownloadOptions([]);
     }
   }, [
     selectedBook,
@@ -244,10 +247,10 @@ const CustomVideoPlayer = () => {
 
   useEffect(() => {
     const checkOrientation = () => {
-
       const isSmallerScreen =
         ["tablet", "laptop", "desktop"].includes(deviceType) &&
-        window.innerWidth > window.innerHeight && window.innerHeight < 600;
+        window.innerWidth > window.innerHeight &&
+        window.innerHeight < 600;
       setIsSmallerScreen(isSmallerScreen);
     };
 
@@ -564,6 +567,10 @@ const CustomVideoPlayer = () => {
       const clickedOnSettingsButton =
         settingsButtonRef.current && settingsButtonRef.current.contains(target);
 
+      const clickedOnChevronButton = (target as Element)?.closest(
+        'button[title*="Chapter"]'
+      );
+
       if ((showSettingsMenu || showQualityDrawer) && clickedOutsideSettings) {
         setShowSettingsMenu(false);
         setShowQualityDrawer(false);
@@ -578,7 +585,8 @@ const CustomVideoPlayer = () => {
         showDownloadDropdown &&
         (clickedOutsideDownload ||
           clickedOnShareButton ||
-          clickedOnSettingsButton)
+          clickedOnSettingsButton ||
+          clickedOnChevronButton)
       ) {
         setShowDownloadDropdown(false);
       }
@@ -591,7 +599,6 @@ const CustomVideoPlayer = () => {
       document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [showSettingsMenu, showQualityDrawer, showShare, showDownloadDropdown]);
-
 
   // Update intervals when play state changes
   useEffect(() => {
@@ -1437,33 +1444,43 @@ const CustomVideoPlayer = () => {
                                   </div>
                                 ) : (
                                   <div className="space-y-1 max-h-25 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
-                                    {downloadOptions.map((option : { quality: string; width?: number; height?: number; format?: string }, index) => (
-                                      <button
-                                        key={index}
-                                        onClick={() =>
-                                          handleDownloadVideo(option)
-                                        }
-                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
-                                      >
-                                        <div className="font-medium flex flex-col">
-                                          <span>
-                                            {option.quality || "Unknown"}
-                                            {option.width && option.height && (
-                                              <span className="text-gray-400 ml-1">
-                                                ({option.width}×{option.height})
-                                              </span>
-                                            )}
-                                          </span>
-                                          <span>
-                                            {option.format?.toUpperCase() ||
-                                              "MP4"}
-                                          </span>
-                                        </div>
-                                        <Download
-                                          size={16}
-                                        />
-                                      </button>
-                                    ))}
+                                    {downloadOptions.map(
+                                      (
+                                        option: {
+                                          quality: string;
+                                          width?: number;
+                                          height?: number;
+                                          format?: string;
+                                        },
+                                        index
+                                      ) => (
+                                        <button
+                                          key={index}
+                                          onClick={() =>
+                                            handleDownloadVideo(option)
+                                          }
+                                          className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
+                                        >
+                                          <div className="font-medium flex flex-col">
+                                            <span>
+                                              {option.quality || "Unknown"}
+                                              {option.width &&
+                                                option.height && (
+                                                  <span className="text-gray-400 ml-1">
+                                                    ({option.width}×
+                                                    {option.height})
+                                                  </span>
+                                                )}
+                                            </span>
+                                            <span>
+                                              {option.format?.toUpperCase() ||
+                                                "MP4"}
+                                            </span>
+                                          </div>
+                                          <Download size={16} />
+                                        </button>
+                                      )
+                                    )}
                                   </div>
                                 )}
 
