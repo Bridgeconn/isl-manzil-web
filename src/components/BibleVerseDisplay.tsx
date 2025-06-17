@@ -158,55 +158,26 @@ const BibleVerseDisplay = ({
     return null;
   };
 
-  const isCurrentVerse = (verseNumber: string | number): boolean => {
-    if (!currentPlayingVerse) return false;
-
-    const normalizedVerseNumber = verseNumber.toString().includes("-")
-      ? verseNumber.toString().replace("-", "_")
-      : verseNumber.toString();
-
-
-    const normalizedCurrentPlaying = currentPlayingVerse.includes("-")
-      ? currentPlayingVerse.replace("-", "_")
-      : currentPlayingVerse;
-
-
-    if (normalizedCurrentPlaying === normalizedVerseNumber) return true;
-
-    const isVerseInRange = (verse: string, range: string): boolean => {
-      if (!range.includes("_")) return false;
-
-      const rangeParts = range.split("_");
-      if (rangeParts.length !== 2) return false;
-
-      const startVerse = parseInt(rangeParts[0]);
-      const endVerse = parseInt(rangeParts[1]);
-      const verseNum = parseInt(verse);
-
-      return (
-        !isNaN(startVerse) &&
-        !isNaN(endVerse) &&
-        !isNaN(verseNum) &&
-        verseNum >= startVerse &&
-        verseNum <= endVerse
-      );
+  const hasOverlap = (range1: string, range2: string): boolean => {
+    const parseRange = (str: string) => {
+      const normalized = str.replace("-", "_");
+      if (normalized.includes("_")) {
+        const [start, end] = normalized.split("_").map(Number);
+        return { start, end };
+      }
+      const num = Number(normalized);
+      return { start: num, end: num };
     };
 
-    if (
-      normalizedCurrentPlaying.includes("_") &&
-      !normalizedVerseNumber.includes("_")
-    ) {
-      return isVerseInRange(normalizedVerseNumber, normalizedCurrentPlaying);
-    }
+    const r1 = parseRange(range1);
+    const r2 = parseRange(range2);
 
-    if (
-      normalizedVerseNumber.includes("_") &&
-      !normalizedCurrentPlaying.includes("_")
-    ) {
-      return isVerseInRange(normalizedCurrentPlaying, normalizedVerseNumber);
-    }
+    return r1.start <= r2.end && r2.start <= r1.end;
+  };
 
-    return false;
+  const isCurrentVerse = (verseNumber: string | number): boolean => {
+    if (!currentPlayingVerse) return false;
+    return hasOverlap(currentPlayingVerse, verseNumber.toString());
   };
 
   const setVerseRef = (

@@ -227,8 +227,11 @@ const CustomVideoPlayer = () => {
 
       setVerse({
         value: verseValue,
-        label: verseNumber.toString(),
+        label: verseStr,
       });
+
+      prevSelectedVerse.current = verseValue;
+
       setTimeout(() => {
         isManualSeekingRef.current = false;
       }, 300);
