@@ -39,6 +39,32 @@ const BibleVerseDisplay = ({
         : currentPlayingVerse;
       let verseElement = verseRefs.current[normalizedCurrentVerse];
 
+      if (!verseElement) {
+        const currentVerseNum = parseInt(normalizedCurrentVerse);
+
+        if (!isNaN(currentVerseNum)) {
+          for (const [refKey, element] of Object.entries(verseRefs.current)) {
+            if (element && refKey.includes("_")) {
+              const rangeParts = refKey.split("_");
+              if (rangeParts.length === 2) {
+                const startVerse = parseInt(rangeParts[0]);
+                const endVerse = parseInt(rangeParts[1]);
+
+                if (!isNaN(startVerse) && !isNaN(endVerse)) {
+                  if (
+                    currentVerseNum >= startVerse &&
+                    currentVerseNum <= endVerse
+                  ) {
+                    verseElement = element;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
       if (!verseElement && normalizedCurrentVerse.includes("_")) {
         const firstVerse = normalizedCurrentVerse.split("_")[0];
         verseElement = verseRefs.current[firstVerse];
@@ -133,46 +159,51 @@ const BibleVerseDisplay = ({
   };
 
   const isCurrentVerse = (verseNumber: string | number): boolean => {
-    console.log("is current verse", verseNumber, currentPlayingVerse);
-
     if (!currentPlayingVerse) return false;
 
     const normalizedVerseNumber = verseNumber.toString().includes("-")
       ? verseNumber.toString().replace("-", "_")
       : verseNumber.toString();
 
+
     const normalizedCurrentPlaying = currentPlayingVerse.includes("-")
       ? currentPlayingVerse.replace("-", "_")
       : currentPlayingVerse;
 
+
     if (normalizedCurrentPlaying === normalizedVerseNumber) return true;
 
-    // If currentPlayingVerse is a range, check if the current verse falls within that range
-    if (normalizedCurrentPlaying.includes("_")) {
-      const rangeParts = normalizedCurrentPlaying.split("_");
-      if (rangeParts.length === 2) {
-        const startVerse = parseInt(rangeParts[0]);
-        const endVerse = parseInt(rangeParts[1]);
+    const isVerseInRange = (verse: string, range: string): boolean => {
+      if (!range.includes("_")) return false;
 
-        if (!normalizedVerseNumber.includes("_")) {
-          const currentVerseNum = parseInt(normalizedVerseNumber);
-          if (
-            !isNaN(startVerse) &&
-            !isNaN(endVerse) &&
-            !isNaN(currentVerseNum)
-          ) {
-            return currentVerseNum >= startVerse && currentVerseNum <= endVerse;
-          }
-        }
-      }
+      const rangeParts = range.split("_");
+      if (rangeParts.length !== 2) return false;
+
+      const startVerse = parseInt(rangeParts[0]);
+      const endVerse = parseInt(rangeParts[1]);
+      const verseNum = parseInt(verse);
+
+      return (
+        !isNaN(startVerse) &&
+        !isNaN(endVerse) &&
+        !isNaN(verseNum) &&
+        verseNum >= startVerse &&
+        verseNum <= endVerse
+      );
+    };
+
+    if (
+      normalizedCurrentPlaying.includes("_") &&
+      !normalizedVerseNumber.includes("_")
+    ) {
+      return isVerseInRange(normalizedVerseNumber, normalizedCurrentPlaying);
     }
 
-    const currentVerseParts = normalizedCurrentPlaying.split("_");
     if (
-      currentVerseParts.length > 2 ||
+      normalizedVerseNumber.includes("_") &&
       !normalizedCurrentPlaying.includes("_")
     ) {
-      return currentVerseParts.includes(normalizedVerseNumber);
+      return isVerseInRange(normalizedCurrentPlaying, normalizedVerseNumber);
     }
 
     return false;

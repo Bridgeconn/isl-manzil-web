@@ -46,6 +46,7 @@ interface BibleStore {
   isVideoLoading: boolean;
   // Add request tracking
   currentLoadingRequest: string | null;
+  isManualVerseSelection: boolean;
 
   setBook: (book: BookOption | null) => void;
   setChapter: (chapter: ChapterOption | null) => void;
@@ -87,6 +88,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
   bibleVerseMarker: [],
   currentLoadingRequest: null,
+  isManualVerseSelection: false,
 
   // Helper function to check if a verse number is within a verse range
   isVerseInRange: (verseNumber: number, verseRange: string): boolean => {
@@ -165,12 +167,21 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       } else {
         get().setVerse(null);
       }
-    } else {
+     } else {
       get().setVerse(null);
     }
   },
 
-  setVerse: (verse: VerseOption | null) => set({ selectedVerse: verse }),
+  setVerse: (verse: VerseOption | null) => {
+    set({
+      selectedVerse: verse,
+      isManualVerseSelection: true,
+    });
+
+    setTimeout(() => {
+      set({ isManualVerseSelection: false });
+    }, 3000);
+  },
   setCurrentVideoId: (videoId: number | null) =>
     set({ currentVideoId: videoId }),
   setCurrentPlayingVerse: (verse: string | null) =>
@@ -587,13 +598,51 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     verse = verse.toString().includes("-")
       ? verse.toString().replace("-", "_")
       : verse.toString();
-    const marker = bibleVerseMarker?.find(
+
+    const isVerseInRange = (
+      targetVerse: string,
+      rangeVerse: string
+    ): boolean => {
+      if (!rangeVerse.includes("_")) return false;
+
+      const rangeParts = rangeVerse.split("_");
+      if (rangeParts.length !== 2) return false;
+
+      const startVerse = parseInt(rangeParts[0]);
+      const endVerse = parseInt(rangeParts[1]);
+      const targetVerseNum = parseInt(targetVerse);
+
+      return (
+        !isNaN(startVerse) &&
+        !isNaN(endVerse) &&
+        !isNaN(targetVerseNum) &&
+        targetVerseNum >= startVerse &&
+        targetVerseNum <= endVerse
+      );
+    };
+
+    let marker = bibleVerseMarker?.find(
       (v) => v.verse.toString().trim() === verse.toString().trim()
     );
-    console.log("marker", marker);
-    const cleanedTime = marker && marker.time.split(":").slice(0, 3).join(":");
+
+    if (!marker) {
+      marker = bibleVerseMarker?.find((v) => {
+        const markerVerse = v.verse.toString().trim();
+
+        if (markerVerse.includes("_") && !verse.includes("_")) {
+          return isVerseInRange(verse, markerVerse);
+        }
+
+        if (verse.includes("_") && !markerVerse.includes("_")) {
+          return isVerseInRange(markerVerse, verse);
+        }
+
+        return false;
+      });
+    }
 
     if (marker) {
+      const cleanedTime = marker.time.split(":").slice(0, 3).join(":");
       const event = new CustomEvent("seek-to-verse", {
         detail: { time: cleanedTime },
       });
