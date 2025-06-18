@@ -41,7 +41,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           <span className="text-white text-sm font-medium leading-none">
             Speed
           </span>
-          <span className="text-gray-300 text-sm  leading-none">
+          <span className="text-gray-300 text-sm ml-2 leading-none">
             {" "}
             {playbackSpeed === 1 ? "Normal" : `${playbackSpeed}x`}
           </span>
