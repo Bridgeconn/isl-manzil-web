@@ -150,7 +150,6 @@ const CustomVideoPlayer = () => {
     { id: string; label: string }[]
   >([]);
   const [isSmallerScreen, setIsSmallerScreen] = useState(false);
-  const [actualFullscreenState, setActualFullscreenState] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
 
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
@@ -720,7 +719,6 @@ const CustomVideoPlayer = () => {
       const isCurrentlyFullscreen = !!
         document.fullscreenElement 
       ;
-      setActualFullscreenState(isCurrentlyFullscreen);
       if (isCurrentlyFullscreen !== isFullscreen) {
         setIsFullscreen(isCurrentlyFullscreen);
       }
