@@ -93,6 +93,7 @@ const CustomVideoPlayer = () => {
     setCurrentPlayingVerse,
     currentPlayingVerse,
     isVideoLoading,
+    isManualVerseSelection,
   } = useBibleStore();
 
   const { deviceType, shouldUseMobileBottomBar } = useDeviceDetection();
@@ -119,6 +120,7 @@ const CustomVideoPlayer = () => {
   const userInteractedRef = useRef<boolean>(false);
   const isManualSeekingRef = useRef<boolean>(false);
   const shareRef = useRef<HTMLDivElement>(null);
+  const pendingVerseSeekRef = useRef<number | null>(null);
 
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
@@ -187,6 +189,7 @@ const CustomVideoPlayer = () => {
   useEffect(() => {
     if (selectedBook && selectedChapter) {
       setCurrentVideoId(null);
+      setIsPlayerReady(false);
       loadVideoForCurrentSelection();
       getBibleVerseMarker();
       setSelectedQuality("Auto");
@@ -215,12 +218,20 @@ const CustomVideoPlayer = () => {
     (verseNumber: string | number) => {
       if (isManualSeekingRef.current) return;
       isManualSeekingRef.current = true;
+      const verseStr = verseNumber.toString();
+      const verseValue = ["Intro", "0"].includes(verseStr)
+        ? 0
+        : verseStr.includes("-")
+        ? parseInt(verseStr.split("-")[0])
+        : parseInt(verseStr) || 0;
+
       setVerse({
-        value: ["Intro", "0"].includes(verseNumber.toString())
-          ? 0
-          : Number(verseNumber),
-        label: verseNumber.toString(),
+        value: verseValue,
+        label: verseStr,
       });
+
+      prevSelectedVerse.current = verseValue;
+
       setTimeout(() => {
         isManualSeekingRef.current = false;
       }, 300);
@@ -244,10 +255,10 @@ const CustomVideoPlayer = () => {
 
   useEffect(() => {
     const checkOrientation = () => {
-
       const isSmallerScreen =
         ["tablet", "laptop", "desktop"].includes(deviceType) &&
-        window.innerWidth > window.innerHeight && window.innerHeight < 600;
+        window.innerWidth > window.innerHeight &&
+        window.innerHeight < 600;
       setIsSmallerScreen(isSmallerScreen);
     };
 
@@ -296,6 +307,10 @@ const CustomVideoPlayer = () => {
   const setupIntervals = useCallback(() => {
     clearIntervals();
 
+    if (!isPlayerReady || pendingVerseSeekRef.current !== null) {
+    return;
+  }
+
     // Set up interval for time updates
     updateIntervalRef.current = window.setInterval(async () => {
       if (vimeoPlayerRef.current && isPlayerReady) {
@@ -317,7 +332,9 @@ const CustomVideoPlayer = () => {
         !isEnded &&
         bibleVerseMarker &&
         bibleVerseMarker?.length > 0 &&
-        !isManualSeekingRef.current
+        !isManualSeekingRef.current &&
+        !isManualVerseSelection &&
+        pendingVerseSeekRef.current === null
       ) {
         try {
           const time = await vimeoPlayerRef.current.getCurrentTime();
@@ -342,6 +359,7 @@ const CustomVideoPlayer = () => {
     updateVerseDropdown,
     setCurrentPlayingVerse,
     clearIntervals,
+    isManualVerseSelection
   ]);
 
   // Helper function to jump to a specific verse
@@ -404,10 +422,18 @@ const CustomVideoPlayer = () => {
         }
       }
 
+      if (!isPlayerReady || isManualSeekingRef.current) {
+      if (currentVerse !== 0) {
+        pendingVerseSeekRef.current = currentVerse;
+      }
+      return;
+    }
+
       if (prevSelectedVerse.current !== currentVerse) {
         prevSelectedVerse.current = currentVerse;
         userInteractedRef.current = false;
         await jumpToVerse(currentVerse);
+        pendingVerseSeekRef.current = null;
       }
     };
 
@@ -484,6 +510,11 @@ const CustomVideoPlayer = () => {
         setDuration(newDuration);
 
         setIsPlayerReady(true);
+        if (pendingVerseSeekRef.current !== null) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await jumpToVerse(pendingVerseSeekRef.current);
+        pendingVerseSeekRef.current = null;
+      }
       } catch (error) {
         console.error("Error loading new video:", error);
       }
@@ -590,7 +621,6 @@ const CustomVideoPlayer = () => {
       document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [showSettingsMenu, showQualityDrawer, showShare, showDownloadDropdown]);
-
 
   // Update intervals when play state changes
   useEffect(() => {
@@ -851,7 +881,20 @@ const CustomVideoPlayer = () => {
 
     const newIsPlaying = !isPlaying;
     if (newIsPlaying) {
-      vimeoPlayerRef.current.play();
+      if (
+        isPlayerReady &&
+        selectedVerse &&
+        selectedVerse.value !== 0 &&
+        !isManualSeekingRef.current &&
+        !userInteractedRef.current &&
+        currentTime === 0
+      ) {
+        jumpToVerse(selectedVerse.value).then(() => {
+          vimeoPlayerRef.current?.play();
+        });
+      } else {
+        vimeoPlayerRef.current.play();
+      }
       setIsEnded(false);
       setLastAction("play");
     } else {
@@ -907,12 +950,20 @@ const CustomVideoPlayer = () => {
     setCurrentPlayingVerse(newCurrentVerse);
 
     if (newCurrentVerse) {
+
+      const verseStr = newCurrentVerse.toString();
+      const verseValue = ["Intro", "0"].includes(verseStr)
+        ? 0
+        : verseStr.includes("-")
+        ? parseInt(verseStr.split("-")[0])
+        : parseInt(verseStr) || 0;
+      
       setVerse({
-        value: ["Intro", "0"].includes(newCurrentVerse.toString())
-          ? 0
-          : Number(newCurrentVerse),
-        label: newCurrentVerse.toString(),
+        value: verseValue,
+        label: verseStr,
       });
+
+      prevSelectedVerse.current = verseValue;
     }
 
     // If video was ended, update state
@@ -963,12 +1014,19 @@ const CustomVideoPlayer = () => {
     // Update current verse based on clicked marker
     setCurrentPlayingVerse(verse.verse);
 
-    setVerse({
-      value: ["Intro", "0"].includes(verse.verse.toString())
+    const verseStr = verse.verse.toString();
+    const verseValue = ["Intro", "0"].includes(verseStr)
         ? 0
-        : Number(verse.verse),
-      label: verse.verse.toString(),
+        : verseStr.includes("-")
+        ? parseInt(verseStr.split("-")[0])
+        : parseInt(verseStr) || 0;
+    
+    setVerse({
+      value: verseValue,
+      label: verseStr,
     });
+
+    prevSelectedVerse.current = verseValue;
 
     // If video was ended, update state
     if (isEnded) {
@@ -1012,12 +1070,19 @@ const CustomVideoPlayer = () => {
       vimeoPlayerRef.current.setCurrentTime(seekTime);
       setCurrentTime(seekTime);
       setCurrentPlayingVerse(nextVerse.verse);
+
+      const verseStr = nextVerse.verse.toString();
+      const verseValue = ["Intro", "0"].includes(verseStr)
+        ? 0
+        : verseStr.includes("-")
+        ? parseInt(verseStr.split("-")[0])
+        : parseInt(verseStr) || 0;
       setVerse({
-        value: ["Intro", "0"].includes(nextVerse.verse)
-          ? 0
-          : Number(nextVerse.verse),
-        label: nextVerse.verse.toString(),
+        value: verseValue,
+        label: verseStr,
       });
+
+      prevSelectedVerse.current = verseValue;
 
       if (isEnded) {
         setIsEnded(false);
@@ -1436,33 +1501,43 @@ const CustomVideoPlayer = () => {
                                   </div>
                                 ) : (
                                   <div className="space-y-1 max-h-25 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
-                                    {downloadOptions.map((option : { quality: string; width?: number; height?: number; format?: string }, index) => (
-                                      <button
-                                        key={index}
-                                        onClick={() =>
-                                          handleDownloadVideo(option)
-                                        }
-                                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
-                                      >
-                                        <div className="font-medium flex flex-col">
-                                          <span>
-                                            {option.quality || "Unknown"}
-                                            {option.width && option.height && (
-                                              <span className="text-gray-400 ml-1">
-                                                ({option.width}×{option.height})
-                                              </span>
-                                            )}
-                                          </span>
-                                          <span>
-                                            {option.format?.toUpperCase() ||
-                                              "MP4"}
-                                          </span>
-                                        </div>
-                                        <Download
-                                          size={16}
-                                        />
-                                      </button>
-                                    ))}
+                                    {downloadOptions.map(
+                                      (
+                                        option: {
+                                          quality: string;
+                                          width?: number;
+                                          height?: number;
+                                          format?: string;
+                                        },
+                                        index
+                                      ) => (
+                                        <button
+                                          key={index}
+                                          onClick={() =>
+                                            handleDownloadVideo(option)
+                                          }
+                                          className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
+                                        >
+                                          <div className="font-medium flex flex-col">
+                                            <span>
+                                              {option.quality || "Unknown"}
+                                              {option.width &&
+                                                option.height && (
+                                                  <span className="text-gray-400 ml-1">
+                                                    ({option.width}×
+                                                    {option.height})
+                                                  </span>
+                                                )}
+                                            </span>
+                                            <span>
+                                              {option.format?.toUpperCase() ||
+                                                "MP4"}
+                                            </span>
+                                          </div>
+                                          <Download size={16} />
+                                        </button>
+                                      )
+                                    )}
                                   </div>
                                 )}
 
