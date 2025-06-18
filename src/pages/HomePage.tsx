@@ -36,14 +36,14 @@ const HomePage: React.FC = () => {
   const getLayoutClasses = () => {
     if (shouldUseMobileBottomBar) {
       if (isMobileLandscape) {
-        return "flex gap-2 h-full px-2";
+        return "flex gap-2 h-full p-2";
       }
       return "flex flex-col h-full";
     }
     if (isHorizontalLayout && textPosition === "right") {
       return "flex gap-2 h-full p-2";
     }
-    return `${textPosition === "below" ? "max-w-7xl" : ""} w-full mx-auto`;
+    return `${textPosition === "below" ? "max-w-7xl mt-1" : ""} w-full mx-auto`;
   };
 
   const getVideoContainerClasses = () => {
@@ -65,7 +65,7 @@ const HomePage: React.FC = () => {
   const getVerseContentClasses = () => {
     if (shouldUseMobileBottomBar) {
       if (isMobileLandscape && showText && textPosition === "right") {
-        return "verse-content-container h-[calc(100vh-65px)] bg-gray-50 border-2 pl-4 py-2";
+        return "verse-content-container h-[calc(100vh-80px)] bg-gray-50 border-2 pl-4 py-2";
       }
       if (isMobilePortrait) {
         return "verse-content-container h-full w-full bg-gray-50 border-2 pl-4 py-2";
@@ -117,7 +117,7 @@ const HomePage: React.FC = () => {
   return (
     <>
     {!shouldUseMobileBottomBar && (
-      <div className="w-full bg-gray-100 mt-1 mb-2">
+      <div className="w-full bg-gray-100 mt-1">
         <div className="max-w-7xl mx-auto w-full flex justify-between items-center px-2">
           <SelectBoxContainer />
 
@@ -166,7 +166,7 @@ const HomePage: React.FC = () => {
 
         {isHorizontalLayout && textPosition === "right" && shouldShowContent && (
           <div className={getHorizontalTextContainerClasses()}>
-            <div className={shouldUseMobileBottomBar ? "w-48 sm:w-60 sm:py-2 h-full" : "w-60 md:w-90 h-full"}>
+            <div className={shouldUseMobileBottomBar ? "w-48 sm:w-60 h-full" : "w-60 md:w-90 h-full"}>
               <div className={getVerseContentClasses()}>
                 <BibleVerseDisplay
                   setIsIntroDataAvailable={setIsIntroDataAvailable}
