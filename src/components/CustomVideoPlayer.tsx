@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -72,6 +72,20 @@ const FilledSkipForwardIcon = ({ size = 24, className = "" }) => (
   </svg>
 );
 
+const getViewportHeight = () => {
+  if (window.visualViewport) {
+    return window.visualViewport.height;
+  }
+  return window.innerHeight;
+};
+
+const getViewportWidth = () => {
+  if (window.visualViewport) {
+    return window.visualViewport.width;
+  }
+  return window.innerWidth;
+};
+
 const CustomVideoPlayer = () => {
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
@@ -136,6 +150,7 @@ const CustomVideoPlayer = () => {
     { id: string; label: string }[]
   >([]);
   const [isSmallerScreen, setIsSmallerScreen] = useState(false);
+  const [actualFullscreenState, setActualFullscreenState] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
 
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
@@ -246,20 +261,53 @@ const CustomVideoPlayer = () => {
   ]);
 
   useEffect(() => {
+    const addViewportMeta = () => {
+      let viewport = document.querySelector('meta[name="viewport"]');
+      if (!viewport) {
+        viewport = document.createElement("meta");
+        viewport.setAttribute("name", "viewport");
+        document.head.appendChild(viewport);
+      }
+
+      if (isFullscreen && deviceType === "mobile") {
+        viewport.setAttribute(
+          "content",
+          "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+        );
+      } else {
+        viewport.setAttribute(
+          "content",
+          "width=device-width, initial-scale=1.0, viewport-fit=cover"
+        );
+      }
+    };
+
+    addViewportMeta();
+  }, [isFullscreen, deviceType]);
+
+  useEffect(() => {
     const checkOrientation = () => {
+      const viewportWidth = getViewportWidth();
+      const viewportHeight = getViewportHeight();
       const isSmallerScreen =
         ["tablet", "laptop", "desktop"].includes(deviceType) &&
-        window.innerWidth > window.innerHeight &&
-        window.innerHeight < 600;
+        viewportWidth > viewportHeight &&
+        viewportHeight < 600;
       setIsSmallerScreen(isSmallerScreen);
     };
 
     // Debounce the orientation check to prevent rapid state changes
     let orientationTimeout: number;
+    let resizeTimeout: number;
 
     const debouncedCheckOrientation = () => {
       clearTimeout(orientationTimeout);
-      orientationTimeout = window.setTimeout(checkOrientation, 150);
+      orientationTimeout = window.setTimeout(checkOrientation, 100);
+    };
+
+    const debouncedResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(checkOrientation, 100);
     };
 
     checkOrientation();
@@ -267,22 +315,40 @@ const CustomVideoPlayer = () => {
     // Listen for orientation changes with debouncing
     const handleOrientationChange = () => {
       // Add a longer delay for orientation change events
-      setTimeout(debouncedCheckOrientation, 200);
+      setTimeout(debouncedCheckOrientation, 300);
     };
 
     const handleResize = () => {
+      debouncedResize();
+    };
+
+    const handleVisualViewportChange = () => {
       debouncedCheckOrientation();
     };
 
     window.addEventListener("orientationchange", handleOrientationChange);
     window.addEventListener("resize", handleResize);
 
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener(
+        "resize",
+        handleVisualViewportChange
+      );
+    }
+
     return () => {
       clearTimeout(orientationTimeout);
+      clearTimeout(resizeTimeout);
       window.removeEventListener("orientationchange", handleOrientationChange);
       window.removeEventListener("resize", handleResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener(
+          "resize",
+          handleVisualViewportChange
+        );
+      }
     };
-  }, [deviceType, isSmallerScreen]);
+  }, [deviceType]);
 
   // Helper function to clear all intervals
   const clearIntervals = useCallback(() => {
@@ -651,13 +717,19 @@ const CustomVideoPlayer = () => {
   // Handle fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(document.fullscreenElement !== null);
+      const isCurrentlyFullscreen = !!
+        document.fullscreenElement 
+      ;
+      setActualFullscreenState(isCurrentlyFullscreen);
+      if (isCurrentlyFullscreen !== isFullscreen) {
+        setIsFullscreen(isCurrentlyFullscreen);
+      }
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, []);
+  }, [isFullscreen]);
 
   // Handle keyboard controls
   useEffect(() => {
@@ -1112,6 +1184,38 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  const getVideoContainerStyles = ():React.CSSProperties => {
+    if (!isFullscreen) return {};
+
+    const viewportWidth = getViewportWidth();
+    const viewportHeight = getViewportHeight();
+
+    if (deviceType === 'mobile' && viewportWidth > viewportHeight && viewportWidth < 640) {
+      
+      // Calculate available space considering safe areas
+      const availableHeight = viewportHeight - (
+        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0') +
+        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0')
+      );
+
+      const availableWidth = viewportWidth - (
+        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)') || '0') +
+        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0')
+      );
+
+      return {
+        width: availableWidth,
+        height: availableHeight,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      };
+    }
+
+    return {};
+  };
+
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -1192,10 +1296,11 @@ const CustomVideoPlayer = () => {
                   isFullscreen &&
                   (shouldUseMobileBottomBar ||
                     ["tablet", "laptop"].includes(deviceType))
-                    ? "relative mx-auto bg-black"
+                    ? "relative mx-auto bg-black overflow-hidden"
                     : "w-full h-full"
                 }`}
                 style={{
+                  ...getVideoContainerStyles(),
                   ...(isFullscreen || shouldUseMobileBottomBar
                     ? {
                         aspectRatio: "16/9",
@@ -1245,7 +1350,11 @@ const CustomVideoPlayer = () => {
                   {/* Bottom Controls */}
                   <div
                     ref={controlsRef}
-                    className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 md:p-4 pointer-events-auto"
+                    className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-auto
+                      ${isFullscreen && deviceType === 'mobile' 
+                        ? 'p-2 pb-safe-bottom' 
+                        : 'p-2 md:p-4'
+                      }`}
                     onClick={(e) => e.stopPropagation()}
                     onMouseEnter={handleControlsMouseEnter}
                     onMouseLeave={handleControlsMouseLeave}
@@ -1253,7 +1362,7 @@ const CustomVideoPlayer = () => {
                     {/* Seekbar with sections */}
                     <div
                       ref={seekBarRef}
-                      className="relative h-1 bg-gray-600 rounded-full mb-1 md:mb-2 cursor-pointer"
+                      className="relative h-1 bg-gray-600 rounded-full ml-0.5 mb-1 md:mb-2 cursor-pointer"
                       onClick={handleSeekClick}
                       onMouseMove={(e) => {
                         const rect =
@@ -1314,7 +1423,7 @@ const CustomVideoPlayer = () => {
                         })}
                       {/* Current Time Indicator */}
                       <div
-                        className="absolute top-0 w-4 h-4 bg-white rounded-full cursor-grab z-20 -mt-1.5"
+                        className="absolute top-0 w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full cursor-grab z-20 -mt-1 sm:-mt-1.5"
                         style={{
                           left: `${progressPercent}%`,
                           transform: "translateX(-50%)",
@@ -1324,7 +1433,7 @@ const CustomVideoPlayer = () => {
                     </div>
                     {/* Control Buttons */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
                         {/* Play/Pause/Replay Button */}
                         {(bibleVerseMarker?.length ?? 0) > 0 &&
                           !selectedChapter?.label.includes("Intro") && (
@@ -1399,7 +1508,7 @@ const CustomVideoPlayer = () => {
                           {formatTime(currentTime)} / {formatTime(duration)}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <div className="relative mt-2">
                           <button
                             onClick={(e) => {
