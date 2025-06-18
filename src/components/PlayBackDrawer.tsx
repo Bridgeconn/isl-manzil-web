@@ -1,6 +1,6 @@
 // components/PlaybackDrawer.tsx
 
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import { ChevronLeft } from "lucide-react";
 
 interface PlaybackDrawerProps {
