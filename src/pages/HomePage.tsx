@@ -8,6 +8,7 @@ import LayoutControlButtons from "@/components/LayoutControlButtons";
 import useBibleStore from "@/store/useBibleStore";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+import SearchboxBCV from "@/components/SearchboxBCV";
 
 const HomePage: React.FC = () => {
   const { selectedBook, selectedChapter } = useBibleStore();
@@ -118,8 +119,10 @@ const HomePage: React.FC = () => {
     <>
     {!shouldUseMobileBottomBar && (
       <div className="w-full bg-gray-100 mt-1">
-        <div className="max-w-7xl mx-auto w-full flex justify-between items-center px-2">
+        <div className="max-w-7xl mx-auto w-full flex justify-between items-center px-2 gap-1">
           <SelectBoxContainer />
+
+          <SearchboxBCV />
 
           <div className="flex flex-1 flex-wrap justify-end items-center gap-2 ml-1">
             <SelectViewContainer />

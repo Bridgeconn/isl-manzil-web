@@ -22,6 +22,8 @@ const SelectBoxContainer = () => {
     initializeAvailableData,
     getAvailableChaptersForBook,
     getAvailableVersesForBookAndChapter,
+    bibleVerseMarker,
+    getBibleVerseMarker
   } = useBibleStore();
 
   const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
@@ -44,6 +46,12 @@ const SelectBoxContainer = () => {
     }
   }, [selectedBook, getAvailableChaptersForBook]);
 
+  useEffect(() => {
+    if (selectedBook && selectedChapter) {
+      getBibleVerseMarker();
+    }
+  }, [selectedBook, selectedChapter, getBibleVerseMarker]);
+
   // Update verse options when selected book or chapter changes
   useEffect(() => {
     if (selectedBook && selectedChapter) {
@@ -55,7 +63,7 @@ const SelectBoxContainer = () => {
     } else {
       setVerseOptions([]);
     }
-  }, [selectedBook, selectedChapter, getAvailableVersesForBookAndChapter]);
+  }, [selectedBook, selectedChapter, bibleVerseMarker, getAvailableVersesForBookAndChapter]);
 
   const handleBookChange = (option: OptionType | null) => {
     if (option === null || "bookId" in option) {

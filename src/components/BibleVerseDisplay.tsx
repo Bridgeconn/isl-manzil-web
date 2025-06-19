@@ -34,7 +34,45 @@ const BibleVerseDisplay = ({
     if (!currentPlayingVerse || !verseData.length) return;
 
     const scrollToVerse = () => {
-      const verseElement = verseRefs.current[currentPlayingVerse];
+      const normalizedCurrentVerse = currentPlayingVerse.includes("-")
+        ? currentPlayingVerse.replace("-", "_")
+        : currentPlayingVerse;
+      let verseElement = verseRefs.current[normalizedCurrentVerse];
+
+      if (!verseElement) {
+        const currentVerseNum = parseInt(normalizedCurrentVerse);
+
+        if (!isNaN(currentVerseNum)) {
+          for (const [refKey, element] of Object.entries(verseRefs.current)) {
+            if (element && refKey.includes("_")) {
+              const rangeParts = refKey.split("_");
+              if (rangeParts.length === 2) {
+                const startVerse = parseInt(rangeParts[0]);
+                const endVerse = parseInt(rangeParts[1]);
+
+                if (!isNaN(startVerse) && !isNaN(endVerse)) {
+                  if (
+                    currentVerseNum >= startVerse &&
+                    currentVerseNum <= endVerse
+                  ) {
+                    verseElement = element;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (!verseElement && normalizedCurrentVerse.includes("_")) {
+        const firstVerse = normalizedCurrentVerse.split("_")[0];
+        verseElement = verseRefs.current[firstVerse];
+      }
+
+      if (!verseElement) {
+        verseElement = verseRefs.current[currentPlayingVerse];
+      }
 
       if (verseElement) {
         verseElement.scrollIntoView({
@@ -120,15 +158,36 @@ const BibleVerseDisplay = ({
     return null;
   };
 
+  const hasOverlap = (range1: string, range2: string): boolean => {
+    const parseRange = (str: string) => {
+      const normalized = str.replace("-", "_");
+      if (normalized.includes("_")) {
+        const [start, end] = normalized.split("_").map(Number);
+        return { start, end };
+      }
+      const num = Number(normalized);
+      return { start: num, end: num };
+    };
+
+    const r1 = parseRange(range1);
+    const r2 = parseRange(range2);
+
+    return r1.start <= r2.end && r2.start <= r1.end;
+  };
+
   const isCurrentVerse = (verseNumber: string | number): boolean => {
-    return currentPlayingVerse === verseNumber.toString();
+    if (!currentPlayingVerse) return false;
+    return hasOverlap(currentPlayingVerse, verseNumber.toString());
   };
 
   const setVerseRef = (
     verseNumber: string | number,
     element: HTMLDivElement | null
   ) => {
-    verseRefs.current[verseNumber.toString()] = element;
+    const normalizedVerseNumber = verseNumber.toString().includes("-")
+      ? verseNumber.toString().replace("-", "_")
+      : verseNumber.toString();
+    verseRefs.current[normalizedVerseNumber] = element;
   };
 
   return (
@@ -153,7 +212,10 @@ const BibleVerseDisplay = ({
                 ref={(el) => setVerseRef(verseData[0]?.verse, el)}
                 id={`verse-${verseData[0]?.verse}`}
               >
-                <span style={{ fontSize: "1.6em" }} className="themed-text text-themed font-bold text-gray-800">
+                <span
+                  style={{ fontSize: "1.6em" }}
+                  className="themed-text text-themed font-bold text-gray-800"
+                >
                   {selectedChapter.value}
                 </span>
                 <span
