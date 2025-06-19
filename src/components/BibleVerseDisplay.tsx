@@ -29,6 +29,34 @@ const BibleVerseDisplay = ({
     import: "default",
   });
 
+  const scrollToVerseInContainer = (verseElement: HTMLDivElement) => {
+    if (!containerRef.current || !verseElement) return;
+
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const verseRect = verseElement.getBoundingClientRect();
+    
+    // Calculate the verse position relative to the container
+    const verseTop = verseRect.top - containerRect.top;
+    const verseBottom = verseRect.bottom - containerRect.top;
+    
+    // Get container dimensions
+    const containerHeight = container.clientHeight;
+    const containerScrollTop = container.scrollTop;
+    
+    // Calculate target scroll position to center the verse in the container
+    const targetScrollTop = containerScrollTop + verseTop - (containerHeight / 2) + (verseRect.height / 2);
+    
+    const isVerseVisible = verseTop >= 0 && verseBottom <= containerHeight;
+    
+    if (!isVerseVisible) {
+      container.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: "smooth"
+      });
+    }
+  };
+
   // Auto-scroll as per current playing verse
   useEffect(() => {
     if (!currentPlayingVerse || !verseData.length) return;
@@ -75,11 +103,8 @@ const BibleVerseDisplay = ({
       }
 
       if (verseElement) {
-        verseElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "nearest",
-        });
+        // Use our custom container-constrained scroll instead of scrollIntoView
+        scrollToVerseInContainer(verseElement);
       }
     };
 

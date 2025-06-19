@@ -242,6 +242,36 @@ const CustomVideoPlayer = () => {
     };
   }, []);
 
+  useEffect(() => {
+    isDoubleTapRef.current = false;
+    skipNextClickRef.current = false;
+
+    if (singleClickTimeoutRef.current) {
+      clearTimeout(singleClickTimeoutRef.current);
+      singleClickTimeoutRef.current = null;
+    }
+  }, [currentVideoId]);
+
+  useEffect(() => {
+    let feedbackTimeout: number;
+
+    if (showSeekFeedback.show) {
+      feedbackTimeout = window.setTimeout(() => {
+        setShowSeekFeedback({
+          show: false,
+          direction: showSeekFeedback.direction,
+          seconds: 10,
+        });
+      }, 700);
+    }
+
+    return () => {
+      if (feedbackTimeout) {
+        clearTimeout(feedbackTimeout);
+      }
+    };
+  }, [showSeekFeedback.show, showSeekFeedback.direction]);
+
   const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
   const showComingSoon =
     !isVideoLoading &&
@@ -1226,14 +1256,15 @@ const CustomVideoPlayer = () => {
         setIsEnded(false);
       }
 
+      setShowSeekFeedback({ show: true, direction, seconds: 10 });
+
       setTimeout(() => {
         setShowSeekFeedback({ show: false, direction, seconds: 10 });
-      }, 1000);
+      }, 700);
     } catch (error) {
       console.error("Error seeking video:", error);
     } finally {
       setTimeout(() => {
-        setShowSeekFeedback({ show: false, direction, seconds: 10 });
         isManualSeekingRef.current = false;
         skipNextClickRef.current = false;
         if (isPlaying && !isEnded) {
@@ -1271,18 +1302,18 @@ const CustomVideoPlayer = () => {
 
       skipNextClickRef.current = true;
 
-      setShowSeekFeedback({
-        show: true,
-        direction,
-        seconds: 10,
-      });
+      // setShowSeekFeedback({
+      //   show: true,
+      //   direction,
+      //   seconds: 10,
+      // });
 
       handleDoubleTapSeek(direction);
       lastTapRef.current = 0;
       setTimeout(() => {
         isDoubleTapRef.current = false;
         skipNextClickRef.current = false;
-      }, 500);
+      }, 800);
     } else {
       lastTapRef.current = now;
       isDoubleTapRef.current = false;
@@ -1306,17 +1337,18 @@ const CustomVideoPlayer = () => {
 
     skipNextClickRef.current = true;
 
-    setShowSeekFeedback({
-      show: true,
-      direction,
-      seconds: 10,
-    });
+    // setShowSeekFeedback({
+    //   show: true,
+    //   direction,
+    //   seconds: 10,
+    // });
 
     handleDoubleTapSeek(direction);
 
     setTimeout(() => {
       skipNextClickRef.current = false;
-    }, 500);
+      isDoubleTapRef.current = false;
+    }, 800);
   };
 
   const handlePlayerClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -1573,31 +1605,42 @@ const CustomVideoPlayer = () => {
 
     const getPositionClasses = () => {
       const isMobile = deviceType === "mobile";
-      const baseClasses =
-        "flex items-center space-x-2 bg-black bg-opacity-70 rounded-lg px-4 py-2 transform transition-all ease-in-out duration-200";
+      const baseClasses = "flex items-center justify-center";
 
       if (isMobile) {
         return showSeekFeedback.direction === "forward"
-          ? `${baseClasses} ml-auto mr-4`
-          : `${baseClasses} mr-auto ml-4`;
+          ? `${baseClasses} ml-auto mr-20`
+          : `${baseClasses} mr-auto ml-20`;
       } else {
         return showSeekFeedback.direction === "forward"
-          ? `${baseClasses} ml-auto mr-16`
-          : `${baseClasses} mr-auto ml-16`;
+          ? `${baseClasses} ml-auto mr-50`
+          : `${baseClasses} mr-auto ml-50`;
       }
     };
 
     return (
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
         <div className={getPositionClasses()}>
-          {showSeekFeedback.direction === "backward" ? (
-            <FilledSkipBackIcon className="text-white w-6 h-6" />
-          ) : (
-            <FilledSkipForwardIcon className="text-white w-6 h-6" />
-          )}
-          <span className="text-white font-semibold">
-            {showSeekFeedback.seconds}s
-          </span>
+          <div className="flex flex-col items-center">
+            <div className="mb-1 sm:mb-2">
+              {showSeekFeedback.direction === "backward" ? (
+                <FilledSkipBackIcon
+                  className={`text-white drop-shadow-lg ${
+                    deviceType === "mobile" ? "w-8 h-8" : "w-12 h-12"
+                  } `}
+                />
+              ) : (
+                <FilledSkipForwardIcon
+                  className={`text-white drop-shadow-lg ${
+                    deviceType === "mobile" ? "w-8 h-8" : "w-12 h-12"
+                  } `}
+                />
+              )}
+            </div>
+            <div className="text-white font-bold text-base sm:text-lg drop-shadow-lg">
+              {showSeekFeedback.seconds}s
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1643,7 +1686,7 @@ const CustomVideoPlayer = () => {
           onDoubleClick={handleDoubleClick}
           onClick={(e) => {
             e.preventDefault();
-            if (!skipNextClickRef.current) {
+            if (!skipNextClickRef.current && !isDoubleTapRef.current) {
               handlePlayerClick(e);
             }
           }}
