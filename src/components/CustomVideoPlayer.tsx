@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,6 +20,7 @@ import SettingsButton from "../components/SettingsButton";
 import SharePopup from "../components/SharePopUp";
 import SettingsDrawer from "../components/SettingsDrawer";
 import QualityDrawer from "../components/QualityDrawer";
+import PlaybackDrawer from "./PlayBackDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
@@ -136,6 +143,8 @@ const CustomVideoPlayer = () => {
   const shareRef = useRef<HTMLDivElement>(null);
   const pendingVerseSeekRef = useRef<number | null>(null);
 
+  const playbackRef = useRef<HTMLDivElement | null>(null);
+
   const [showControls, setShowControls] = useState(true);
   const [showPlayBezel, setShowPlayBezel] = useState(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -147,6 +156,8 @@ const CustomVideoPlayer = () => {
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showQualityDrawer, setShowQualityDrawer] = useState(false);
+  const [showPlaybackDrawer, setShowPlaybackDrawer] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [selectedQuality, setSelectedQuality] = useState("Auto");
   const [availableQualities, setAvailableQualities] = useState<
     { id: string; label: string }[]
@@ -228,6 +239,10 @@ const CustomVideoPlayer = () => {
 
   const handleChangeSettings = () => {
     setShowQualityDrawer(false);
+    setShowSettingsMenu(true);
+  };
+  const handleChangeQuality = () => {
+    setShowPlaybackDrawer(false);
     setShowSettingsMenu(true);
   };
 
@@ -659,6 +674,19 @@ const CustomVideoPlayer = () => {
       const clickedOnShareButton =
         shareButtonRef.current && shareButtonRef.current.contains(target);
 
+      const clickedOutsidePlayback =
+        playbackRef.current && !playbackRef.current.contains(target);
+      const clickedOnChapterChevron = (target as Element)?.closest(
+        'button[title*="Chapter"]'
+      );
+
+      if (
+        showPlaybackDrawer &&
+        (clickedOutsidePlayback || clickedOnChapterChevron)
+      ) {
+        setShowPlaybackDrawer(false);
+      }
+
       const clickedOnSettingsButton =
         settingsButtonRef.current && settingsButtonRef.current.contains(target);
 
@@ -666,13 +694,20 @@ const CustomVideoPlayer = () => {
         'button[title*="Chapter"]'
       );
 
-      if ((showSettingsMenu || showQualityDrawer) && clickedOutsideSettings) {
+      if (
+        (showSettingsMenu || showQualityDrawer) &&
+        (clickedOutsideSettings || clickedOnChapterChevron)
+      ) {
         setShowSettingsMenu(false);
         setShowQualityDrawer(false);
         skipNextClickRef.current = true;
       }
 
-      if (showShare && clickedOutsideShare && !clickedOnShareButton) {
+      if (
+        showShare &&
+        (clickedOutsideShare || clickedOnChapterChevron) &&
+        !clickedOnShareButton
+      ) {
         setShowShare(false);
       }
 
@@ -746,9 +781,7 @@ const CustomVideoPlayer = () => {
   // Handle fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = !!
-        document.fullscreenElement 
-      ;
+      const isCurrentlyFullscreen = !!document.fullscreenElement;
       if (isCurrentlyFullscreen !== isFullscreen) {
         setIsFullscreen(isCurrentlyFullscreen);
       }
@@ -953,7 +986,12 @@ const CustomVideoPlayer = () => {
   // Toggle play/pause
   const togglePlay = () => {
     if (!vimeoPlayerRef.current || !isPlayerReady) return;
-    if (showShare || showSettingsMenu || showQualityDrawer) {
+    if (
+      showShare ||
+      showSettingsMenu ||
+      showQualityDrawer ||
+      showPlaybackDrawer
+    ) {
       return;
     }
 
@@ -1247,32 +1285,51 @@ const CustomVideoPlayer = () => {
     }
   };
 
-  const getVideoContainerStyles = ():React.CSSProperties => {
+  const getVideoContainerStyles = (): React.CSSProperties => {
     if (!isFullscreen) return {};
 
     const viewportWidth = getViewportWidth();
     const viewportHeight = getViewportHeight();
 
-    if (deviceType === 'mobile' && viewportWidth > viewportHeight && viewportWidth < 640) {
-      
+    if (
+      deviceType === "mobile" &&
+      viewportWidth > viewportHeight &&
+      viewportWidth < 640
+    ) {
       // Calculate available space considering safe areas
-      const availableHeight = viewportHeight - (
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0') +
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0')
-      );
+      const availableHeight =
+        viewportHeight -
+        (parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "env(safe-area-inset-top)"
+          ) || "0"
+        ) +
+          parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue(
+              "env(safe-area-inset-bottom)"
+            ) || "0"
+          ));
 
-      const availableWidth = viewportWidth - (
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)') || '0') +
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0')
-      );
+      const availableWidth =
+        viewportWidth -
+        (parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "env(safe-area-inset-left)"
+          ) || "0"
+        ) +
+          parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue(
+              "env(safe-area-inset-right)"
+            ) || "0"
+          ));
 
       return {
         width: availableWidth,
         height: availableHeight,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
       };
     }
 
@@ -1414,9 +1471,10 @@ const CustomVideoPlayer = () => {
                   <div
                     ref={controlsRef}
                     className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-auto
-                      ${isFullscreen && deviceType === 'mobile' 
-                        ? 'p-2 pb-safe-bottom' 
-                        : 'p-2 md:p-4'
+                      ${
+                        isFullscreen && deviceType === "mobile"
+                          ? "p-2 pb-safe-bottom"
+                          : "p-2 md:p-4"
                       }`}
                     onClick={(e) => e.stopPropagation()}
                     onMouseEnter={handleControlsMouseEnter}
@@ -1670,6 +1728,9 @@ const CustomVideoPlayer = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
+                              if (showPlaybackDrawer) {
+                                setShowPlaybackDrawer(false);
+                              }
 
                               // Only skip if share popup is currently open and we flagged to skip
 
@@ -1681,6 +1742,7 @@ const CustomVideoPlayer = () => {
                                 setShowSettingsMenu(false);
                                 setShowQualityDrawer(false);
                                 setShowDownloadDropdown(false);
+
                                 setShowShare(true);
                               } else {
                                 // Normal toggle behavior when settings is closed
@@ -1714,6 +1776,9 @@ const CustomVideoPlayer = () => {
                                 } else if (showQualityDrawer) {
                                   setShowSettingsMenu(false);
                                   setShowQualityDrawer(false);
+                                } else if (showPlaybackDrawer) {
+                                  setShowSettingsMenu(false);
+                                  setShowPlaybackDrawer(false);
                                 } else {
                                   setShowSettingsMenu(true);
                                 }
@@ -1734,6 +1799,11 @@ const CustomVideoPlayer = () => {
                               setShowSettingsMenu(false);
                               setShowQualityDrawer(true);
                             }}
+                            onOpenPlaybackDrawer={() => {
+                              setShowSettingsMenu(false);
+                              setShowPlaybackDrawer(true);
+                            }}
+                            playbackSpeed={playbackSpeed}
                           />
                           <QualityDrawer
                             isVisible={showQualityDrawer}
@@ -1756,6 +1826,21 @@ const CustomVideoPlayer = () => {
                             }}
                             onClose={() => setShowQualityDrawer(false)}
                             onBackToSettings={handleChangeSettings}
+                          />
+                          <PlaybackDrawer
+                            ref={playbackRef}
+                            isVisible={showPlaybackDrawer}
+                            onClose={() => setShowPlaybackDrawer(false)}
+                            playbackSpeed={playbackSpeed}
+                            onChangeSpeed={async (speed) => {
+                              if (vimeoPlayerRef.current) {
+                                await vimeoPlayerRef.current.setPlaybackRate(
+                                  speed
+                                );
+                              }
+                              setPlaybackSpeed(speed);
+                            }}
+                            onBackToSettings={handleChangeQuality}
                           />
                         </div>
                         <button

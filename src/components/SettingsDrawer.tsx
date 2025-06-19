@@ -1,11 +1,14 @@
 import React from "react";
 import { ChevronRight, SlidersHorizontal } from "lucide-react";
+import PlaybackButton from "./PlaybackButton";
 
 interface SettingsDrawerProps {
   isVisible: boolean;
   onClose: () => void;
   selectedQuality: string;
   onOpenQualityDrawer: () => void;
+  onOpenPlaybackDrawer: () => void; // NEW
+  playbackSpeed: number;
 }
 
 const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -13,6 +16,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onClose,
   selectedQuality,
   onOpenQualityDrawer,
+  onOpenPlaybackDrawer,
+  playbackSpeed,
 }) => {
   if (!isVisible) return null;
 
@@ -28,6 +33,25 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         </button>
       </div>
       <div className="space-y-2">
+        <div
+          onClick={onOpenPlaybackDrawer}
+          className="flex items-center gap-2 justify-between cursor-pointer hover:bg-gray-700 p-2 rounded"
+        >
+          <PlaybackButton />
+          <span className="text-white text-sm font-medium leading-none">
+            Speed
+          </span>
+          <span className="text-gray-300 text-sm ml-2 leading-none">
+            {" "}
+            {playbackSpeed === 1 ? "Normal" : `${playbackSpeed}x`}
+          </span>
+          <ChevronRight
+            size={20}
+            strokeWidth={2.5}
+            className=" text-white mt-[1px]"
+          />
+        </div>
+
         <div
           className="flex justify-between items-center cursor-pointer hover:bg-gray-700 p-2 rounded"
           onClick={onOpenQualityDrawer}
