@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -153,6 +159,15 @@ const CustomVideoPlayer = () => {
   >([]);
   const [isSmallerScreen, setIsSmallerScreen] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const lastTapRef = useRef<number>(0);
+  const touchStartTimeRef = useRef<number>(0);
+  const singleClickTimeoutRef = useRef<number | null>(null);
+  const isDoubleTapRef = useRef<boolean>(false);
+  const [showSeekFeedback, setShowSeekFeedback] = useState<{
+    show: boolean;
+    direction: "forward" | "backward";
+    seconds: number;
+  }>({ show: false, direction: "forward", seconds: 10 });
 
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
   const [downloadOptions, setDownloadOptions] = useState([]);
@@ -219,6 +234,14 @@ const CustomVideoPlayer = () => {
     getBibleVerseMarker,
   ]);
 
+  useEffect(() => {
+    return () => {
+      if (singleClickTimeoutRef.current) {
+        clearTimeout(singleClickTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const isVideoAvailable = !isVideoLoading && currentVideoId !== null;
   const showComingSoon =
     !isVideoLoading &&
@@ -233,7 +256,7 @@ const CustomVideoPlayer = () => {
 
   const updateVerseDropdown = useCallback(
     (verseNumber: string | number) => {
-      if (isManualSeekingRef.current) return;
+      if (isManualSeekingRef.current && !skipNextClickRef.current) return;
       isManualSeekingRef.current = true;
       const verseStr = verseNumber.toString();
       const verseValue = ["Intro", "0"].includes(verseStr)
@@ -242,16 +265,17 @@ const CustomVideoPlayer = () => {
         ? parseInt(verseStr.split("-")[0])
         : parseInt(verseStr) || 0;
 
-      setVerse({
-        value: verseValue,
-        label: verseStr,
-      });
-
-      prevSelectedVerse.current = verseValue;
+      if (prevSelectedVerse.current !== verseValue) {
+        setVerse({
+          value: verseValue,
+          label: verseStr,
+        });
+        prevSelectedVerse.current = verseValue;
+      }
 
       setTimeout(() => {
         isManualSeekingRef.current = false;
-      }, 300);
+      }, 200);
     },
     [setVerse]
   );
@@ -375,13 +399,21 @@ const CustomVideoPlayer = () => {
   const setupIntervals = useCallback(() => {
     clearIntervals();
 
-    if (!isPlayerReady || pendingVerseSeekRef.current !== null) {
-    return;
-  }
+    if (
+      !isPlayerReady ||
+      isManualSeekingRef.current ||
+      pendingVerseSeekRef.current !== null
+    ) {
+      return;
+    }
 
     // Set up interval for time updates
     updateIntervalRef.current = window.setInterval(async () => {
-      if (vimeoPlayerRef.current && isPlayerReady) {
+      if (
+        vimeoPlayerRef.current &&
+        isPlayerReady &&
+        !isManualSeekingRef.current
+      ) {
         try {
           const time = await vimeoPlayerRef.current.getCurrentTime();
           setCurrentTime(time);
@@ -427,7 +459,7 @@ const CustomVideoPlayer = () => {
     updateVerseDropdown,
     setCurrentPlayingVerse,
     clearIntervals,
-    isManualVerseSelection
+    isManualVerseSelection,
   ]);
 
   // Helper function to jump to a specific verse
@@ -491,11 +523,11 @@ const CustomVideoPlayer = () => {
       }
 
       if (!isPlayerReady || isManualSeekingRef.current) {
-      if (currentVerse !== 0) {
-        pendingVerseSeekRef.current = currentVerse;
+        if (currentVerse !== 0) {
+          pendingVerseSeekRef.current = currentVerse;
+        }
+        return;
       }
-      return;
-    }
 
       if (prevSelectedVerse.current !== currentVerse) {
         prevSelectedVerse.current = currentVerse;
@@ -579,10 +611,10 @@ const CustomVideoPlayer = () => {
 
         setIsPlayerReady(true);
         if (pendingVerseSeekRef.current !== null) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        await jumpToVerse(pendingVerseSeekRef.current);
-        pendingVerseSeekRef.current = null;
-      }
+          await new Promise((resolve) => setTimeout(resolve, 200));
+          await jumpToVerse(pendingVerseSeekRef.current);
+          pendingVerseSeekRef.current = null;
+        }
       } catch (error) {
         console.error("Error loading new video:", error);
       }
@@ -688,10 +720,8 @@ const CustomVideoPlayer = () => {
     };
 
     document.addEventListener("click", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
     return () => {
       document.removeEventListener("click", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [showSettingsMenu, showQualityDrawer, showShare, showDownloadDropdown]);
 
@@ -746,9 +776,7 @@ const CustomVideoPlayer = () => {
   // Handle fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = !!
-        document.fullscreenElement 
-      ;
+      const isCurrentlyFullscreen = !!document.fullscreenElement;
       if (isCurrentlyFullscreen !== isFullscreen) {
         setIsFullscreen(isCurrentlyFullscreen);
       }
@@ -782,6 +810,8 @@ const CustomVideoPlayer = () => {
           toggleFullscreen();
           break;
         case "ArrowLeft": {
+          isManualSeekingRef.current = true;
+          clearIntervals();
           const currentTime =
             (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
           const newTime = Math.max(0, currentTime - 10);
@@ -792,14 +822,33 @@ const CustomVideoPlayer = () => {
           }
           if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
             const newCurrentVerse = getCurrentVerseFromTime(newTime);
-            setCurrentPlayingVerse(newCurrentVerse);
-            if (newCurrentVerse) {
-              updateVerseDropdown(newCurrentVerse);
+            if (newCurrentVerse && newCurrentVerse !== currentPlayingVerse) {
+              setCurrentPlayingVerse(newCurrentVerse);
+              const verseStr = newCurrentVerse.toString();
+              const verseValue = ["Intro", "0"].includes(verseStr)
+                ? 0
+                : verseStr.includes("-")
+                ? parseInt(verseStr.split("-")[0])
+                : parseInt(verseStr) || 0;
+
+              setVerse({
+                value: verseValue,
+                label: verseStr,
+              });
+              prevSelectedVerse.current = verseValue;
             }
           }
+          setTimeout(() => {
+            isManualSeekingRef.current = false;
+            if (isPlaying && !isEnded) {
+              setupIntervals();
+            }
+          }, 300);
           break;
         }
         case "ArrowRight": {
+          isManualSeekingRef.current = true;
+          clearIntervals();
           const currentTime =
             (await vimeoPlayerRef.current?.getCurrentTime()) || 0;
           const newTime = Math.min(duration, currentTime + 10);
@@ -810,11 +859,28 @@ const CustomVideoPlayer = () => {
           }
           if (bibleVerseMarker && bibleVerseMarker?.length > 0) {
             const newCurrentVerse = getCurrentVerseFromTime(newTime);
-            setCurrentPlayingVerse(newCurrentVerse);
-            if (newCurrentVerse) {
-              updateVerseDropdown(newCurrentVerse);
+            if (newCurrentVerse && newCurrentVerse !== currentPlayingVerse) {
+              setCurrentPlayingVerse(newCurrentVerse);
+              const verseStr = newCurrentVerse.toString();
+              const verseValue = ["Intro", "0"].includes(verseStr)
+                ? 0
+                : verseStr.includes("-")
+                ? parseInt(verseStr.split("-")[0])
+                : parseInt(verseStr) || 0;
+
+              setVerse({
+                value: verseValue,
+                label: verseStr,
+              });
+              prevSelectedVerse.current = verseValue;
             }
           }
+          setTimeout(() => {
+            isManualSeekingRef.current = false;
+            if (isPlaying && !isEnded) {
+              setupIntervals();
+            }
+          }, 300);
           break;
         }
         default:
@@ -835,6 +901,8 @@ const CustomVideoPlayer = () => {
     setCurrentPlayingVerse,
     updateVerseDropdown,
     isVideoAvailable,
+    setupIntervals,
+    clearIntervals,
   ]);
 
   // Setup global mouse events for seek bar dragging
@@ -1028,14 +1096,12 @@ const CustomVideoPlayer = () => {
     setCurrentPlayingVerse(newCurrentVerse);
 
     if (newCurrentVerse) {
-
       const verseStr = newCurrentVerse.toString();
       const verseValue = ["Intro", "0"].includes(verseStr)
         ? 0
         : verseStr.includes("-")
         ? parseInt(verseStr.split("-")[0])
         : parseInt(verseStr) || 0;
-      
       setVerse({
         value: verseValue,
         label: verseStr,
@@ -1094,11 +1160,11 @@ const CustomVideoPlayer = () => {
 
     const verseStr = verse.verse.toString();
     const verseValue = ["Intro", "0"].includes(verseStr)
-        ? 0
-        : verseStr.includes("-")
-        ? parseInt(verseStr.split("-")[0])
-        : parseInt(verseStr) || 0;
-    
+      ? 0
+      : verseStr.includes("-")
+      ? parseInt(verseStr.split("-")[0])
+      : parseInt(verseStr) || 0;
+
     setVerse({
       value: verseValue,
       label: verseStr,
@@ -1113,6 +1179,207 @@ const CustomVideoPlayer = () => {
     setTimeout(() => {
       isManualSeekingRef.current = false;
     }, 500);
+  };
+
+  const handleDoubleTapSeek = async (direction: "forward" | "backward") => {
+    if (!vimeoPlayerRef.current || !isPlayerReady || !isVideoAvailable) return;
+
+    if (isManualSeekingRef.current) return;
+
+    userInteractedRef.current = true;
+    isManualSeekingRef.current = true;
+
+    clearIntervals();
+
+    const seekSeconds = 10;
+
+    try {
+      const currentTime = await vimeoPlayerRef.current.getCurrentTime();
+      const newTime =
+        direction === "forward"
+          ? Math.min(duration, currentTime + seekSeconds)
+          : Math.max(0, currentTime - seekSeconds);
+      await vimeoPlayerRef.current.setCurrentTime(newTime);
+      setCurrentTime(newTime);
+
+      if (bibleVerseMarker && bibleVerseMarker.length > 0) {
+        const newCurrentVerse = getCurrentVerseFromTime(newTime);
+        if (newCurrentVerse && newCurrentVerse !== currentPlayingVerse) {
+          setCurrentPlayingVerse(newCurrentVerse);
+          const verseStr = newCurrentVerse.toString();
+          const verseValue = ["Intro", "0"].includes(verseStr)
+            ? 0
+            : verseStr.includes("-")
+            ? parseInt(verseStr.split("-")[0])
+            : parseInt(verseStr) || 0;
+
+          setVerse({
+            value: verseValue,
+            label: verseStr,
+          });
+          prevSelectedVerse.current = verseValue;
+        }
+      }
+
+      // Reset ended state if seeking
+      if (isEnded) {
+        setIsEnded(false);
+      }
+
+      setTimeout(() => {
+        setShowSeekFeedback({ show: false, direction, seconds: 10 });
+      }, 1000);
+    } catch (error) {
+      console.error("Error seeking video:", error);
+    } finally {
+      setTimeout(() => {
+        setShowSeekFeedback({ show: false, direction, seconds: 10 });
+        isManualSeekingRef.current = false;
+        skipNextClickRef.current = false;
+        if (isPlaying && !isEnded) {
+          setupIntervals();
+        }
+      }, 500);
+    }
+  };
+
+  const handleDoubleTapTouch = (e: React.TouchEvent) => {
+    const target = e.target;
+    const isControlButton =
+      (target as Element)?.closest("button") ||
+      (target as Element)?.closest('[role="button"]');
+    if (isControlButton) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const now = Date.now();
+    const timeDiff = now - lastTapRef.current;
+
+    if (timeDiff < 300) {
+      if (singleClickTimeoutRef.current) {
+        clearTimeout(singleClickTimeoutRef.current);
+        singleClickTimeoutRef.current = null;
+      }
+      isDoubleTapRef.current = true;
+      const touch = e.changedTouches[0];
+      const rect = playerContainerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const tapX = touch.clientX - rect.left;
+      const direction = tapX < rect.width / 2 ? "backward" : "forward";
+
+      skipNextClickRef.current = true;
+
+      setShowSeekFeedback({
+        show: true,
+        direction,
+        seconds: 10,
+      });
+
+      handleDoubleTapSeek(direction);
+      lastTapRef.current = 0;
+      setTimeout(() => {
+        isDoubleTapRef.current = false;
+        skipNextClickRef.current = false;
+      }, 500);
+    } else {
+      lastTapRef.current = now;
+      isDoubleTapRef.current = false;
+    }
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (singleClickTimeoutRef.current) {
+      clearTimeout(singleClickTimeoutRef.current);
+      singleClickTimeoutRef.current = null;
+    }
+
+    const rect = playerContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const tapX = e.clientX - rect.left;
+    const direction = tapX < rect.width / 2 ? "backward" : "forward";
+
+    skipNextClickRef.current = true;
+
+    setShowSeekFeedback({
+      show: true,
+      direction,
+      seconds: 10,
+    });
+
+    handleDoubleTapSeek(direction);
+
+    setTimeout(() => {
+      skipNextClickRef.current = false;
+    }, 500);
+  };
+
+  const handlePlayerClick = (e: React.MouseEvent | React.TouchEvent) => {
+    if (
+      skipNextClickRef.current ||
+      isManualSeekingRef.current ||
+      isDoubleTapRef.current
+    ) {
+      return;
+    }
+    const target = e.target;
+    const isControlButton =
+      (target as Element)?.closest("button") ||
+      (target as Element)?.closest('[role="button"]');
+    if (isControlButton) {
+      return;
+    }
+    const clickedInsideDrawer =
+      containerRef.current?.contains(e.target as Node) ?? false;
+
+    if (!clickedInsideDrawer && isVideoAvailable) {
+      singleClickTimeoutRef.current = window.setTimeout(() => {
+        if (!skipNextClickRef.current && !isDoubleTapRef.current) {
+          togglePlay();
+        }
+        singleClickTimeoutRef.current = null;
+      }, 200);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    console.log("event", e);
+    touchStartTimeRef.current = Date.now();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchDuration = Date.now() - touchStartTimeRef.current;
+
+    const target = e.target;
+    const isControlButton =
+      (target as Element)?.closest("button") ||
+      (target as Element)?.closest('[role="button"]');
+    if (isControlButton) {
+      return;
+    }
+
+    if (touchDuration < 500) {
+      const now = Date.now();
+      const timeDiff = now - lastTapRef.current;
+
+      if (timeDiff < 300) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDoubleTapTouch(e);
+      } else {
+        lastTapRef.current = now;
+        setTimeout(() => {
+          if (!isDoubleTapRef.current && !skipNextClickRef.current) {
+            handlePlayerClick(e);
+          }
+        }, 300);
+      }
+    }
   };
 
   const navigateToVerse = (direction: "forward" | "backward") => {
@@ -1247,32 +1514,51 @@ const CustomVideoPlayer = () => {
     }
   };
 
-  const getVideoContainerStyles = ():React.CSSProperties => {
+  const getVideoContainerStyles = (): React.CSSProperties => {
     if (!isFullscreen) return {};
 
     const viewportWidth = getViewportWidth();
     const viewportHeight = getViewportHeight();
 
-    if (deviceType === 'mobile' && viewportWidth > viewportHeight && viewportWidth < 640) {
-      
+    if (
+      deviceType === "mobile" &&
+      viewportWidth > viewportHeight &&
+      viewportWidth < 640
+    ) {
       // Calculate available space considering safe areas
-      const availableHeight = viewportHeight - (
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0') +
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0')
-      );
+      const availableHeight =
+        viewportHeight -
+        (parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "env(safe-area-inset-top)"
+          ) || "0"
+        ) +
+          parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue(
+              "env(safe-area-inset-bottom)"
+            ) || "0"
+          ));
 
-      const availableWidth = viewportWidth - (
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)') || '0') +
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-right)') || '0')
-      );
+      const availableWidth =
+        viewportWidth -
+        (parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "env(safe-area-inset-left)"
+          ) || "0"
+        ) +
+          parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue(
+              "env(safe-area-inset-right)"
+            ) || "0"
+          ));
 
       return {
         width: availableWidth,
         height: availableHeight,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
       };
     }
 
@@ -1281,6 +1567,41 @@ const CustomVideoPlayer = () => {
 
   // Calculate progress as percentage
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const SeekFeedbackOverlay = () => {
+    if (!showSeekFeedback.show) return null;
+
+    const getPositionClasses = () => {
+      const isMobile = deviceType === "mobile";
+      const baseClasses =
+        "flex items-center space-x-2 bg-black bg-opacity-70 rounded-lg px-4 py-2 transform transition-all ease-in-out duration-200";
+
+      if (isMobile) {
+        return showSeekFeedback.direction === "forward"
+          ? `${baseClasses} ml-auto mr-4`
+          : `${baseClasses} mr-auto ml-4`;
+      } else {
+        return showSeekFeedback.direction === "forward"
+          ? `${baseClasses} ml-auto mr-16`
+          : `${baseClasses} mr-auto ml-16`;
+      }
+    };
+
+    return (
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <div className={getPositionClasses()}>
+          {showSeekFeedback.direction === "backward" ? (
+            <FilledSkipBackIcon className="text-white w-6 h-6" />
+          ) : (
+            <FilledSkipForwardIcon className="text-white w-6 h-6" />
+          )}
+          <span className="text-white font-semibold">
+            {showSeekFeedback.seconds}s
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -1315,24 +1636,21 @@ const CustomVideoPlayer = () => {
                 ["tablet", "laptop"].includes(deviceType))
                 ? "100vh"
                 : "80vh",
+            touchAction: "manipulation",
           }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onDoubleClick={handleDoubleClick}
           onClick={(e) => {
-            const clickedInsideDrawer =
-              containerRef.current?.contains(e.target as Node) ?? false;
-            // Ignore click if it just closed the drawer
-            if (skipNextClickRef.current) {
-              skipNextClickRef.current = false;
-              return;
-            }
-            //  Toggle only if not inside drawer
-            if (!clickedInsideDrawer && isVideoAvailable) {
-              togglePlay();
+            e.preventDefault();
+            if (!skipNextClickRef.current) {
+              handlePlayerClick(e);
             }
           }}
         >
           {(isVideoLoading || !isPlayerReady) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
-              <Loader2 className="w-8 h-8sm:w-12 sm:h-12 text-white animate-spin mb-2 sm:mb-4" />
+              <Loader2 className="w-8 h-8 sm:w-12 sm:h-12 text-white animate-spin mb-2 sm:mb-4" />
               <div className="text-white sm:text-lg">Loading video...</div>
             </div>
           )}
@@ -1377,6 +1695,8 @@ const CustomVideoPlayer = () => {
                   <div ref={playerRef} className="w-full h-full" />
                 </div>
 
+                <SeekFeedbackOverlay />
+
                 {/* Play/Pause/Replay Bezel Effect */}
                 {showPlayBezel && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
@@ -1414,9 +1734,10 @@ const CustomVideoPlayer = () => {
                   <div
                     ref={controlsRef}
                     className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-auto
-                      ${isFullscreen && deviceType === 'mobile' 
-                        ? 'p-2 pb-safe-bottom' 
-                        : 'p-2 md:p-4'
+                      ${
+                        isFullscreen && deviceType === "mobile"
+                          ? "p-2 pb-safe-bottom"
+                          : "p-2 md:p-4"
                       }`}
                     onClick={(e) => e.stopPropagation()}
                     onMouseEnter={handleControlsMouseEnter}
@@ -1760,6 +2081,7 @@ const CustomVideoPlayer = () => {
                         </div>
                         <button
                           onClick={(e) => {
+                            e.stopPropagation();
                             e.stopPropagation();
                             toggleFullscreen();
                           }}
