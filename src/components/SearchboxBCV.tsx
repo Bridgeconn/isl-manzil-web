@@ -52,7 +52,7 @@ const verseUtils = {
 };
 
 function SearchboxBCV({
-  placeholder = "Enter Search text",
+  placeholder = "Search Bible Reference",
   className = "",
 }: SearchboxBCVProps) {
   const [inputValue, setInputValue] = useState("");
