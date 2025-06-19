@@ -1619,7 +1619,7 @@ const CustomVideoPlayer = () => {
     };
 
     return (
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
         <div className={getPositionClasses()}>
           <div className="flex flex-col items-center">
             <div className="mb-1 sm:mb-2">
