@@ -43,7 +43,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   return (
     <>
       <div
-        className={`fixed bottom-0 left-0 right-0 z-50 h-16
+        className={`fixed bottom-0 left-0 right-0 ${isDrawerOpen || isMenuDrawerOpen ? 'z-40' : 'z-[999]'} h-16
       backdrop-blur-md bg-white/90
       shadow-[0_-4px_20px_rgba(0,0,0,0.15),0_-4px_20px_rgba(0,0,0,0.08),0_-1px_4px_rgba(0,0,0,0.04)]
       border-t border-white/50

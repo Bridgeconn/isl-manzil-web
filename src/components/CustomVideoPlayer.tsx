@@ -1609,12 +1609,12 @@ const CustomVideoPlayer = () => {
 
       if (isMobile) {
         return showSeekFeedback.direction === "forward"
-          ? `${baseClasses} ml-auto mr-20`
-          : `${baseClasses} mr-auto ml-20`;
+          ? `${baseClasses} ml-auto mr-20 mb-4`
+          : `${baseClasses} mr-auto ml-20 mb-4`;
       } else {
         return showSeekFeedback.direction === "forward"
-          ? `${baseClasses} ml-auto mr-50`
-          : `${baseClasses} mr-auto ml-50`;
+          ? `${baseClasses} ml-auto mr-50 mb-4`
+          : `${baseClasses} mr-auto ml-50 mb-4`;
       }
     };
 
