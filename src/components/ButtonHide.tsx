@@ -8,18 +8,16 @@ interface ButtonHideProps {
 }
 
 const ButtonHide: React.FC<ButtonHideProps> = ({ isVisible, toggle }) => {
-  const buttonText = isVisible ? "Hide Text" : "Show Text";
   const buttonImage = isVisible ? HideImage : ShowImage;
   return (
     <div>
       <button
         onClick={toggle}
-        className="w-35 flex items-center gap-2 px-2 py-1 border-2 text-black rounded-md cursor-pointer"
+        className="w-20 h-10 flex items-center justify-center gap-2 px-2 py-1 border-2 text-black rounded-md cursor-pointer"
       >
         {buttonImage && (
-          <img src={buttonImage} alt="show/hide" className="w-9 h-9" />
+          <img src={buttonImage} alt="show/hide" className="w-10 h-9" />
         )}
-        <span className="themed-text">{buttonText}</span>
       </button>
     </div>
   );
