@@ -55,7 +55,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
         </div>
       )}
 
-      <div className="absolute bottom-6 md:bottom-8 right-2 sm:right-4 w-64 sm:w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-3 sm:p-4 z-50">
+      <div className="absolute  bottom-6 md:bottom-8 right-2 sm:right-4 w-62 sm:w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-2 sm:p-4 z-50">
         {/* URL Display */}
         <div className="flex justify-center">
           <div className="mb-3 sm:mb-5  text-center text-xs sm:text-sm text-gray-800 break-words  px-3 py-2 bg-white-100 border border-gray-300 whitespace-normal w-full">
@@ -85,16 +85,16 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
         <div className="flex justify-center gap-2 sm:gap-4">
           <FacebookShareButton url={shareUrl}>
             <FacebookIcon
-              className="w-8 h-8 rounded-full overflow-hidden inline-block"
-              size={32}
+              className="w-8 h-8 sm:w-8 sm:h-8 rounded-full overflow-hidden inline-block"
+              size={28}
               round
             />
           </FacebookShareButton>
           <WhatsappShareButton url={shareUrl}>
-            <WhatsappIcon size={28} className="sm:w-8 sm:h-8" round />
+            <WhatsappIcon size={28} className="w-8 h-8 sm:w-8 sm:h-8" round />
           </WhatsappShareButton>
           <TwitterShareButton url={shareUrl}>
-            <XIcon size={28} className="sm:w-8 sm:h-8" round />
+            <XIcon size={28} className="w-8 h-8 sm:w-8 sm:h-8" round />
           </TwitterShareButton>
           <a
             href={`mailto:?subject=Check this out&body=${encodeURIComponent(
@@ -102,12 +102,11 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full overflow-hidden inline-block"
           >
-            <EmailIcon size={32} round />
+            <EmailIcon className="w-8 h-8 sm-w-8 sm:h-8 " size={28} round />
           </a>
           <LinkedinShareButton url={shareUrl}>
-            <LinkedinIcon size={28} className="sm:w-8 sm:h-8" round />
+            <LinkedinIcon size={28} className="w-8 h-8 sm:w-8 sm:h-8" round />
           </LinkedinShareButton>
         </div>
       </div>

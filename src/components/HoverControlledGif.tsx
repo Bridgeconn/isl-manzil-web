@@ -1,27 +1,30 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-const HoverControlledGif = ({ 
-  src, 
-  className, 
-  alt, 
+interface HoverControlledGifProps {
+  src: string;
+  alt: string;
+  className?: string;
+  duration?: number;
+  loopCount?: number;
+  hover?: boolean;
+}
+
+const HoverControlledGif: React.FC<HoverControlledGifProps> = ({
+  src,
+  alt,
+  className = "",
   duration = 3000,
-  loopCount = 3 
-}: {
-  src: string, 
-  className: string, 
-  alt: string, 
-  duration?: number,
-  loopCount?: number
+  loopCount = Infinity,
+  hover = false,
 }) => {
   const imgRef = useRef<HTMLImageElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const loopCountRef = useRef(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   const restartGif = () => {
     const img = imgRef.current;
     if (!img) return;
-    
     const originalSrc = img.src;
     img.src = "";
     img.src = originalSrc;
@@ -29,19 +32,15 @@ const HoverControlledGif = ({
 
   const startLooping = () => {
     if (intervalRef.current) return;
-    
     loopCountRef.current = 0;
     restartGif();
-    
+
     intervalRef.current = setInterval(() => {
       loopCountRef.current++;
-      if (loopCountRef.current < loopCount) {
+      if (loopCount === Infinity || loopCountRef.current < loopCount) {
         restartGif();
       } else {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
+        stopLooping();
       }
     }, duration);
   };
@@ -55,27 +54,31 @@ const HoverControlledGif = ({
   };
 
   useEffect(() => {
-    if (isHovered) {
+    if (hover) {
+      if (isHovered) {
+        startLooping();
+      } else {
+        stopLooping();
+      }
+    }
+  }, [isHovered, hover]);
+
+  useEffect(() => {
+    if (!hover) {
       startLooping();
-    } else {
-      stopLooping();
     }
 
     return () => stopLooping();
-  }, [isHovered]);
-
-  useEffect(() => {
-    return () => stopLooping();
-  }, []);
+  }, [src, hover]);
 
   return (
-    <img 
-      ref={imgRef} 
-      src={src} 
-      alt={alt} 
+    <img
+      ref={imgRef}
+      src={src}
+      alt={alt}
       className={className}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={hover ? () => setIsHovered(true) : undefined}
+      onMouseLeave={hover ? () => setIsHovered(false) : undefined}
     />
   );
 };
