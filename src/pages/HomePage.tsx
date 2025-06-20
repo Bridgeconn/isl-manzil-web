@@ -68,10 +68,12 @@ const HomePage: React.FC = () => {
         return {
           flexGrow: 1,
           minWidth: 0,
+          transition: "all 800ms ease-in-out",
         };
       }
       return {
         width: "100%",
+        transition: "all 800ms ease-in-out",
       };
     }
 
@@ -79,15 +81,13 @@ const HomePage: React.FC = () => {
       return {
         flexGrow: 1,
         minWidth: 0,
-        transition: showText
-          ? "flex-basis 800ms ease-in-out"
-          : "flex-basis 800ms ease-in-out",
+        transition: "all 800ms ease-in-out",
       };
     }
 
     return {
       flexBasis: "100%",
-      transition: "flex-basis 800ms ease-in-out",
+      transition: "all 800ms ease-in-out",
       minWidth: 0,
     };
   };
@@ -113,34 +113,46 @@ const HomePage: React.FC = () => {
   };
 
   const getHorizontalTextContainerClasses = () => {
-    const baseClasses =
-      "flex-shrink-0 transition-all duration-800 ease-in-out overflow-hidden";
+    const baseClasses = "flex-shrink-0 h-full transition-all duration-800 ease-in-out overflow-hidden";
+    
     if (shouldUseMobileBottomBar && isMobileLandscape) {
-      if (showText) {
-        return `${baseClasses} opacity-100 overflow-y-auto`;
-      } else {
-        return `${baseClasses} w-0 opacity-0`;
-      }
+      return baseClasses + "overflow-y-auto";
     }
 
-    if (showText) {
-      return `${baseClasses} opacity-100`;
-    } else {
-      return `${baseClasses} w-0 opacity-0`;
-    }
+    return baseClasses;
   };
 
-  const getResizableContainerStyle = () => {
+  const getHorizontalTextContainerStyle = () => {
     if (!showText) {
       return {
         width: 0,
         opacity: 0,
-        transition: "width 800ms ease-in-out, opacity 800ms ease-in-out",
+        minWidth: 0,
+        maxWidth: 0,
+        transition: 'all 800ms ease-in-out',
       };
     }
+    
+    if (shouldUseResizable) {
+      return {
+        width: `${size.width}px`,
+        opacity: 1,
+        minWidth: `${size.width}px`,
+        maxWidth: `${size.width}px`,
+        transition: isResizing ? 'none' : 'all 800ms ease-in-out',
+      };
+    }
+    
+    const defaultWidth = shouldUseMobileBottomBar 
+      ? (isMobileLandscape ? "20rem" : "15rem")
+      : "30rem";
+    
     return {
+      width: defaultWidth,
       opacity: 1,
-      transition: "width 800ms ease-in-out, opacity 800ms ease-in-out",
+      minWidth: defaultWidth,
+      maxWidth: defaultWidth,
+      transition: 'all 800ms ease-in-out',
     };
   };
 
@@ -202,11 +214,7 @@ const HomePage: React.FC = () => {
       )}
 
       <div
-        className={`${getLayoutClasses()} ${
-          isHorizontalLayout && textPosition === "right"
-            ? "transition-all duration-800 ease-in-out"
-            : ""
-        }`}
+        className={`${getLayoutClasses()}`}
       >
         <div
           className="transition-all duration-800 ease-in-out"
@@ -239,138 +247,137 @@ const HomePage: React.FC = () => {
         {isHorizontalLayout &&
           textPosition === "right" &&
           shouldShowContent && (
-            <div
+            <div 
               className={getHorizontalTextContainerClasses()}
-              style={
-                shouldUseResizable ? getResizableContainerStyle() : undefined
-              }
+              style={getHorizontalTextContainerStyle()}
             >
-              {shouldUseResizable ? (
-                <div
-                  style={{
-                    transition: "opacity 800ms ease-in-out",
-                    opacity: showText ? 1 : 0,
-                    pointerEvents: showText ? "auto" : "none",
+              {shouldUseResizable && showText ? (
+                <Resizable
+                  size={{
+                    width: size.width,
+                    height: size.height,
                   }}
-                  className="flex-shrink-0 relative"
+                  minWidth={constraints.minWidth}
+                  maxWidth={constraints.maxWidth}
+                  minHeight={constraints.minHeight}
+                  maxHeight={constraints.maxHeight}
+                  onResizeStart={handleResizeStart}
+                  onResize={(_e, _direction, ref) => {
+                    const newWidth = ref.offsetWidth;
+                    
+                    const parentContainer = ref.parentElement;
+                    if (parentContainer) {
+                      parentContainer.style.width = `${newWidth}px`;
+                      parentContainer.style.minWidth = `${newWidth}px`;
+                      parentContainer.style.maxWidth = `${newWidth}px`;
+                      
+                      parentContainer.style.transition = 'none';
+                    }
+                  }}
+                  onResizeStop={(_e, _direction, ref) => {
+                    const newSize = {
+                      width: ref.offsetWidth,
+                      height: ref.offsetHeight,
+                    };
+                    
+                    const parentContainer = ref.parentElement;
+                    if (parentContainer) {
+                      parentContainer.style.transition = 'all 800ms ease-in-out';
+                    }
+                    
+                    handleResize(newSize);
+                    handleResizeStop();
+                  }}
+                  enable={{
+                    top: true,
+                    right: false,
+                    bottom: true,
+                    left: true,
+                    topRight: false,
+                    bottomRight: false,
+                    bottomLeft: true,
+                    topLeft: true,
+                  }}
+                  handleStyles={{
+                    left: {
+                      width: "6px",
+                      background:
+                        "linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
+                      cursor: "col-resize",
+                      borderRadius: "3px",
+                      left: "-3px",
+                    },
+                    top: {
+                      height: "6px",
+                      background:
+                        "linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
+                      cursor: "row-resize",
+                      borderRadius: "3px",
+                      top: "-3px",
+                    },
+                    bottom: {
+                      height: "6px",
+                      background:
+                        "linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
+                      cursor: "row-resize",
+                      borderRadius: "3px",
+                      bottom: "-3px",
+                    },
+                    topLeft: {
+                      width: "10px",
+                      height: "10px",
+                      background: "rgba(59, 130, 246, 0.7)",
+                      borderRadius: "50%",
+                      cursor: "nw-resize",
+                      top: "-5px",
+                      left: "-5px",
+                      border: "2px solid white",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    },
+                    bottomLeft: {
+                      width: "10px",
+                      height: "10px",
+                      background: "rgba(59, 130, 246, 0.7)",
+                      borderRadius: "50%",
+                      cursor: "sw-resize",
+                      bottom: "-5px",
+                      left: "-5px",
+                      border: "2px solid white",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    },
+                  }}
+                  handleClasses={{
+                    left: "hover:bg-blue-400 transition-colors duration-200",
+                    top: "hover:bg-blue-400 transition-colors duration-200",
+                    bottom:
+                      "hover:bg-blue-400 transition-colors duration-200",
+                    topLeft:
+                      "hover:bg-blue-500 transition-colors duration-200",
+                    bottomLeft:
+                      "hover:bg-blue-500 transition-colors duration-200",
+                  }}
+                  className="h-full"
+                  style={{
+                    ...getResizableStyle(),
+                  }}
                 >
-                  <Resizable
-                    defaultSize={{
-                      width: size.width,
-                      height: size.height,
-                    }}
-                    minWidth={constraints.minWidth}
-                    maxWidth={constraints.maxWidth}
-                    minHeight={constraints.minHeight}
-                    maxHeight={constraints.maxHeight}
-                    onResizeStart={handleResizeStart}
-                    onResizeStop={(_e, _direction, ref) => {
-                      console.log('Resize direction:', _direction);
-                      console.log('Resize event:', _e);
-                      handleResize({
-                        width: ref.offsetWidth,
-                        height: ref.offsetHeight,
-                      });
-                      handleResizeStop();
-                    }}
-                    enable={{
-                      top: true,
-                      right: false,
-                      bottom: true,
-                      left: true,
-                      topRight: false,
-                      bottomRight: false,
-                      bottomLeft: true,
-                      topLeft: true,
-                    }}
-                    handleStyles={{
-                      left: {
-                        width: "6px",
-                        background:
-                          "linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
-                        cursor: "col-resize",
-                        borderRadius: "3px",
-                        left: "-3px",
-                      },
-                      top: {
-                        height: "6px",
-                        background:
-                          "linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
-                        cursor: "row-resize",
-                        borderRadius: "3px",
-                        top: "-3px",
-                      },
-                      bottom: {
-                        height: "6px",
-                        background:
-                          "linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
-                        cursor: "row-resize",
-                        borderRadius: "3px",
-                        bottom: "-3px",
-                      },
-                      topLeft: {
-                        width: "10px",
-                        height: "10px",
-                        background: "rgba(59, 130, 246, 0.7)",
-                        borderRadius: "50%",
-                        cursor: "nw-resize",
-                        top: "-5px",
-                        left: "-5px",
-                        border: "2px solid white",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      },
-                      bottomLeft: {
-                        width: "10px",
-                        height: "10px",
-                        background: "rgba(59, 130, 246, 0.7)",
-                        borderRadius: "50%",
-                        cursor: "sw-resize",
-                        bottom: "-5px",
-                        left: "-5px",
-                        border: "2px solid white",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      },
-                    }}
-                    handleClasses={{
-                      left: "hover:bg-blue-400 transition-colors duration-200",
-                      top: "hover:bg-blue-400 transition-colors duration-200",
-                      bottom:
-                        "hover:bg-blue-400 transition-colors duration-200",
-                      topLeft:
-                        "hover:bg-blue-500 transition-colors duration-200",
-                      bottomLeft:
-                        "hover:bg-blue-500 transition-colors duration-200",
-                    }}
-                    className="flex-shrink-0 relative"
-                    style={{
-                      width: `${size.width}px`,
-                      ...getResizableStyle(),
-                    }}
-                  >
-                    <div className="h-full w-full">
-                      <div className={getVerseContentClasses()}>
-                        <BibleVerseDisplay
-                          setIsIntroDataAvailable={setIsIntroDataAvailable}
-                        />
-                      </div>
+                  <div className="h-full w-full">
+                    <div className={getVerseContentClasses()}>
+                      <BibleVerseDisplay
+                        setIsIntroDataAvailable={setIsIntroDataAvailable}
+                      />
                     </div>
-                  </Resizable>
-                </div>
-              ) : (
-                <div
-                  className={
-                    shouldUseMobileBottomBar
-                      ? "w-48 sm:w-60 h-full"
-                      : "w-60 md:w-90 h-full"
-                  }
-                >
+                  </div>
+                </Resizable>
+              ) : showText ? (
+                <div className="h-full w-full">
                   <div className={getVerseContentClasses()}>
                     <BibleVerseDisplay
                       setIsIntroDataAvailable={setIsIntroDataAvailable}
                     />
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
       </div>

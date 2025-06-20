@@ -23,22 +23,27 @@ interface UseResizableProps {
 const isBrowser = () => typeof window !== "undefined";
 
 export const useResizable = ({
-  initialWidth = 320,
-  initialHeight = 400,
   isMobileLandscape = false,
   persistKey = "bible-verse-container-size",
 }: UseResizableProps = {}) => {
-  const { deviceType } = useDeviceDetection();
+  const { deviceType, orientation } = useDeviceDetection();
 
-  // Get device-specific storage key
+  const initialDimensions = useMemo(() => ({
+    width: (deviceType === "mobile" && isMobileLandscape) ? 240 : (deviceType === "tablet" || deviceType === "laptop" && orientation === "landscape") ? 400 : 700,
+    height: (deviceType === "mobile" && isMobileLandscape) ? 280 : (deviceType === "tablet" || deviceType === "laptop" && orientation === "landscape") ? 600 : 1000,
+  }), [deviceType, isMobileLandscape, orientation]);
+
   const getDeviceSpecificKey = useCallback(() => {
     if (!isBrowser()) return persistKey;
 
     const isMobile = deviceType === "mobile";
+    const isTablet = deviceType === "tablet";
     const isLandscape = window.innerWidth > window.innerHeight;
 
     if (isMobile && isLandscape && isMobileLandscape) {
       return `${persistKey}-mobile-landscape`;
+    } else if (isTablet && isLandscape) {
+      return `${persistKey}-tablet-landscape`;
     } else {
       return `${persistKey}-large-screen`;
     }
@@ -54,24 +59,6 @@ export const useResizable = ({
     null
   );
 
-  const [size, setSize] = useState<ResizableSize>(() => {
-    if (!isBrowser()) return { width: initialWidth, height: initialHeight };
-    try {
-      const deviceKey = getDeviceSpecificKey();
-      const saved = localStorage.getItem(deviceKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          width: parsed.width || initialWidth,
-          height: parsed.height || initialHeight,
-        };
-      }
-    } catch (error) {
-      console.warn("Failed to load resizable size from localStorage:", error);
-    }
-    return { width: initialWidth, height: initialHeight };
-  });
-  const [isResizing, setIsResizing] = useState(false);
   const [viewportSize, setViewportSize] = useState(() => ({
     width: isBrowser() ? window.innerWidth : 1024,
     height: isBrowser() ? window.innerHeight : 768,
@@ -109,6 +96,30 @@ export const useResizable = ({
     }),
     [constraints]
   );
+
+  const getInitialSize = useCallback(() => {
+    if (!isBrowser()) return initialDimensions;
+    
+    try {
+      const deviceKey = getDeviceSpecificKey();
+      const saved = localStorage.getItem(deviceKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const savedSize = {
+          width: parsed.width || initialDimensions.width,
+          height: parsed.height || initialDimensions.height,
+        };
+        return applyConstraints(savedSize);
+      }
+    } catch (error) {
+      console.warn("Failed to load resizable size from localStorage:", error);
+    }
+    
+    return applyConstraints(initialDimensions);
+  }, [getDeviceSpecificKey, applyConstraints, initialDimensions]);
+
+  const [size, setSize] = useState<ResizableSize>(() => getInitialSize());
+  const [isResizing, setIsResizing] = useState(false);
 
   const handleResize = useCallback(
     (newSize: ResizableSize) => {
@@ -197,7 +208,7 @@ export const useResizable = ({
   }, []);
 
   const resetSize = useCallback(() => {
-    const newSize = { width: initialWidth, height: initialHeight };
+    const newSize = applyConstraints(initialDimensions);
     setSize(newSize);
 
     if (isBrowser()) {
@@ -211,7 +222,7 @@ export const useResizable = ({
         );
       }
     }
-  }, [initialWidth, initialHeight, getDeviceSpecificKey]);
+  }, [initialDimensions, getDeviceSpecificKey, applyConstraints]);
 
   useEffect(() => {
     if (!isBrowser()) return;
@@ -222,30 +233,6 @@ export const useResizable = ({
         height: window.innerHeight,
       };
       setViewportSize(newViewportSize);
-
-      // When viewport changes significantly (device rotation or resize), reset size
-      const deviceKey = getDeviceSpecificKey();
-      try {
-        const saved = localStorage.getItem(deviceKey);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          const savedSize = {
-            width: parsed.width || initialWidth,
-            height: parsed.height || initialHeight,
-          };
-          setSize(applyConstraints(savedSize));
-        } else {
-          // No saved size for this device type, use defaults
-          setSize(
-            applyConstraints({ width: initialWidth, height: initialHeight })
-          );
-        }
-      } catch (error) {
-        console.warn("Failed to load size after viewport change:", error);
-        setSize(
-          applyConstraints({ width: initialWidth, height: initialHeight })
-        );
-      }
     };
 
     // Debounce viewport changes to avoid excessive updates
@@ -260,11 +247,55 @@ export const useResizable = ({
       window.removeEventListener("resize", debouncedUpdate);
       clearTimeout(timeoutId);
     };
-  }, [getDeviceSpecificKey, initialWidth, initialHeight, applyConstraints]);
+  }, []);
 
   useEffect(() => {
-    setSize((prev) => applyConstraints(prev));
-  }, [applyConstraints]);
+    if (!isBrowser()) return;
+
+    const handleDeviceOrConstraintChange = () => {
+      try {
+        const deviceKey = getDeviceSpecificKey();
+        const saved = localStorage.getItem(deviceKey);
+        
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const savedSize = {
+            width: parsed.width || initialDimensions.width,
+            height: parsed.height || initialDimensions.height,
+          };
+          // Apply current constraints to saved size
+          setSize(applyConstraints(savedSize));
+        } else {
+          setSize(applyConstraints(initialDimensions));
+        }
+      } catch (error) {
+        console.warn("Failed to load size after device/constraint change:", error);
+        setSize(applyConstraints(initialDimensions));
+      }
+    };
+
+    handleDeviceOrConstraintChange();
+  }, [getDeviceSpecificKey, initialDimensions, applyConstraints]);
+
+  useEffect(() => {
+    setSize((prevSize) => {
+      const constrainedSize = applyConstraints(prevSize);
+      
+      if (constrainedSize.width !== prevSize.width || constrainedSize.height !== prevSize.height) {
+        if (isBrowser()) {
+          try {
+            const deviceKey = getDeviceSpecificKey();
+            localStorage.setItem(deviceKey, JSON.stringify(constrainedSize));
+          } catch (error) {
+            console.warn("Failed to save constrained size to localStorage:", error);
+          }
+        }
+        return constrainedSize;
+      }
+      
+      return prevSize;
+    });
+  }, [applyConstraints, getDeviceSpecificKey]);
 
   // Cleanup effect
   useEffect(() => {
