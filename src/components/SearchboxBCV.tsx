@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import useBibleStore from "@/store/useBibleStore";
 import BookData from "../assets/data/book_codes.json";
 import { VerseOption } from "@/types/Navigation";
+import { Search, X } from 'lucide-react';
 
 interface SearchboxBCVProps {
   placeholder?: string;
@@ -18,12 +19,10 @@ const verseUtils = {
   parseVerseRange: (verseLabel: string | number) => {
     const label = verseLabel.toString();
 
-
     if (/^\d+$/.test(label)) {
       const num = parseInt(label);
       return { start: num, end: num, isSingle: true };
     }
-
 
     const rangeMatch = label.match(/^(\d+)[-_](\d+)$/);
     if (rangeMatch) {
@@ -92,6 +91,21 @@ function SearchboxBCV({
       };
     }
   }, [isFocused]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        if (errorMessage) {
+          setErrorMessage("");
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [errorMessage]);
 
   const findBook = (searchTerm: string) => {
     const lowerSearchTerm = searchTerm.toLowerCase();
@@ -296,20 +310,33 @@ function SearchboxBCV({
       return false;
     }
 
+    if (verse !== null) {
+      const availableVerses = getAvailableVersesForBookAndChapter(
+        book.value,
+        chapter
+      );
+      const foundVerse = findVerseInAvailableVerses(availableVerses, verse);
+
+      if (!foundVerse) {
+        setErrorMessage("Verse not found");
+        return false;
+      }
+    }
+
     const isBookChange = !selectedBook || selectedBook.value !== book.value;
-    const isChapterChange =
-      !selectedChapter || selectedChapter.value !== chapter;
+    const isChapterChange = !selectedChapter || selectedChapter.value !== chapter;
 
     if (isBookChange) {
       setBook(book);
     }
 
-    if (isChapterChange) {
+
+    if (isChapterChange || isBookChange) {
       setChapter(foundChapter);
     }
 
     if (verse !== null) {
-      const delay = isBookChange ? 800 : isChapterChange ? 500 : 150;
+      const delay = isBookChange ? 800 : (isChapterChange || isBookChange) ? 500 : 150;
       setTimeout(() => {
         const availableVerses = getAvailableVersesForBookAndChapter(
           book.value,
@@ -317,14 +344,11 @@ function SearchboxBCV({
         );
         const foundVerse = findVerseInAvailableVerses(availableVerses, verse);
 
-        if (!foundVerse) {
-          setErrorMessage("Verse not found");
-          return;
+        if (foundVerse) {
+          setVerse(foundVerse);
+          setCurrentPlayingVerse(foundVerse.label);
+          setErrorMessage("");
         }
-
-        setVerse(foundVerse);
-        setCurrentPlayingVerse(foundVerse.label);
-        setErrorMessage("");
       }, delay);
     } else {
       setErrorMessage("");
@@ -411,20 +435,20 @@ function SearchboxBCV({
             {inputValue && (
               <button
                 onClick={handleClear}
-                className="text-gray-400 hover:text-gray-600 text-xs p-1 flex-shrink-0"
+                className="text-gray-600 hover:text-gray-800 text-xs p-1 flex-shrink-0"
                 title="Clear"
                 disabled={isSearching}
               >
-                ✕
+                <X strokeWidth={2.5} size={20} />
               </button>
             )}
             <button
               onClick={handleSearch}
-              className="text-blue-600 hover:text-blue-800 text-xs p-1 disabled:opacity-50 flex-shrink-0"
+              className="text-blue-700 hover:text-blue-900 text-xs p-1 disabled:opacity-50 flex-shrink-0"
               title="Search"
               disabled={isSearching || !inputValue.trim()}
             >
-              {isSearching ? "⏳" : "🔍"}
+              {isSearching ? "⏳" : <Search strokeWidth={2.5} size={18}/>}
             </button>
           </div>
         </div>
@@ -432,7 +456,7 @@ function SearchboxBCV({
 
       {errorMessage && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 border border-red-300 rounded-md shadow-lg z-50 p-2 text-xs">
-          <div className="text-red-600 font-medium">{errorMessage}</div>
+          <div className="themed-text text-themed font-medium">{errorMessage}</div>
         </div>
       )}
     </div>
