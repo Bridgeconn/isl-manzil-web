@@ -227,7 +227,7 @@ const CustomVideoPlayer = () => {
       loadVideoForCurrentSelection();
       getBibleVerseMarker();
       setSelectedQuality("Auto");
-
+      setPlaybackSpeed(1);
       setShowDownloadDropdown(false);
       setDownloadOptions([]);
     }
