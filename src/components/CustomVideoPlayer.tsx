@@ -1697,7 +1697,7 @@ const CustomVideoPlayer = () => {
           ))}
         <div
           ref={playerContainerRef}
-          className={`relative w-full max-w-4xl mx-auto overflow-hidden ${
+          className={`relative w-full ${shouldUseMobileBottomBar ? "max-w-5xl" : "max-w-4xl"} mx-auto overflow-hidden ${
             isFullscreen &&
             (shouldUseMobileBottomBar ||
               ["tablet", "laptop"].includes(deviceType))

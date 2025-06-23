@@ -15,8 +15,9 @@ import SearchboxBCV from "@/components/SearchboxBCV";
 const HomePage: React.FC = () => {
   const { selectedBook, selectedChapter } = useBibleStore();
   const [isIntroDataAvailable, setIsIntroDataAvailable] = useState(false);
-  const { shouldUseMobileBottomBar, isMobilePortrait, isMobileLandscape } =
+  const { shouldUseMobileBottomBar, isMobilePortrait, isMobileLandscape, isTabletLandscape, isTabletPortrait } =
     useDeviceDetection();
+
 
   const {
     showText,
@@ -49,7 +50,7 @@ const HomePage: React.FC = () => {
 
   const getLayoutClasses = () => {
     if (shouldUseMobileBottomBar) {
-      if (isMobileLandscape) {
+      if (isMobileLandscape || isTabletLandscape) {
         return "flex gap-2 h-full p-2 overflow-y-auto";
       }
       return "flex flex-col h-full";
@@ -62,7 +63,7 @@ const HomePage: React.FC = () => {
 
   const getVideoContainerStyle = () => {
     if (shouldUseMobileBottomBar) {
-      if (isMobileLandscape) {
+      if (isMobileLandscape || isTabletLandscape) {
         return {
           flexGrow: 1,
           minWidth: 0,
@@ -92,10 +93,10 @@ const HomePage: React.FC = () => {
 
   const getVerseContentClasses = () => {
     if (shouldUseMobileBottomBar) {
-      if (isMobileLandscape && showText && textPosition === "right") {
+      if ((isMobileLandscape || isTabletLandscape) && showText && textPosition === "right") {
         return "verse-content-container h-full bg-gray-50 border-2 pl-4 py-2 overflow-y-auto";
       }
-      if (isMobilePortrait) {
+      if (isMobilePortrait || isTabletPortrait) {
         return "verse-content-container h-full w-full bg-gray-50 border-2 pl-4 py-2";
       }
     }
@@ -113,7 +114,7 @@ const HomePage: React.FC = () => {
   const getHorizontalTextContainerClasses = () => {
     const baseClasses = "flex-shrink-0 h-full transition-all duration-800 ease-in-out overflow-hidden";
     
-    if (shouldUseMobileBottomBar && isMobileLandscape) {
+    if (shouldUseMobileBottomBar && (isMobileLandscape || isTabletLandscape)) {
       return baseClasses + "overflow-y-auto";
     }
 
@@ -142,7 +143,7 @@ const HomePage: React.FC = () => {
     }
     
     const defaultWidth = shouldUseMobileBottomBar 
-      ? (isMobileLandscape ? "20rem" : "15rem")
+      ? (isMobileLandscape || isTabletLandscape ? "20rem" : "15rem")
       : "30rem";
     
     return {
@@ -157,7 +158,7 @@ const HomePage: React.FC = () => {
   const getVerticalTextContainerClasses = () => {
     const baseClasses =
       "transition-all duration-800 ease-in-out overflow-hidden custom-scroll-ultra-thin";
-    if (shouldUseMobileBottomBar && isMobilePortrait) {
+    if (shouldUseMobileBottomBar && (isMobilePortrait || isTabletPortrait)) {
       if (showText) {
         return `${baseClasses} h-full opacity-100`;
       } else {
