@@ -13,6 +13,7 @@ interface ScreenInfo {
   isTabletLandscape: boolean;
   isMobileLandscape: boolean;
   isMobilePortrait: boolean;
+  isTabletPortrait: boolean;
   shouldUseHorizontalLayout: boolean;
   shouldUseMobileBottomBar: boolean;
 }
@@ -29,8 +30,12 @@ const detectTrueDeviceType = (): DeviceType => {
   const maxDim = Math.max(currentWidth, currentHeight);
   const minDim = Math.min(currentWidth, currentHeight);
 
-  if (/iphone/.test(ua)) {
+  if (/iphone|ipod/.test(ua)) {
     return "mobile";
+  }
+
+  if (/ipad/.test(ua) && (hasTouch && maxTouchPoints > 1)) {
+    return "tablet";
   }
 
   const hasUserAgentData = (
@@ -50,10 +55,17 @@ const detectTrueDeviceType = (): DeviceType => {
     mobileUA &&
     maxTouchPoints === 0 &&
     pixelRatio <= 1.25 &&
-    maxDim > 900;
+    !hasTouch &&
+    maxDim >= 1024;
 
   if (isDesktopEmulatingMobile) {
-    return "laptop"; // fallback for emulated mobile on desktop
+    if (maxDim >= 1920) return "desktop";
+    if (maxDim >= 1200) return "laptop";
+    return "laptop"; 
+  }
+
+  if (/android.*mobile/.test(ua) || mobileUA) {
+    return "mobile";
   }
 
   const tabletPatterns = [
@@ -69,7 +81,7 @@ const detectTrueDeviceType = (): DeviceType => {
     if (pattern.test(ua)) return "tablet";
   }
 
-  if (hasTouch) {
+  if (hasTouch && maxTouchPoints > 0) {
     const dpi = pixelRatio * 96;
     const physicalDiagonal = Math.sqrt(
       Math.pow(maxDim / dpi, 2) + Math.pow(minDim / dpi, 2)
@@ -77,8 +89,13 @@ const detectTrueDeviceType = (): DeviceType => {
 
     // Fallback if physicalDiagonal not reliable
     if (!physicalDiagonal || physicalDiagonal <= 0) {
-      if (maxDim <= 900) return "mobile";
       if (maxDim >= 768 && maxDim <= 1366) return "tablet";
+      if (maxDim <= 768 || (maxDim <= 926 && minDim <= 428)) {
+        return "mobile";
+      }
+      if (maxDim > 1366) {
+        return "laptop";
+      }
     }
 
     if (
@@ -88,12 +105,16 @@ const detectTrueDeviceType = (): DeviceType => {
       return "mobile";
     }
 
-    if (maxDim >= 768 && maxDim <= 1366 && physicalDiagonal >= 7) {
+    if (maxDim >= 768 && maxDim <= 1366 && physicalDiagonal >= 7 && physicalDiagonal <= 13) {
       return "tablet";
     }
 
-    if (maxDim > 1366) {
+    if (maxDim > 1366 && physicalDiagonal > 13) {
       return physicalDiagonal > 15 ? "desktop" : "laptop";
+    }
+    
+    if (physicalDiagonal < 7) {
+      return "mobile";
     }
   }
 
@@ -118,10 +139,12 @@ const getScreenType = (): ScreenInfo => {
     deviceType === "mobile" && orientation === "landscape";
   const isMobilePortrait =
     deviceType === "mobile" && orientation === "portrait";
+  const isTabletPortrait = 
+    deviceType === "tablet" && orientation === "portrait";
 
   const shouldUseHorizontalLayout = (): boolean => {
-    if (deviceType === "mobile") {
-      return isMobileLandscape;
+    if (deviceType === "mobile" || deviceType === "tablet") {
+      return orientation === "landscape";
     }
     return orientation === "landscape";
   };
@@ -129,7 +152,7 @@ const getScreenType = (): ScreenInfo => {
   const layoutMode: LayoutMode = shouldUseHorizontalLayout()
     ? "horizontal"
     : "vertical";
-  const shouldUseMobileBottomBar = deviceType === "mobile";
+  const shouldUseMobileBottomBar = deviceType === "mobile" || deviceType === "tablet";
 
   return {
     width,
@@ -140,6 +163,7 @@ const getScreenType = (): ScreenInfo => {
     isTabletLandscape,
     isMobileLandscape,
     isMobilePortrait,
+    isTabletPortrait,
     shouldUseHorizontalLayout: shouldUseHorizontalLayout(),
     shouldUseMobileBottomBar,
   };

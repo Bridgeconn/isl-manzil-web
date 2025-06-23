@@ -26,7 +26,7 @@ export const useResizable = ({
   isMobileLandscape = false,
   persistKey = "bible-verse-container-size",
 }: UseResizableProps = {}) => {
-  const { deviceType, orientation } = useDeviceDetection();
+  const { deviceType, orientation, isTabletLandscape } = useDeviceDetection();
 
   const [viewportSize, setViewportSize] = useState(() => ({
     width: isBrowser() ? window.innerWidth : 1024,
@@ -49,14 +49,14 @@ export const useResizable = ({
     let height: number;
     if (deviceType === "mobile" && isMobileLandscape) {
       height = windowHeight - 80;
-    } else if (orientation === "landscape") {
-      height = windowHeight - 180;
+    } else if (orientation === "landscape" && isTabletLandscape) {
+      height = windowHeight - 80;
     } else {
       height = windowHeight - 180;
     }
 
     return { width, height };
-  }, [deviceType, isMobileLandscape, orientation, viewportSize]);
+  }, [deviceType, isMobileLandscape, isTabletLandscape, orientation, viewportSize]);
 
   const getDeviceSpecificKey = useCallback(() => {
     if (!isBrowser()) return persistKey;
@@ -99,7 +99,7 @@ export const useResizable = ({
       minWidth: 280,
       maxWidth: Math.floor(vw * 0.5),
       minHeight: 300,
-      maxHeight: vh - 120,
+      maxHeight: vh - 80,
     };
   }, [viewportSize, isMobileLandscape]);
 

@@ -227,7 +227,7 @@ const CustomVideoPlayer = () => {
       loadVideoForCurrentSelection();
       getBibleVerseMarker();
       setSelectedQuality("Auto");
-
+      setPlaybackSpeed(1);
       setShowDownloadDropdown(false);
       setDownloadOptions([]);
     }
@@ -500,6 +500,27 @@ const CustomVideoPlayer = () => {
     clearIntervals,
     isManualVerseSelection,
   ]);
+
+  useEffect(() => {
+    let timeUpdateInterval: NodeJS.Timeout;
+
+    if (isPlayerReady && vimeoPlayerRef.current) {
+      timeUpdateInterval = setInterval(async () => {
+        try {
+          const time = await vimeoPlayerRef.current?.getCurrentTime();
+          setCurrentTime(time!);
+        } catch (error) {
+          console.error("Error updating time:", error);
+        }
+      }, 500);
+    }
+
+    return () => {
+      if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+      }
+    };
+  }, [isPlayerReady]);
 
   // Helper function to jump to a specific verse
   const jumpToVerse = useCallback(
@@ -1697,7 +1718,9 @@ const CustomVideoPlayer = () => {
           ))}
         <div
           ref={playerContainerRef}
-          className={`relative w-full max-w-4xl mx-auto overflow-hidden ${
+          className={`relative w-full ${
+            shouldUseMobileBottomBar ? "max-w-5xl" : "max-w-4xl"
+          } mx-auto overflow-hidden ${
             isFullscreen &&
             (shouldUseMobileBottomBar ||
               ["tablet", "laptop"].includes(deviceType))
