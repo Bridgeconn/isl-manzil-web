@@ -37,8 +37,6 @@ const HomePage: React.FC = () => {
     handleResizeStart,
     handleResizeStop,
   } = useResizable({
-    initialWidth: isMobileLandscape ? 240 : 320,
-    initialHeight: 400,
     isMobileLandscape,
     persistKey: "bible-verse-container-size",
   });
@@ -135,10 +133,10 @@ const HomePage: React.FC = () => {
     
     if (shouldUseResizable) {
       return {
-        width: `${size.width}px`,
+        width: `${size?.width}px`,
         opacity: 1,
-        minWidth: `${size.width}px`,
-        maxWidth: `${size.width}px`,
+        minWidth: `${size?.width}px`,
+        maxWidth: `${size?.width}px`,
         transition: isResizing ? 'none' : 'all 800ms ease-in-out',
       };
     }
@@ -254,8 +252,8 @@ const HomePage: React.FC = () => {
               {shouldUseResizable && showText ? (
                 <Resizable
                   size={{
-                    width: size.width,
-                    height: size.height,
+                    width: size?.width,
+                    height: size?.height,
                   }}
                   minWidth={constraints.minWidth}
                   maxWidth={constraints.maxWidth}

@@ -28,10 +28,35 @@ export const useResizable = ({
 }: UseResizableProps = {}) => {
   const { deviceType, orientation } = useDeviceDetection();
 
-  const initialDimensions = useMemo(() => ({
-    width: (deviceType === "mobile" && isMobileLandscape) ? 240 : (deviceType === "tablet" || deviceType === "laptop" && orientation === "landscape") ? 400 : 700,
-    height: (deviceType === "mobile" && isMobileLandscape) ? 280 : (deviceType === "tablet" || deviceType === "laptop" && orientation === "landscape") ? 600 : 1000,
-  }), [deviceType, isMobileLandscape, orientation]);
+  const [viewportSize, setViewportSize] = useState(() => ({
+    width: isBrowser() ? window.innerWidth : 1024,
+    height: isBrowser() ? window.innerHeight : 768,
+  }));
+
+  const initialDimensions = useMemo(() => {
+    const windowWidth = viewportSize.width;
+    const windowHeight = viewportSize.height;
+
+    let width: number;
+    if (deviceType === "mobile" && isMobileLandscape) {
+      width = windowWidth >= 640 ? 240 : 192;
+    } else if (orientation === "landscape") {
+      width = windowWidth >= 768 ? 360 : 240;
+    } else {
+      width = 360;
+    }
+
+    let height: number;
+    if (deviceType === "mobile" && isMobileLandscape) {
+      height = windowHeight - 80;
+    } else if (orientation === "landscape") {
+      height = windowHeight - 180;
+    } else {
+      height = windowHeight - 180;
+    }
+
+    return { width, height };
+  }, [deviceType, isMobileLandscape, orientation, viewportSize]);
 
   const getDeviceSpecificKey = useCallback(() => {
     if (!isBrowser()) return persistKey;
@@ -58,11 +83,6 @@ export const useResizable = ({
   const touchMovePreventHandler = useRef<((e: TouchEvent) => void) | null>(
     null
   );
-
-  const [viewportSize, setViewportSize] = useState(() => ({
-    width: isBrowser() ? window.innerWidth : 1024,
-    height: isBrowser() ? window.innerHeight : 768,
-  }));
 
   const constraints = useMemo((): ResizableConstraints => {
     const vw = viewportSize.width;
@@ -99,7 +119,6 @@ export const useResizable = ({
 
   const getInitialSize = useCallback(() => {
     if (!isBrowser()) return initialDimensions;
-    
     try {
       const deviceKey = getDeviceSpecificKey();
       const saved = localStorage.getItem(deviceKey);
@@ -114,7 +133,6 @@ export const useResizable = ({
     } catch (error) {
       console.warn("Failed to load resizable size from localStorage:", error);
     }
-    
     return applyConstraints(initialDimensions);
   }, [getDeviceSpecificKey, applyConstraints, initialDimensions]);
 
@@ -256,7 +274,6 @@ export const useResizable = ({
       try {
         const deviceKey = getDeviceSpecificKey();
         const saved = localStorage.getItem(deviceKey);
-        
         if (saved) {
           const parsed = JSON.parse(saved);
           const savedSize = {
@@ -269,7 +286,10 @@ export const useResizable = ({
           setSize(applyConstraints(initialDimensions));
         }
       } catch (error) {
-        console.warn("Failed to load size after device/constraint change:", error);
+        console.warn(
+          "Failed to load size after device/constraint change:",
+          error
+        );
         setSize(applyConstraints(initialDimensions));
       }
     };
@@ -280,19 +300,23 @@ export const useResizable = ({
   useEffect(() => {
     setSize((prevSize) => {
       const constrainedSize = applyConstraints(prevSize);
-      
-      if (constrainedSize.width !== prevSize.width || constrainedSize.height !== prevSize.height) {
+      if (
+        constrainedSize.width !== prevSize.width ||
+        constrainedSize.height !== prevSize.height
+      ) {
         if (isBrowser()) {
           try {
             const deviceKey = getDeviceSpecificKey();
             localStorage.setItem(deviceKey, JSON.stringify(constrainedSize));
           } catch (error) {
-            console.warn("Failed to save constrained size to localStorage:", error);
+            console.warn(
+              "Failed to save constrained size to localStorage:",
+              error
+            );
           }
         }
         return constrainedSize;
       }
-      
       return prevSize;
     });
   }, [applyConstraints, getDeviceSpecificKey]);
