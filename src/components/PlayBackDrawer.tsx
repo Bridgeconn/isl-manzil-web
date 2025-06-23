@@ -55,7 +55,7 @@ const PlaybackDrawer = forwardRef<HTMLDivElement, PlaybackDrawerProps>(
                   speed === playbackSpeed ? "bg-gray-700" : ""
                 }`}
               >
-                {speed}
+                {speed === 1 ? "Normal" : speed}
               </li>
             ))}
           </ul>
