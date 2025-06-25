@@ -295,8 +295,6 @@ const CustomVideoPlayer = () => {
 
   const updateVerseDropdown = useCallback(
     (verseNumber: string | number) => {
-      if (isManualSeekingRef.current && !skipNextClickRef.current) return;
-      isManualSeekingRef.current = true;
       const verseStr = verseNumber.toString();
       const verseValue = ["Intro", "0"].includes(verseStr)
         ? 0
@@ -312,9 +310,9 @@ const CustomVideoPlayer = () => {
         prevSelectedVerse.current = verseValue;
       }
 
-      setTimeout(() => {
-        isManualSeekingRef.current = false;
-      }, 200);
+      // setTimeout(() => {
+      //   isManualSeekingRef.current = false;
+      // }, 200);
     },
     [setVerse]
   );
@@ -438,11 +436,7 @@ const CustomVideoPlayer = () => {
   const setupIntervals = useCallback(() => {
     clearIntervals();
 
-    if (
-      !isPlayerReady ||
-      isManualSeekingRef.current ||
-      pendingVerseSeekRef.current !== null
-    ) {
+    if (!isPlayerReady || pendingVerseSeekRef.current !== null) {
       return;
     }
 
@@ -1022,6 +1016,7 @@ const CustomVideoPlayer = () => {
     const handlePlay = () => {
       setIsPlaying(true);
       setIsEnded(false);
+      setControlsHideTimeout();
     };
 
     const handlePause = () => {
@@ -1284,10 +1279,22 @@ const CustomVideoPlayer = () => {
         direction === "forward"
           ? Math.min(duration, currentTime + seekSeconds)
           : Math.max(0, currentTime - seekSeconds);
+      if (
+        (direction === "backward" && (currentTime <= 5 || currentTime === 0)) ||
+        (direction === "forward" && (currentTime >= duration - 5 || isEnded))
+      ) {
+        isManualSeekingRef.current = false;
+        return;
+      }
+
+      setShowSeekFeedback({ show: true, direction, seconds: seekSeconds });
+      setTimeout(() => {
+        setShowSeekFeedback({ show: false, direction, seconds: 10 });
+      }, 700);
       await vimeoPlayerRef.current.setCurrentTime(newTime);
       setCurrentTime(newTime);
 
-      if (bibleVerseMarker && bibleVerseMarker.length > 0) {
+      if (bibleVerseMarker?.length) {
         const newCurrentVerse = getCurrentVerseFromTime(newTime);
         if (newCurrentVerse && newCurrentVerse !== currentPlayingVerse) {
           setCurrentPlayingVerse(newCurrentVerse);
@@ -1310,12 +1317,6 @@ const CustomVideoPlayer = () => {
       if (isEnded) {
         setIsEnded(false);
       }
-
-      setShowSeekFeedback({ show: true, direction, seconds: 10 });
-
-      setTimeout(() => {
-        setShowSeekFeedback({ show: false, direction, seconds: 10 });
-      }, 700);
     } catch (error) {
       console.error("Error seeking video:", error);
     } finally {
@@ -1427,7 +1428,14 @@ const CustomVideoPlayer = () => {
     if (!clickedInsideDrawer && isVideoAvailable) {
       singleClickTimeoutRef.current = window.setTimeout(() => {
         if (!skipNextClickRef.current && !isDoubleTapRef.current) {
-          togglePlay();
+          if (!showControls) {
+            setShowControls(true);
+          } else {
+            togglePlay();
+          }
+          if (isPlaying && !isEnded) {
+            setControlsHideTimeout();
+          }
         }
         singleClickTimeoutRef.current = null;
       }, 200);
@@ -1847,7 +1855,13 @@ const CustomVideoPlayer = () => {
                     <div
                       ref={seekBarRef}
                       className="relative h-1 bg-gray-600 rounded-full ml-0.5 mb-1 md:mb-2 cursor-pointer"
-                      onClick={handleSeekClick}
+                      onClick={(e) => {
+                        if (!showControls) {
+                          setShowControls(true);
+                          return;
+                        }
+                        handleSeekClick(e);
+                      }}
                       onMouseMove={(e) => {
                         const rect =
                           seekBarRef.current?.getBoundingClientRect();
@@ -1898,7 +1912,13 @@ const CustomVideoPlayer = () => {
                                 left: `${versePosition}%`,
                                 transform: "translateX(-50%)",
                               }}
-                              onClick={(e) => handleVerseMarkerClick(verse, e)}
+                              onClick={(e) => {
+                                if (!showControls) {
+                                  setShowControls(true);
+                                  return;
+                                }
+                                handleVerseMarkerClick(verse, e);
+                              }}
                               title={`Verse ${verse.verse} - ${formatTime(
                                 verseTimeInSeconds
                               )}`}
@@ -1924,6 +1944,11 @@ const CustomVideoPlayer = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                if (!showControls) {
+                                  setShowControls(true);
+                                  // setControlsHideTimeout();
+                                  return;
+                                }
                                 navigateToVerse("backward");
                               }}
                               className={`${
@@ -1941,6 +1966,11 @@ const CustomVideoPlayer = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (!showControls) {
+                              setShowControls(true);
+                              setControlsHideTimeout();
+                              return;
+                            }
                             if (isEnded && !(currentTime < duration)) {
                               replayVideo(e);
                             } else {
@@ -1970,6 +2000,11 @@ const CustomVideoPlayer = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                if (!showControls) {
+                                  setShowControls(true);
+                                  setControlsHideTimeout();
+                                  return;
+                                }
                                 navigateToVerse("forward");
                               }}
                               className={`${
@@ -1998,6 +2033,11 @@ const CustomVideoPlayer = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
+                              if (!showControls) {
+                                setShowControls(true);
+                                setControlsHideTimeout();
+                                return;
+                              }
                               if (
                                 showSettingsMenu ||
                                 showShare ||
@@ -2091,6 +2131,11 @@ const CustomVideoPlayer = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
+                              if (!showControls) {
+                                setShowControls(true);
+                                setControlsHideTimeout();
+                                return;
+                              }
                               if (showPlaybackDrawer) {
                                 setShowPlaybackDrawer(false);
                               }
@@ -2127,6 +2172,11 @@ const CustomVideoPlayer = () => {
                             <SettingsButton
                               ref={settingsButtonRef}
                               onClick={() => {
+                                if (!showControls) {
+                                  setShowControls(true);
+                                  setControlsHideTimeout();
+                                  return;
+                                }
                                 if (showShare || showDownloadDropdown) {
                                   setShowShare(false);
                                   setShowDownloadDropdown(false);
@@ -2210,6 +2260,11 @@ const CustomVideoPlayer = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             e.stopPropagation();
+                            if (!showControls) {
+                              setShowControls(true);
+                              setControlsHideTimeout();
+                              return;
+                            }
                             toggleFullscreen();
                           }}
                           className="text-white hover:text-blue-400"
