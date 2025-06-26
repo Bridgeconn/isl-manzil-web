@@ -9,6 +9,8 @@ const BCVDrawer = () => {
     useChapterNavigation();
   const [isBCVDrawerOpen, setIsBCVDrawerOpen] = useState(false);
 
+  console.log("isBCVDrawerOpen", isBCVDrawerOpen);
+
   return (
     <div
       className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-md px-3 py-2"
