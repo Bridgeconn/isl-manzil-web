@@ -62,7 +62,7 @@ const useLayoutStore = create<LayoutStore>()(
         
         set({
           textPosition: initialTextPosition,
-          showText: true,
+          showText: currentState.showText,
           isHorizontalLayout: shouldUseHorizontalLayout,
           canTogglePosition,
           isInitialized: true,

@@ -16,7 +16,7 @@ const Settings: React.FC = () => {
   } = useThemeStore();
   const { textPosition, canTogglePosition, toggleTextPosition } =
     useLayoutControl();
-  const { isLowHeightDesktop } = useDeviceDetection();
+  const { isLowHeightDesktop, shouldUseMobileBottomBar } = useDeviceDetection();
   const percent = ((fontSize - 12) * 100) / (24 - 12);
 
   const handleContainerClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -135,7 +135,7 @@ const Settings: React.FC = () => {
         </div>
       </div>
       {/* Toggle text position */}
-      {!isLowHeightDesktop && (
+      {(!isLowHeightDesktop && !shouldUseMobileBottomBar) && (
       <div className="mt-4 flex items-center gap-4">
         <h4 className="text-base font-semibold text-gray-700">
           Text position

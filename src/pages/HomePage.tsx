@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Resizable } from "re-resizable";
 import CustomVideoPlayer from "@/components/CustomVideoPlayer";
 import BibleVerseDisplay from "@/components/BibleVerseDisplay";
-import SelectViewContainer from "@/components/SelectViewContainer";
 import useBibleStore from "@/store/useBibleStore";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
@@ -219,6 +218,23 @@ const HomePage: React.FC = () => {
     touchAction: "none",
   });
 
+  const renderRightSideContent = () => {
+    if (!shouldShowContent) {
+      return (
+        <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
+        </div>
+      );
+    }
+
+    return (
+      <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
+        <BibleVerseDisplay
+          setIsIntroDataAvailable={setIsIntroDataAvailable}
+        />
+      </div>
+    );
+  };
+
   return (
     <>
       {getFadeCSS()}
@@ -231,16 +247,12 @@ const HomePage: React.FC = () => {
           {!shouldUseMobileBottomBar && (
             <div className="w-full mb-2">
               <div className="w-full flex justify-between items-center gap-4">
-                {/* <SelectBoxContainer /> */}
                 <BCVDrawer />
 
-                <div className="ml-auto">
-                  <SelectViewContainer />
-                </div>
-                <ButtonHide
+                {shouldShowContent && <ButtonHide
                   isVisible={showText}
                   toggle={toggleTextVisibility}
-                />
+                />}
               </div>
             </div>
           )}
@@ -261,7 +273,7 @@ const HomePage: React.FC = () => {
 
         {(isLowHeightDesktop ||
           (isHorizontalLayout && effectiveTextPosition === "right")) &&
-          shouldShowContent && (
+          (
             <div
               className={getHorizontalTextContainerClasses()}
               style={{
@@ -354,25 +366,21 @@ const HomePage: React.FC = () => {
                 >
                   {renderFadeWrapper(
                     <div className="h-full w-full">
-                      <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
-                        <BibleVerseDisplay
-                          setIsIntroDataAvailable={setIsIntroDataAvailable}
-                        />
-                      </div>
+                      {renderRightSideContent()}
                     </div>
                   )}
                 </Resizable>
               ) : showText ? (
                 renderFadeWrapper(
                   <div className="h-full w-full">
-                    <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
-                      <BibleVerseDisplay
-                        setIsIntroDataAvailable={setIsIntroDataAvailable}
-                      />
-                    </div>
+                    {renderRightSideContent()}
                   </div>
                 )
-              ) : null}
+              ) : renderFadeWrapper(
+                  <div className="h-full w-full">
+                    {renderRightSideContent()}
+                  </div>
+                )}
             </div>
           )}
       </div>
