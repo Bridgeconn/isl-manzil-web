@@ -1,32 +1,31 @@
 import React, { useState } from "react";
 import { Resizable } from "re-resizable";
 import CustomVideoPlayer from "@/components/CustomVideoPlayer";
-import SelectBoxContainer from "@/components/SelectBoxContainer";
 import BibleVerseDisplay from "@/components/BibleVerseDisplay";
-import Middlebar from "@/components/Middlebar";
 import SelectViewContainer from "@/components/SelectViewContainer";
-import LayoutControlButtons from "@/components/LayoutControlButtons";
 import useBibleStore from "@/store/useBibleStore";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { useResizable } from "@/hooks/useResizable";
-import SearchboxBCV from "@/components/SearchboxBCV";
+import ButtonHide from "@/components/ButtonHide";
+import BCVDrawer from "@/components/BCVDrawer";
 
 const HomePage: React.FC = () => {
   const { selectedBook, selectedChapter } = useBibleStore();
   const [isIntroDataAvailable, setIsIntroDataAvailable] = useState(false);
-  const { shouldUseMobileBottomBar, isMobilePortrait, isMobileLandscape, isTabletLandscape, isTabletPortrait } =
-    useDeviceDetection();
-
-
+  const [isResizeHandleHovered, setIsResizeHandleHovered] = useState(false);
+  const [isResizeHandleActive, setIsResizeHandleActive] = useState(false);
   const {
-    showText,
-    textPosition,
-    isHorizontalLayout,
-    canTogglePosition,
-    toggleTextVisibility,
-    toggleTextPosition,
-  } = useLayoutControl();
+    shouldUseMobileBottomBar,
+    isMobilePortrait,
+    isMobileLandscape,
+    isTabletLandscape,
+    isTabletPortrait,
+    isLowHeightDesktop,
+  } = useDeviceDetection();
+
+  const { showText, textPosition, isHorizontalLayout, toggleTextVisibility } =
+    useLayoutControl();
 
   const shouldUseResizable = isHorizontalLayout && textPosition === "right";
 
@@ -55,10 +54,13 @@ const HomePage: React.FC = () => {
       }
       return "flex flex-col h-full";
     }
-    if (isHorizontalLayout && textPosition === "right") {
+    if (
+      isLowHeightDesktop ||
+      (isHorizontalLayout && textPosition === "right")
+    ) {
       return "flex gap-2 h-full p-2";
     }
-    return `${textPosition === "below" ? "max-w-7xl mt-1" : ""} w-full mx-auto`;
+    return `w-full mx-auto mt-1`;
   };
 
   const getVideoContainerStyle = () => {
@@ -67,92 +69,72 @@ const HomePage: React.FC = () => {
         return {
           flexGrow: 1,
           minWidth: 0,
-          transition: "all 800ms ease-in-out",
         };
       }
       return {
         width: "100%",
-        transition: "all 800ms ease-in-out",
       };
     }
 
-    if (isHorizontalLayout && textPosition === "right") {
+    if (
+      isLowHeightDesktop ||
+      (isHorizontalLayout && textPosition === "right")
+    ) {
       return {
         flexGrow: 1,
-        minWidth: 0,
-        transition: "all 800ms ease-in-out",
+        minWidth: 0.
       };
     }
 
     return {
       flexBasis: "100%",
-      transition: "all 800ms ease-in-out",
       minWidth: 0,
     };
   };
 
   const getVerseContentClasses = () => {
     if (shouldUseMobileBottomBar) {
-      if ((isMobileLandscape || isTabletLandscape) && showText && textPosition === "right") {
-        return "verse-content-container h-full bg-gray-50 border-2 pl-4 py-2 overflow-y-auto";
+      if (
+        (isMobileLandscape || isTabletLandscape) &&
+        showText &&
+        textPosition === "right"
+      ) {
+        return "themed-bg verse-content-container h-full bg-gray-50 border-2 pl-4 py-2 overflow-y-auto";
       }
       if (isMobilePortrait || isTabletPortrait) {
-        return "verse-content-container h-full w-full bg-gray-50 border-2 pl-4 py-2";
+        return "themed-bg verse-content-container h-full w-full bg-gray-50 border-2 pl-4 py-2";
       }
-    }
-    if (isHorizontalLayout && showText && textPosition === "right") {
-      return "verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto";
     }
     const maxHeightClass =
       typeof window !== "undefined" && window.innerHeight > 1000
-        ? "max-h-90"
-        : "max-h-45";
+        ? "max-h-90 h-full"
+        : "max-h-35 h-full";
 
-    return `verse-content-container ${maxHeightClass} w-full max-w-4xl mx-auto my-2 bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin`;
+    return `themed-bg verse-content-container ${maxHeightClass} w-full ${textPosition === "below" ? "max-w-6xl" : "max-w-7xl"} mx-auto my-2 bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin`;
   };
 
   const getHorizontalTextContainerClasses = () => {
-    const baseClasses = "flex-shrink-0 h-full transition-all duration-800 ease-in-out overflow-hidden";
-    
+    const baseClasses =
+      "flex-shrink-0 h-full transition-all duration-800 ease-in-out overflow-hidden";
+
     if (shouldUseMobileBottomBar && (isMobileLandscape || isTabletLandscape)) {
-      return baseClasses + "overflow-y-auto";
+      return baseClasses + " overflow-y-auto";
     }
 
     return baseClasses;
   };
 
   const getHorizontalTextContainerStyle = () => {
-    if (!showText) {
-      return {
-        width: 0,
-        opacity: 0,
-        minWidth: 0,
-        maxWidth: 0,
-        transition: 'all 800ms ease-in-out',
-      };
-    }
-    
     if (shouldUseResizable) {
+      const widthValue = `${size?.width}px`;
       return {
-        width: `${size?.width}px`,
+        width: widthValue,
         opacity: 1,
-        minWidth: `${size?.width}px`,
-        maxWidth: `${size?.width}px`,
-        transition: isResizing ? 'none' : 'all 800ms ease-in-out',
+        minWidth: widthValue,
+        maxWidth: widthValue,
+        transition: isResizing ? "none" : "all 500ms ease-in-out",
       };
     }
-    
-    const defaultWidth = shouldUseMobileBottomBar 
-      ? (isMobileLandscape || isTabletLandscape ? "20rem" : "15rem")
-      : "30rem";
-    
-    return {
-      width: defaultWidth,
-      opacity: 1,
-      minWidth: defaultWidth,
-      maxWidth: defaultWidth,
-      transition: 'all 800ms ease-in-out',
-    };
   };
 
   const getVerticalTextContainerClasses = () => {
@@ -168,8 +150,8 @@ const HomePage: React.FC = () => {
     if (showText) {
       const maxHeightClass =
         typeof window !== "undefined" && window.innerHeight > 1000
-          ? "max-h-96"
-          : "max-h-48";
+          ? "max-h-96 h-full"
+          : "max-h-38 h-full";
       return `${baseClasses} ${maxHeightClass} opacity-100`;
     } else {
       return `${baseClasses} max-h-0 opacity-0`;
@@ -186,196 +168,210 @@ const HomePage: React.FC = () => {
     return {};
   };
 
+  const effectiveTextPosition = isLowHeightDesktop ? "right" : textPosition;
+
+  const renderFadeWrapper = (children: React.ReactNode) => {
+    return (
+      <div className="relative h-full w-full">
+        <div
+          className={`absolute top-0 h-full z-10 pointer-events-none ${
+            showText ? "fade-right" : "fade-left"
+          }`}
+        />
+        <div
+          className="h-full w-full"
+          style={{
+            opacity: showText ? 1 : 0,
+            transition: "opacity 800ms ease-in-out",
+            pointerEvents: showText ? "auto" : "none",
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  };
+
+  const getFadeCSS = () => (
+    <style>{`
+      .fade-left {
+        background: linear-gradient(to right, white, transparent);
+      }
+      .fade-right {
+        background: linear-gradient(to left, white, transparent);
+      }
+    `}</style>
+  );
+
+  const getResizeHandleStyle = () => ({
+    left: "0px",
+    width: `${isMobileLandscape || isTabletLandscape ? "4px" : "2px"}`,
+    height: "100%",
+    backgroundColor:
+      isResizeHandleHovered || isResizeHandleActive ? "#3b82f6" : "transparent",
+    cursor: "ew-resize",
+    zIndex: 20,
+    transition: "background-color 200ms ease-in-out",
+    borderLeft:
+      isResizeHandleHovered || isResizeHandleActive
+        ? "2px solid #3b82f6"
+        : "2px solid transparent",
+    touchAction: "none",
+  });
+
   return (
     <>
-      {!shouldUseMobileBottomBar && (
-        <div className="w-full bg-gray-100 mt-1">
-          <div className="max-w-7xl mx-auto w-full flex justify-between items-center px-2 gap-1">
-            <SelectBoxContainer />
+      {getFadeCSS()}
 
-            <SearchboxBCV />
-
-            <div className="flex flex-1 flex-wrap justify-end items-center gap-2 ml-1">
-              <SelectViewContainer />
-
-              {canTogglePosition && (
-                <LayoutControlButtons
-                  showText={showText}
-                  textPosition={textPosition}
-                  canTogglePosition={canTogglePosition}
-                  onToggleVisibility={toggleTextVisibility}
-                  onTogglePosition={toggleTextPosition}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div
-        className={`${getLayoutClasses()}`}
-      >
+      <div className={`${getLayoutClasses()}`}>
         <div
-          className="transition-all duration-800 ease-in-out"
+          className={`w-full ${textPosition === "below" ? "max-w-6xl" : "max-w-7xl"} mx-auto flex flex-col`}
           style={getVideoContainerStyle()}
         >
+          {!shouldUseMobileBottomBar && (
+            <div className="w-full mb-2">
+              <div className="w-full flex justify-between items-center gap-4">
+                {/* <SelectBoxContainer /> */}
+                <BCVDrawer />
+
+                <div className="ml-auto">
+                  <SelectViewContainer />
+                </div>
+                <ButtonHide
+                  isVisible={showText}
+                  toggle={toggleTextVisibility}
+                />
+              </div>
+            </div>
+          )}
           <CustomVideoPlayer />
         </div>
 
-        {(!isHorizontalLayout || textPosition === "below") && (
-          <>
-            {!shouldUseMobileBottomBar && (
-              <Middlebar
-                showVerse={showText}
-                toggleButton={toggleTextVisibility}
-                isIntroDataAvailable={isIntroDataAvailable}
-              />
-            )}
-            {shouldShowContent && (
-              <div className={getVerticalTextContainerClasses()}>
-                <div className={getVerseContentClasses()}>
-                  <BibleVerseDisplay
-                    setIsIntroDataAvailable={setIsIntroDataAvailable}
-                  />
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {isHorizontalLayout &&
-          textPosition === "right" &&
+        {!isLowHeightDesktop &&
+          (!isHorizontalLayout || effectiveTextPosition === "below") &&
           shouldShowContent && (
-            <div 
+            <div className={getVerticalTextContainerClasses()}>
+              <div className={getVerseContentClasses()}>
+                <BibleVerseDisplay
+                  setIsIntroDataAvailable={setIsIntroDataAvailable}
+                />
+              </div>
+            </div>
+          )}
+
+        {(isLowHeightDesktop ||
+          (isHorizontalLayout && effectiveTextPosition === "right")) &&
+          shouldShowContent && (
+            <div
               className={getHorizontalTextContainerClasses()}
-              style={getHorizontalTextContainerStyle()}
+              style={{
+                ...getHorizontalTextContainerStyle(),
+                position: "relative",
+              }}
             >
-              {shouldUseResizable && showText ? (
+              {shouldUseResizable ? (
                 <Resizable
                   size={{
                     width: size?.width,
-                    height: size?.height,
+                    height: '100%',
                   }}
                   minWidth={constraints.minWidth}
                   maxWidth={constraints.maxWidth}
-                  minHeight={constraints.minHeight}
-                  maxHeight={constraints.maxHeight}
-                  onResizeStart={handleResizeStart}
+                  onResizeStart={() => {
+                    setIsResizeHandleActive(true);
+                    handleResizeStart();
+                  }}
                   onResize={(_e, _direction, ref) => {
-                    const newWidth = ref.offsetWidth;
-                    
-                    const parentContainer = ref.parentElement;
-                    if (parentContainer) {
-                      parentContainer.style.width = `${newWidth}px`;
-                      parentContainer.style.minWidth = `${newWidth}px`;
-                      parentContainer.style.maxWidth = `${newWidth}px`;
-                      
-                      parentContainer.style.transition = 'none';
-                    }
+                    handleResize({
+                      width: ref.offsetWidth,
+                      height: ref.offsetHeight,
+                    });
                   }}
                   onResizeStop={(_e, _direction, ref) => {
                     const newSize = {
                       width: ref.offsetWidth,
                       height: ref.offsetHeight,
                     };
-                    
-                    const parentContainer = ref.parentElement;
-                    if (parentContainer) {
-                      parentContainer.style.transition = 'all 800ms ease-in-out';
-                    }
-                    
+
                     handleResize(newSize);
                     handleResizeStop();
+                    setIsResizeHandleActive(false);
                   }}
                   enable={{
-                    top: true,
-                    right: false,
-                    bottom: true,
                     left: true,
-                    topRight: false,
-                    bottomRight: false,
-                    bottomLeft: true,
-                    topLeft: true,
+                  }}
+                  handleComponent={{
+                    left: (
+                      <div
+                        onMouseEnter={() => setIsResizeHandleHovered(true)}
+                        onMouseLeave={() => setIsResizeHandleHovered(false)}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          setIsResizeHandleActive(true);
+                        }}
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          setIsResizeHandleActive(false);
+                        }}
+                        onTouchMove={(e) => {
+                          e.preventDefault();
+                          if (e.touches?.[0]) {
+                            const touchX = e.touches[0].clientX;
+                            const parent =
+                              e.currentTarget.parentElement?.parentElement;
+                            const rightEdge =
+                              parent?.getBoundingClientRect()?.right ?? 0;
+                            const newWidth = rightEdge - touchX;
+
+                            if (
+                              newWidth >= constraints.minWidth &&
+                              newWidth <= constraints.maxWidth
+                            ) {
+                              handleResize({
+                                width: newWidth,
+                                height: size.height,
+                              });
+                            }
+                          }
+                        }}
+                        style={getResizeHandleStyle()}
+                      />
+                    ),
                   }}
                   handleStyles={{
-                    left: {
-                      width: "6px",
-                      background:
-                        "linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
-                      cursor: "col-resize",
-                      borderRadius: "3px",
-                      left: "-3px",
-                    },
-                    top: {
-                      height: "6px",
-                      background:
-                        "linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
-                      cursor: "row-resize",
-                      borderRadius: "3px",
-                      top: "-3px",
-                    },
-                    bottom: {
-                      height: "6px",
-                      background:
-                        "linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.5), transparent)",
-                      cursor: "row-resize",
-                      borderRadius: "3px",
-                      bottom: "-3px",
-                    },
-                    topLeft: {
-                      width: "10px",
-                      height: "10px",
-                      background: "rgba(59, 130, 246, 0.7)",
-                      borderRadius: "50%",
-                      cursor: "nw-resize",
-                      top: "-5px",
-                      left: "-5px",
-                      border: "2px solid white",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                    },
-                    bottomLeft: {
-                      width: "10px",
-                      height: "10px",
-                      background: "rgba(59, 130, 246, 0.7)",
-                      borderRadius: "50%",
-                      cursor: "sw-resize",
-                      bottom: "-5px",
-                      left: "-5px",
-                      border: "2px solid white",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                    },
-                  }}
-                  handleClasses={{
-                    left: "hover:bg-blue-400 transition-colors duration-200",
-                    top: "hover:bg-blue-400 transition-colors duration-200",
-                    bottom:
-                      "hover:bg-blue-400 transition-colors duration-200",
-                    topLeft:
-                      "hover:bg-blue-500 transition-colors duration-200",
-                    bottomLeft:
-                      "hover:bg-blue-500 transition-colors duration-200",
+                    left: getResizeHandleStyle(),
                   }}
                   className="h-full"
                   style={{
                     ...getResizableStyle(),
+                    boxSizing: "border-box",
+                    position: "absolute",
+                    right: 0,
+                    top: 0,
+                    height: "100%",
+                    touchAction: "none",
                   }}
                 >
+                  {renderFadeWrapper(
+                    <div className="h-full w-full">
+                      <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
+                        <BibleVerseDisplay
+                          setIsIntroDataAvailable={setIsIntroDataAvailable}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </Resizable>
+              ) : showText ? (
+                renderFadeWrapper(
                   <div className="h-full w-full">
-                    <div className={getVerseContentClasses()}>
+                    <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
                       <BibleVerseDisplay
                         setIsIntroDataAvailable={setIsIntroDataAvailable}
                       />
                     </div>
                   </div>
-                </Resizable>
-              ) : showText ? (
-                <div className="h-full w-full">
-                  <div className={getVerseContentClasses()}>
-                    <BibleVerseDisplay
-                      setIsIntroDataAvailable={setIsIntroDataAvailable}
-                    />
-                  </div>
-                </div>
+                )
               ) : null}
             </div>
           )}

@@ -275,13 +275,13 @@ const SelectViewContainer = () => {
     <div className="relative">
       <div className="flex gap-1">
         <button
-          className={`border border-gray-300 p-2 rounded cursor-pointer hover:bg-gray-100`}
+          className={`themed-text border border-gray-300 p-2 rounded cursor-pointer hover:bg-gray-100`}
           onClick={() => openDialog("grid")}
         >
           <LayoutGrid size={24} />
         </button>
         <button
-          className={`border border-gray-300 p-2 rounded cursor-pointer hover:bg-gray-100`}
+          className={`themed-text border border-gray-300 p-2 rounded cursor-pointer hover:bg-gray-100`}
           onClick={() => openDialog("list")}
         >
           <List size={24} />

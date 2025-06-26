@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import useBibleStore from "@/store/useBibleStore";
 import BookData from "../assets/data/book_codes.json";
 import { VerseOption } from "@/types/Navigation";
-import { Search, X } from 'lucide-react';
+import { Search, X } from "lucide-react";
 
 interface SearchboxBCVProps {
   placeholder?: string;
@@ -94,7 +94,10 @@ function SearchboxBCV({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+      if (
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
         if (errorMessage) {
           setErrorMessage("");
         }
@@ -324,19 +327,23 @@ function SearchboxBCV({
     }
 
     const isBookChange = !selectedBook || selectedBook.value !== book.value;
-    const isChapterChange = !selectedChapter || selectedChapter.value !== chapter;
+    const isChapterChange =
+      !selectedChapter || selectedChapter.value !== chapter;
 
     if (isBookChange) {
       setBook(book);
     }
-
 
     if (isChapterChange || isBookChange) {
       setChapter(foundChapter);
     }
 
     if (verse !== null) {
-      const delay = isBookChange ? 800 : (isChapterChange || isBookChange) ? 500 : 150;
+      const delay = isBookChange
+        ? 800
+        : isChapterChange || isBookChange
+        ? 500
+        : 150;
       setTimeout(() => {
         const availableVerses = getAvailableVersesForBookAndChapter(
           book.value,
@@ -417,8 +424,17 @@ function SearchboxBCV({
 
   return (
     <div className={`relative ${className}`}>
-      <div className="max-w-[200px] w-full border border-gray-400 rounded-md bg-white overflow-hidden">
-        <div className="flex items-center p-2 gap-1">
+      <div
+        className="max-w-[250px] w-full bg-white overflow-hidden rounded-sm"
+        style={{
+          boxShadow:
+            "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
+            "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
+            "rgba(0, 0, 0, 0.12) 0px -1px 4px 0px",
+          transition: "box-shadow 0.3s ease-in-out",
+        }}
+      >
+        <div className="flex items-center p-2 px-4 gap-1">
           <input
             ref={inputRef}
             type="text"
@@ -428,7 +444,7 @@ function SearchboxBCV({
             onFocus={handleFocus}
             onBlur={handleBlur}
             placeholder={placeholder}
-            className="flex-1 outline-none text-sm bg-transparent min-w-0 overflow-hidden text-ellipsis"
+            className="flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis"
             disabled={isSearching}
           />
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -448,7 +464,7 @@ function SearchboxBCV({
               title="Search"
               disabled={isSearching || !inputValue.trim()}
             >
-              {isSearching ? "⏳" : <Search strokeWidth={2.5} size={18}/>}
+              {isSearching ? "⏳" : <Search strokeWidth={2.5} size={18} />}
             </button>
           </div>
         </div>
@@ -456,7 +472,9 @@ function SearchboxBCV({
 
       {errorMessage && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 border border-red-300 rounded-md shadow-lg z-50 p-2 text-xs">
-          <div className="themed-text text-themed font-medium">{errorMessage}</div>
+          <div className="themed-text text-themed font-medium">
+            {errorMessage}
+          </div>
         </div>
       )}
     </div>

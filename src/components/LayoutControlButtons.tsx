@@ -1,6 +1,5 @@
 import React from "react";
-import { TextPosition } from "@/hooks/useLayoutControl";
-import ButtonHide from "./ButtonHide";
+import { TextPosition } from "@/store/useLayoutStore";
 
 interface IconProps {
   size?: number;
@@ -44,23 +43,18 @@ const CustomLayoutIcons = {
 };
 
 interface LayoutControlButtonsProps {
-  showText: boolean;
   textPosition: TextPosition;
-  canTogglePosition: boolean;
-  onToggleVisibility: () => void;
   onTogglePosition: () => void;
   className?: string;
 }
 
 const LayoutControlButtons: React.FC<LayoutControlButtonsProps> = ({
-  showText,
   textPosition,
-  onToggleVisibility,
   onTogglePosition,
   className = "",
 }) => {
   return (
-    <div className={`flex items-center justify-end gap-2 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       {/* Text Right Button */}
       <button
         onClick={onTogglePosition}
@@ -88,10 +82,6 @@ const LayoutControlButtons: React.FC<LayoutControlButtonsProps> = ({
       >
         <CustomLayoutIcons.TextBelowIcon size={16} />
       </button>
-
-      <div className={`${textPosition === "right" ? "visible" : "invisible"}`}>
-        <ButtonHide isVisible={showText} toggle={onToggleVisibility} />
-      </div>
     </div>
   );
 };

@@ -1,6 +1,8 @@
 import React from "react";
 import useThemeStore from "../store/useThemeStore";
-
+import LayoutControlButtons from "./LayoutControlButtons";
+import { useLayoutControl } from "@/hooks/useLayoutControl";
+import useDeviceDetection from "@/hooks/useDeviceDetection";
 
 const Settings: React.FC = () => {
   const {
@@ -12,11 +14,23 @@ const Settings: React.FC = () => {
     setFontSize,
     setTheme,
   } = useThemeStore();
+  const { textPosition, canTogglePosition, toggleTextPosition } =
+    useLayoutControl();
+  const { isLowHeightDesktop } = useDeviceDetection();
   const percent = ((fontSize - 12) * 100) / (24 - 12);
 
-  return (
-    <div className="w-80 bg-white border border-gray-200 shadow-lg p-4 pt-2 relative z-50">
+  const handleContainerClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
 
+  return (
+    <div
+      className="w-80 bg-white border border-gray-200 shadow-lg p-4 pt-2 relative"
+      onClick={handleContainerClick}
+      onMouseDown={handleContainerClick}
+      onTouchStart={handleContainerClick}
+    >
       <div className="space-y-2 sm:space-y-4">
         <h4 className="text-base font-semibold text-gray-700 mb-3">Theme</h4>
 
@@ -24,7 +38,10 @@ const Settings: React.FC = () => {
           {themes.map((theme) => (
             <button
               key={theme.id}
-              onClick={() => setTheme(theme)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setTheme(theme);
+              }}
               className={`
                 relative p-1 border-2 transition-all duration-200
                 ${
@@ -55,7 +72,9 @@ const Settings: React.FC = () => {
 
       {/* Font Type Toggle */}
       <div>
-        <h4 className="text-base font-semibold text-gray-700 mb-3">Font Type</h4>
+        <h4 className="text-base font-semibold text-gray-700 mb-3">
+          Font Type
+        </h4>
         <div className="flex items-center gap-4 mb-2">
           <span
             className={`${
@@ -65,7 +84,10 @@ const Settings: React.FC = () => {
             Serif
           </span>
           <button
-            onClick={() => setFontType(fontType === "serif" ? "sans" : "serif")}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFontType(fontType === "serif" ? "sans" : "serif");
+            }}
             className="relative w-10 h-4 bg-gray-300 rounded-full focus:outline-none"
           >
             <span
@@ -86,7 +108,9 @@ const Settings: React.FC = () => {
 
       {/* Font Size Slider */}
       <div className="mt-4">
-        <h4 className="text-base font-semibold text-gray-700 mb-3">Font Size</h4>
+        <h4 className="text-base font-semibold text-gray-700 mb-3">
+          Font Size
+        </h4>
         <div className="flex items-center gap-3">
           <span className="text-xs font-bold text-black-600">A-</span>
           <input
@@ -95,7 +119,11 @@ const Settings: React.FC = () => {
             max={24}
             step={1}
             value={fontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
+            onChange={(e) => {
+              e.stopPropagation();
+              setFontSize(Number(e.target.value));
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
             className="w-full appearance-none rounded-full"
             style={{
               height: "4px",
@@ -106,6 +134,25 @@ const Settings: React.FC = () => {
           <span className="text-lg font-bold text-black-600">A+</span>
         </div>
       </div>
+      {/* Toggle text position */}
+      {!isLowHeightDesktop && (
+      <div className="mt-4 flex items-center gap-4">
+        <h4 className="text-base font-semibold text-gray-700">
+          Text position
+        </h4>
+
+        {canTogglePosition && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <LayoutControlButtons
+              textPosition={textPosition}
+              onTogglePosition={() => {
+                toggleTextPosition();
+              }}
+            />
+          </div>
+        )}
+      </div>
+      )}
     </div>
   );
 };
