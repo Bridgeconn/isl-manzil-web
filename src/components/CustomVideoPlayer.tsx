@@ -987,21 +987,47 @@ const CustomVideoPlayer = () => {
       }
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDraggingRef.current && seekBarRef.current && isVideoAvailable) {
+        const touch = e.touches[0];
+        handleSeekPosition(touch.clientX);
+      }
+    };
+
     const handleMouseUp = () => {
       if (isDraggingRef.current) {
         isDraggingRef.current = false;
         setTimeout(() => {
           isManualSeekingRef.current = false;
+          if (isPlaying && !isEnded) {
+            setControlsHideTimeout();
+          }
+        }, 500);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setTimeout(() => {
+          isManualSeekingRef.current = false;
+          if (isPlaying && !isEnded) {
+            setControlsHideTimeout();
+          }
         }, 500);
       }
     };
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("touchmove", handleTouchMove);
+    document.addEventListener("touchend", handleTouchEnd);
 
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
   }, [duration, isVideoAvailable]);
 
@@ -1016,7 +1042,12 @@ const CustomVideoPlayer = () => {
     const handlePlay = () => {
       setIsPlaying(true);
       setIsEnded(false);
-      setControlsHideTimeout();
+      if (
+        (deviceType === "mobile" || deviceType === "tablet") &&
+        !isDraggingRef.current
+      ) {
+        setControlsHideTimeout();
+      }
     };
 
     const handlePause = () => {
@@ -1205,6 +1236,7 @@ const CustomVideoPlayer = () => {
     event.stopPropagation();
     if (isVideoAvailable) {
       handleSeekPosition(event.clientX);
+      hideControlsIfTouch();
     }
   };
 
@@ -1214,6 +1246,20 @@ const CustomVideoPlayer = () => {
       isDraggingRef.current = true;
       isManualSeekingRef.current = true;
       userInteractedRef.current = true;
+      setShowControls(true);
+      clearControlsTimeout();
+    }
+  };
+
+  const handleSeekTouchStart = (event: React.TouchEvent) => {
+    event.stopPropagation();
+    if (isVideoAvailable) {
+      isDraggingRef.current = true;
+      isManualSeekingRef.current = true;
+      userInteractedRef.current = true;
+      setShowControls(true);
+      // clearControlsTimeout();
+      setControlsHideTimeout();
     }
   };
 
@@ -1258,6 +1304,7 @@ const CustomVideoPlayer = () => {
     }
     setTimeout(() => {
       isManualSeekingRef.current = false;
+      hideControlsIfTouch();
     }, 500);
   };
 
@@ -1357,12 +1404,6 @@ const CustomVideoPlayer = () => {
       const direction = tapX < rect.width / 2 ? "backward" : "forward";
 
       skipNextClickRef.current = true;
-
-      // setShowSeekFeedback({
-      //   show: true,
-      //   direction,
-      //   seconds: 10,
-      // });
 
       handleDoubleTapSeek(direction);
       lastTapRef.current = 0;
@@ -1529,6 +1570,7 @@ const CustomVideoPlayer = () => {
       }
       setTimeout(() => {
         isManualSeekingRef.current = false;
+        hideControlsIfTouch();
       }, 500);
     }
   };
@@ -1605,6 +1647,21 @@ const CustomVideoPlayer = () => {
 
   const handleControlsMouseLeave = () => {
     if (!isEnded && !isDraggingRef.current && isVideoAvailable) {
+      setControlsHideTimeout();
+    }
+  };
+
+  const hideControlsIfTouch = () => {
+    if (
+      (deviceType === "mobile" || deviceType === "tablet") &&
+      isPlaying &&
+      !isEnded &&
+      !showDownloadDropdown &&
+      !showPlaybackDrawer &&
+      !showQualityDrawer &&
+      !showSettingsMenu &&
+      !showShare
+    ) {
       setControlsHideTimeout();
     }
   };
@@ -1751,6 +1808,10 @@ const CustomVideoPlayer = () => {
           onDoubleClick={handleDoubleClick}
           onClick={(e) => {
             e.preventDefault();
+            if (showControls) {
+              setShowControls(false);
+              clearControlsTimeout();
+            }
             if (!skipNextClickRef.current && !isDoubleTapRef.current) {
               handlePlayerClick(e);
             }
@@ -1933,6 +1994,7 @@ const CustomVideoPlayer = () => {
                           transform: "translateX(-50%)",
                         }}
                         onMouseDown={handleSeekMouseDown}
+                        onTouchStart={handleSeekTouchStart}
                       ></div>
                     </div>
                     {/* Control Buttons */}
@@ -1946,7 +2008,7 @@ const CustomVideoPlayer = () => {
                                 e.stopPropagation();
                                 if (!showControls) {
                                   setShowControls(true);
-                                  // setControlsHideTimeout();
+                                  clearControlsTimeout();
                                   return;
                                 }
                                 navigateToVerse("backward");
@@ -1968,7 +2030,7 @@ const CustomVideoPlayer = () => {
                             e.stopPropagation();
                             if (!showControls) {
                               setShowControls(true);
-                              setControlsHideTimeout();
+                              clearControlsTimeout();
                               return;
                             }
                             if (isEnded && !(currentTime < duration)) {
@@ -2002,7 +2064,7 @@ const CustomVideoPlayer = () => {
                                 e.stopPropagation();
                                 if (!showControls) {
                                   setShowControls(true);
-                                  setControlsHideTimeout();
+                                  clearControlsTimeout();
                                   return;
                                 }
                                 navigateToVerse("forward");
@@ -2035,7 +2097,7 @@ const CustomVideoPlayer = () => {
                               e.preventDefault();
                               if (!showControls) {
                                 setShowControls(true);
-                                setControlsHideTimeout();
+                                clearControlsTimeout();
                                 return;
                               }
                               if (
@@ -2133,7 +2195,7 @@ const CustomVideoPlayer = () => {
                               e.preventDefault();
                               if (!showControls) {
                                 setShowControls(true);
-                                setControlsHideTimeout();
+                                clearControlsTimeout();
                                 return;
                               }
                               if (showPlaybackDrawer) {
@@ -2174,7 +2236,7 @@ const CustomVideoPlayer = () => {
                               onClick={() => {
                                 if (!showControls) {
                                   setShowControls(true);
-                                  setControlsHideTimeout();
+                                  clearControlsTimeout();
                                   return;
                                 }
                                 if (showShare || showDownloadDropdown) {
@@ -2262,7 +2324,7 @@ const CustomVideoPlayer = () => {
                             e.stopPropagation();
                             if (!showControls) {
                               setShowControls(true);
-                              setControlsHideTimeout();
+                              clearControlsTimeout();
                               return;
                             }
                             toggleFullscreen();
