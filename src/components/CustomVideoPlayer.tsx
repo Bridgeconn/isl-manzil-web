@@ -1000,6 +1000,7 @@ const CustomVideoPlayer = () => {
         setTimeout(() => {
           isManualSeekingRef.current = false;
           if (isPlaying && !isEnded) {
+            setupIntervals();
             setControlsHideTimeout();
           }
         }, 500);
@@ -1012,6 +1013,7 @@ const CustomVideoPlayer = () => {
         setTimeout(() => {
           isManualSeekingRef.current = false;
           if (isPlaying && !isEnded) {
+            setupIntervals();
             setControlsHideTimeout();
           }
         }, 500);
@@ -1242,6 +1244,7 @@ const CustomVideoPlayer = () => {
 
   const handleSeekMouseDown = (event: React.MouseEvent) => {
     event.stopPropagation();
+    event.preventDefault();
     if (isVideoAvailable) {
       isDraggingRef.current = true;
       isManualSeekingRef.current = true;
@@ -1253,6 +1256,7 @@ const CustomVideoPlayer = () => {
 
   const handleSeekTouchStart = (event: React.TouchEvent) => {
     event.stopPropagation();
+    event.preventDefault();
     if (isVideoAvailable) {
       isDraggingRef.current = true;
       isManualSeekingRef.current = true;
@@ -1915,7 +1919,7 @@ const CustomVideoPlayer = () => {
                     {/* Seekbar with sections */}
                     <div
                       ref={seekBarRef}
-                      className="relative h-1 bg-gray-600 rounded-full ml-0.5 mb-1 md:mb-2 cursor-pointer"
+                      className="relative h-1 bg-gray-600 rounded-full px-2 ml-0.5 mb-1 md:mb-2 cursor-pointer"
                       onClick={(e) => {
                         if (!showControls) {
                           setShowControls(true);
@@ -1988,14 +1992,15 @@ const CustomVideoPlayer = () => {
                         })}
                       {/* Current Time Indicator */}
                       <div
-                        className="absolute top-0 w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full cursor-grab z-20 -mt-1 sm:-mt-1.5"
+                        className="absolute top-0 w-10 h-10 z-30 flex items-center justify-center -mt-4.5"
                         style={{
                           left: `${progressPercent}%`,
                           transform: "translateX(-50%)",
+                          touchAction: "none"
                         }}
                         onMouseDown={handleSeekMouseDown}
                         onTouchStart={handleSeekTouchStart}
-                      ></div>
+                      ><div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full cursor-grab" /></div>
                     </div>
                     {/* Control Buttons */}
                     <div className="flex items-center justify-between">
