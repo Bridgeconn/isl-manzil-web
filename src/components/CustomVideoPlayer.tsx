@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useLayoutEffect,
 } from "react";
 import {
   ChevronLeft,
@@ -173,6 +174,9 @@ const CustomVideoPlayer = () => {
     direction: "forward" | "backward";
     seconds: number;
   }>({ show: false, direction: "forward", seconds: 10 });
+  const [tooltipWidth, setTooltipWidth] = useState(0);
+
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
   const [downloadOptions, setDownloadOptions] = useState([]);
@@ -187,6 +191,15 @@ const CustomVideoPlayer = () => {
   const isHDSelected = HD_QUALITIES.includes(selectedQuality);
 
   // const [shareUrl, setShareUrl] = useState<string>("");
+
+  useLayoutEffect(() => {
+    if (tooltipRef.current) {
+      const width = tooltipRef.current.offsetWidth;
+      if (width !== tooltipWidth) {
+        setTooltipWidth(width);
+      }
+    }
+  }, [hoverTime, tooltipWidth]);
 
   const BASE_URL =
     typeof window !== "undefined"
@@ -990,7 +1003,16 @@ const CustomVideoPlayer = () => {
     const handleTouchMove = (e: TouchEvent) => {
       if (isDraggingRef.current && seekBarRef.current && isVideoAvailable) {
         const touch = e.touches[0];
-        handleSeekPosition(touch.clientX);
+        const touchX = touch.clientX;
+        handleSeekPosition(touchX);
+        const rect = seekBarRef.current.getBoundingClientRect();
+        const percent = Math.max(
+          0,
+          Math.min(1, (touchX - rect.left) / rect.width)
+        );
+        const time = percent * duration;
+
+        setHoverTime(time);
       }
     };
 
@@ -1010,11 +1032,12 @@ const CustomVideoPlayer = () => {
     const handleTouchEnd = () => {
       if (isDraggingRef.current) {
         isDraggingRef.current = false;
+        setHoverTime(null);
+        setControlsHideTimeout();
         setTimeout(() => {
           isManualSeekingRef.current = false;
           if (isPlaying && !isEnded) {
             setupIntervals();
-            setControlsHideTimeout();
           }
         }, 500);
       }
@@ -1262,8 +1285,7 @@ const CustomVideoPlayer = () => {
       isManualSeekingRef.current = true;
       userInteractedRef.current = true;
       setShowControls(true);
-      // clearControlsTimeout();
-      setControlsHideTimeout();
+      clearControlsTimeout();
     }
   };
 
@@ -1437,12 +1459,6 @@ const CustomVideoPlayer = () => {
     const direction = tapX < rect.width / 2 ? "backward" : "forward";
 
     skipNextClickRef.current = true;
-
-    // setShowSeekFeedback({
-    //   show: true,
-    //   direction,
-    //   seconds: 10,
-    // });
 
     handleDoubleTapSeek(direction);
 
@@ -1770,6 +1786,54 @@ const CustomVideoPlayer = () => {
     );
   };
 
+  const renderSeekbarTooltip = () => {
+    if (hoverTime === null || duration === 0 || !seekBarRef.current)
+      return null;
+
+    const currentVerse = getCurrentVerseFromTime(hoverTime);
+    const verseText = currentVerse ? `Verse ${currentVerse}` : "Intro";
+    const tooltipText = `${verseText} - ${formatTime(hoverTime)}`;
+
+    const seekbarRect = seekBarRef.current.getBoundingClientRect();
+    const seekbarWidth = seekbarRect.width;
+
+    const hoverX = (hoverTime / duration) * seekbarWidth;
+
+    const halfTooltip = tooltipWidth / 2;
+    const leftPx = Math.max(
+      0,
+      Math.min(hoverX - halfTooltip, seekbarWidth - tooltipWidth)
+    );
+    const leftPercent = (leftPx / seekbarWidth) * 100;
+
+    const arrowOffsetFromTooltipLeft = hoverX - leftPx;
+    const clampedArrow = Math.max(
+      8,
+      Math.min(tooltipWidth - 8, arrowOffsetFromTooltipLeft)
+    );
+
+    return (
+      <div
+        ref={tooltipRef}
+        className="absolute bottom-full mb-2 px-2 py-1 text-sm rounded bg-black text-white whitespace-nowrap z-50"
+        style={{
+          left: `${leftPercent}%`,
+          transform: "translateX(0%)",
+          maxWidth: "200px",
+        }}
+      >
+        {tooltipText}
+        <div
+          className="w-2 h-2 bg-black rotate-45 absolute -bottom-1"
+          style={{
+            left: `${clampedArrow}px`,
+            transform: "translateX(-50%)",
+          }}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="flex items-end justify-center gap-2 w-full">
@@ -1941,19 +2005,9 @@ const CustomVideoPlayer = () => {
                         }
                       }}
                       onMouseLeave={() => setHoverTime(null)}
-                      title={
-                        hoverTime !== null
-                          ? (() => {
-                              const currentVerse =
-                                getCurrentVerseFromTime(hoverTime);
-                              const verseText = currentVerse
-                                ? `Verse ${currentVerse}`
-                                : "Intro";
-                              return `${verseText} - ${formatTime(hoverTime)}`;
-                            })()
-                          : ""
-                      }
                     >
+                      {renderSeekbarTooltip()}
+
                       {/* Progress Bar */}
                       <div
                         className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full"
@@ -1984,9 +2038,9 @@ const CustomVideoPlayer = () => {
                                 }
                                 handleVerseMarkerClick(verse, e);
                               }}
-                              title={`Verse ${verse.verse} - ${formatTime(
-                                verseTimeInSeconds
-                              )}`}
+                              data-tooltip={`Verse ${
+                                verse.verse
+                              } - ${formatTime(verseTimeInSeconds)}`}
                             ></div>
                           );
                         })}
@@ -1996,11 +2050,13 @@ const CustomVideoPlayer = () => {
                         style={{
                           left: `${progressPercent}%`,
                           transform: "translateX(-50%)",
-                          touchAction: "none"
+                          touchAction: "none",
                         }}
                         onMouseDown={handleSeekMouseDown}
                         onTouchStart={handleSeekTouchStart}
-                      ><div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full cursor-grab" /></div>
+                      >
+                        <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full cursor-grab" />
+                      </div>
                     </div>
                     {/* Control Buttons */}
                     <div className="flex items-center justify-between">
