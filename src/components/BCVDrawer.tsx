@@ -69,7 +69,6 @@ const BCVDrawer = () => {
     }
   }, [selectedBook, selectedChapter, getBibleVerseMarker]);
 
-
   useEffect(() => {
     if (selectedBook && selectedChapter) {
       const verses = getAvailableVersesForBookAndChapter(
@@ -282,7 +281,7 @@ const BCVDrawer = () => {
   return (
     <>
       <div
-        className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-md px-3 py-2"
+        className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2"
         style={{
           boxShadow:
             "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
@@ -322,30 +321,33 @@ const BCVDrawer = () => {
       <Dialog open={isBCVDrawerOpen} onOpenChange={setIsBCVDrawerOpen}>
         <DialogContent className="sm:max-w-6xl h-[calc(100vh-100px)] flex flex-col [&>button]:hidden">
           <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 pb-2 border-b">
-            {activeView === "book" && (
-              <div className="flex gap-1">
-                <button
-                  className={`border border-gray-300 p-2 rounded cursor-pointer transition-colors ${
-                    viewMode === "list"
-                      ? "bg-gray-200 text-gray-800"
-                      : "bg-white text-gray-700 hover:bg-gray-100"
-                  }`}
-                  onClick={() => setViewMode("list")}
-                >
-                  <List size={20} />
-                </button>
-                <button
-                  className={`border border-gray-300 p-2 rounded cursor-pointer transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-gray-200 text-gray-800"
-                      : "bg-white text-gray-700 hover:bg-gray-100"
-                  }`}
-                  onClick={() => setViewMode("grid")}
-                >
-                  <LayoutGrid size={20} />
-                </button>
-              </div>
-            )}
+            <div
+              className={`flex gap-1 ${
+                activeView !== "book" ? "invisible" : ""
+              }`}
+            >
+              <button
+                className={`border border-gray-300 p-2 rounded cursor-pointer transition-colors ${
+                  viewMode === "list"
+                    ? "bg-gray-200 text-gray-800"
+                    : "bg-white text-gray-700 hover:bg-gray-100"
+                }`}
+                onClick={() => setViewMode("list")}
+              >
+                <List size={20} />
+              </button>
+              <button
+                className={`border border-gray-300 p-2 rounded cursor-pointer transition-colors ${
+                  viewMode === "grid"
+                    ? "bg-gray-200 text-gray-800"
+                    : "bg-white text-gray-700 hover:bg-gray-100"
+                }`}
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid size={20} />
+              </button>
+            </div>
+
             <div className="max-w-xl w-full mx-auto flex flex-col sm:flex-row justify-center gap-2">
               <button
                 className={`px-4 py-2 font-semibold cursor-pointer flex-1 rounded-sm ${
@@ -424,32 +426,34 @@ const BCVDrawer = () => {
                 Verse
               </button>
             </div>
-            {activeView === "book" && (
-              <div className="flex items-center justify-end p-2">
-                <div
-                  className="relative max-w-md rounded-sm"
-                  style={{
-                    boxShadow:
-                      "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
-                      "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
-                      "rgba(0, 0, 0, 0.12) 0px -1px 4px 0px",
-                    transition: "box-shadow 0.3s ease-in-out",
-                  }}
-                >
-                  <input
-                    type="text"
-                    placeholder="Search books..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 focus:outline-none"
-                  />
-                  <Search
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900"
-                    size={16}
-                  />
-                </div>
+            <div
+              className={`flex items-center justify-end p-2 ${
+                activeView !== "book" ? "invisible" : ""
+              }`}
+            >
+              <div
+                className="relative max-w-md rounded-sm"
+                style={{
+                  boxShadow:
+                    "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
+                    "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
+                    "rgba(0, 0, 0, 0.12) 0px -1px 4px 0px",
+                  transition: "box-shadow 0.3s ease-in-out",
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search books..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 focus:outline-none"
+                />
+                <Search
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900"
+                  size={16}
+                />
               </div>
-            )}
+            </div>
             <DialogClose className="h-6 w-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100">
               <X className="h-5 w-5" />
             </DialogClose>
