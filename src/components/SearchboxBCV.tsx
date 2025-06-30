@@ -425,7 +425,7 @@ function SearchboxBCV({
   return (
     <div className={`relative ${className}`}>
       <div
-        className="max-w-[250px] w-full bg-white overflow-hidden rounded-sm"
+        className="max-w-[250px] w-full bg-white overflow-hidden rounded-full"
         style={{
           boxShadow:
             "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
