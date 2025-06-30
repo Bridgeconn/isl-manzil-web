@@ -1,5 +1,5 @@
 import Header from "./Header";
-import Footer from "./Footer";
+// import Footer from "./Footer";
 import MobileBottomBar from "./MobileBottomBar";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
@@ -14,7 +14,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="w-full h-full mx-auto flex flex-col">{children}</div>
       </main>
       
-      {!shouldUseMobileBottomBar && <Footer />}
+      {/* {!shouldUseMobileBottomBar && <Footer />} */}
       
       {shouldUseMobileBottomBar && <MobileBottomBar />}
     </div>

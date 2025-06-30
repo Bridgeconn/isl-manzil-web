@@ -7,8 +7,6 @@ import React, {
   useLayoutEffect,
 } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
   RefreshCw,
   Maximize,
   Minimize,
@@ -25,11 +23,11 @@ import PlaybackDrawer from "./PlayBackDrawer";
 import { Options as VimeoPlayerOptions } from "@vimeo/player";
 import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
-import { useChapterNavigation } from "../hooks/useChapterNavigation";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
 import { useVimeoDownload } from "@/hooks/useVimeoDownload";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
+import { useLayoutControl } from "@/hooks/useLayoutControl";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -95,8 +93,6 @@ const getViewportWidth = () => {
 };
 
 const CustomVideoPlayer = () => {
-  const { canGoPrevious, canGoNext, navigateToChapter } =
-    useChapterNavigation();
   const {
     availableData,
     setBook,
@@ -119,6 +115,8 @@ const CustomVideoPlayer = () => {
   } = useBibleStore();
 
   const { deviceType, shouldUseMobileBottomBar } = useDeviceDetection();
+   const {  textPosition } =
+      useLayoutControl();
   const { getDownloadOptions, downloadVideo, error, loading } =
     useVimeoDownload();
 
@@ -1835,24 +1833,12 @@ const CustomVideoPlayer = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
+    <div className="w-full mx-auto">
       <div className="flex items-end justify-center gap-2 w-full">
-        {!shouldUseMobileBottomBar &&
-          (canGoPrevious ? (
-            <button
-              onClick={() => navigateToChapter("previous")}
-              className="mb-5.5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
-              title="Previous Chapter"
-            >
-              <ChevronLeft strokeWidth={2.5} size={25} />
-            </button>
-          ) : (
-            <div className="w-6 h-6 mb-3" />
-          ))}
         <div
           ref={playerContainerRef}
-          className={`relative w-full ${
-            shouldUseMobileBottomBar ? "max-w-5xl" : "max-w-4xl"
+          className={`video-player-container relative w-full ${
+            shouldUseMobileBottomBar || textPosition === "below" ? "max-w-6xl" : "max-w-7xl"
           } mx-auto overflow-hidden ${
             isFullscreen &&
             (shouldUseMobileBottomBar ||
@@ -2428,18 +2414,6 @@ const CustomVideoPlayer = () => {
             </>
           )}
         </div>
-        {!shouldUseMobileBottomBar &&
-          (canGoNext ? (
-            <button
-              onClick={() => navigateToChapter("next")}
-              className="mb-5.5 transition-all duration-200 bg-opacity-50 hover:bg-opacity-70 hover:bg-gray-200 hover:scale-120"
-              title="Next Chapter"
-            >
-              <ChevronRight strokeWidth={2.5} size={25} />
-            </button>
-          ) : (
-            <div className="w-6 h-6 mb-3" />
-          ))}
       </div>
     </div>
   );

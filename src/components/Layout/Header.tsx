@@ -6,7 +6,7 @@ const Header = () => {
   const navItems = [
     {
       name: "ISL Bible",
-      path: "/"
+      path: "/",
     },
     // {
     //   name: "Dictionary",
@@ -34,25 +34,22 @@ const Header = () => {
     // },
   ];
   return (
-    <header className="w-full sticky top-0 left-0 right-0 bg-white z-10">
+    <header
+      className="max-w-screen w-full px-6 sticky top-0 left-0 right-0 z-10 bg-white
+      shadow-[0_2px_4px_-1px_rgba(0,0,0,0.2),0_4px_5px_0_rgba(0,0,0,0.14),0_1px_10px_0_rgba(0,0,0,0.12)]
+      transition-shadow duration-300 ease-out
+    "
+    >
       {/* Header content container */}
-      <div className="max-w-7xl mx-auto flex py-1 items-end relative">
+      <div className="w-full flex items-center relative">
         {/* Left Logo */}
         <div className="absolute left-0 top-0 z-10">
           <img
             src={Logo}
-            className="w-auto h-18"
+            className="w-auto h-14"
             aria-placeholder="logo"
             alt="logo"
           />
-        </div>
-
-        {/* Menu Bar */}
-        <div className="flex-grow flex flex-col pl-20"> 
-          <div className="w-full flex justify-between px-4 text-xs">
-            <p>Bridge Connectivity Solution</p>
-            <p>Indian Sign Language</p>
-          </div>
         </div>
       </div>
       <Navbar items={navItems} />

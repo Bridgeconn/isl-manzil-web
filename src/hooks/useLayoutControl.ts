@@ -1,100 +1,88 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDeviceDetection } from "./useDeviceDetection";
-
-export type TextPosition = "below" | "right" | "hidden";
-
-interface LayoutControlState {
-  textPosition: TextPosition;
-  showText: boolean;
-  isHorizontalLayout: boolean;
-  canTogglePosition: boolean;
-}
+import useLayoutStore from "@/store/useLayoutStore";
 
 export const useLayoutControl = () => {
   const {
     shouldUseHorizontalLayout,
     isTabletLandscape,
+    isTabletPortrait,
     deviceType,
     isMobileLandscape,
     isMobilePortrait,
+    isLowHeightDesktop
   } = useDeviceDetection();
 
-  const [layoutState, setLayoutState] = useState<LayoutControlState>(() => ({
-    textPosition:
-      shouldUseHorizontalLayout || isTabletLandscape ? "right" : "below",
-    showText: true,
-    isHorizontalLayout: shouldUseHorizontalLayout,
-    canTogglePosition: shouldUseHorizontalLayout && deviceType !== "mobile",
-  }));
+  const {
+    textPosition,
+    showText,
+    isHorizontalLayout,
+    canTogglePosition,
+    toggleTextVisibility,
+    setTextPosition,
+    toggleTextPosition,
+    updateLayoutFromDevice,
+    initializeLayout,
+  } = useLayoutStore();
+
+  const prevDeviceRef = useRef<string>(null);
+  const prevLayoutRef = useRef<boolean>(null);
+  const prevLowHeightRef = useRef<boolean>(null);
+  const hasInitialized = useRef<boolean>(false);
 
   useEffect(() => {
-    setLayoutState((prev) => {
-      let newTextPosition = prev.textPosition;
-      let canTogglePosition =
-        shouldUseHorizontalLayout && deviceType !== "mobile";
+    if (!hasInitialized.current) {
+      initializeLayout({
+        shouldUseHorizontalLayout,
+        isTabletLandscape,
+        deviceType,
+        isLowHeightDesktop
+      });
+      hasInitialized.current = true;
+      prevDeviceRef.current = deviceType;
+      prevLayoutRef.current = shouldUseHorizontalLayout;
+      prevLowHeightRef.current = isLowHeightDesktop;
+    }
+  }, [initializeLayout, shouldUseHorizontalLayout, isTabletLandscape, deviceType, isLowHeightDesktop]);
 
-      if (deviceType === "mobile") {
-        if (isMobileLandscape) {
-          newTextPosition = "right";
-        } else if (isMobilePortrait) {
-          newTextPosition = "below";
-        }
-        canTogglePosition = false;
-      } else {
-        if (shouldUseHorizontalLayout) {
-          if (prev.textPosition === "below" && prev.showText) {
-            newTextPosition = "right";
-          }
-        } else {
-          if (prev.textPosition === "right") {
-            newTextPosition = "below";
-          }
-        }
-      }
+  useEffect(() => {
+    if (!hasInitialized.current) return;
 
-      return {
-        ...prev,
-        isHorizontalLayout: shouldUseHorizontalLayout,
-        canTogglePosition,
-        textPosition: newTextPosition,
-      };
-    });
+    const deviceChanged = prevDeviceRef.current !== deviceType;
+    const layoutChanged = prevLayoutRef.current !== shouldUseHorizontalLayout;
+    const lowHeightChanged = prevLowHeightRef.current !== isLowHeightDesktop;
+
+    if (deviceChanged || layoutChanged || lowHeightChanged) {
+      updateLayoutFromDevice({
+        shouldUseHorizontalLayout,
+        deviceType,
+        isMobileLandscape,
+        isMobilePortrait,
+        isTabletLandscape,
+        isTabletPortrait,
+        isLowHeightDesktop
+      });
+
+      prevDeviceRef.current = deviceType;
+      prevLayoutRef.current = shouldUseHorizontalLayout;
+      prevLowHeightRef.current = isLowHeightDesktop;
+    }
   }, [
     shouldUseHorizontalLayout,
     deviceType,
+    isTabletLandscape,
+    isTabletPortrait,
     isMobileLandscape,
     isMobilePortrait,
+    updateLayoutFromDevice,
+    isLowHeightDesktop
   ]);
 
-  const toggleTextVisibility = () => {
-    setLayoutState((prev) => ({
-      ...prev,
-      showText: !prev.showText,
-    }));
-  };
-
-  const setTextPosition = (position: TextPosition) => {
-    setLayoutState((prev) => ({
-      ...prev,
-      textPosition: position,
-      showText: position !== "hidden",
-    }));
-  };
-
-  const toggleTextPosition = () => {
-    setLayoutState((prev) => {
-      if (!prev.canTogglePosition) return prev;
-
-      const newPosition = prev.textPosition === "right" ? "below" : "right";
-      return {
-        ...prev,
-        textPosition: newPosition,
-      };
-    });
-  };
-
   return {
-    ...layoutState,
+    textPosition,
+    showText,
+    isHorizontalLayout,
+    canTogglePosition,
     toggleTextVisibility,
     setTextPosition,
     toggleTextPosition,

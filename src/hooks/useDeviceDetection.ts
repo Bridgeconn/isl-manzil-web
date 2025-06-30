@@ -16,6 +16,7 @@ interface ScreenInfo {
   isTabletPortrait: boolean;
   shouldUseHorizontalLayout: boolean;
   shouldUseMobileBottomBar: boolean;
+  isLowHeightDesktop: boolean;
 }
 
 // Enhanced device detection
@@ -141,8 +142,13 @@ const getScreenType = (): ScreenInfo => {
     deviceType === "mobile" && orientation === "portrait";
   const isTabletPortrait = 
     deviceType === "tablet" && orientation === "portrait";
+  const isLowHeightDesktop = 
+    (deviceType === "laptop" || deviceType === "desktop") && height <= 920;
 
   const shouldUseHorizontalLayout = (): boolean => {
+    if (isLowHeightDesktop) {
+      return true;
+    }
     if (deviceType === "mobile" || deviceType === "tablet") {
       return orientation === "landscape";
     }
@@ -166,6 +172,7 @@ const getScreenType = (): ScreenInfo => {
     isTabletPortrait,
     shouldUseHorizontalLayout: shouldUseHorizontalLayout(),
     shouldUseMobileBottomBar,
+    isLowHeightDesktop
   };
 };
 

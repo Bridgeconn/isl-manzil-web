@@ -24,20 +24,20 @@ const themes: ThemeOption[] = [
   {
     id: "theme1",
     name: "Theme 1",
-    backgroundColor: "#FFFFFF",
-    textColor: "#333333",
+    backgroundColor: "#F0F0F0",
+    textColor: "#000000",
   },
   {
     id: "theme2",
     name: "Theme 2",
-    backgroundColor: "#F5F5F5",
-    textColor: "#1A1A7E",
+    backgroundColor: "#FFFFFF",
+    textColor: "#000063",
   },
   {
     id: "theme3",
     name: "Theme 3",
-    backgroundColor: "#FFE5B4",
-    textColor: "#5C4033",
+    backgroundColor: "#001F3F",
+    textColor: "#E0E0E0",
   },
 ];
 

@@ -26,7 +26,7 @@ export const useResizable = ({
   isMobileLandscape = false,
   persistKey = "bible-verse-container-size",
 }: UseResizableProps = {}) => {
-  const { deviceType, orientation, isTabletLandscape } = useDeviceDetection();
+  const { deviceType, orientation } = useDeviceDetection();
 
   const [viewportSize, setViewportSize] = useState(() => ({
     width: isBrowser() ? window.innerWidth : 1024,
@@ -45,18 +45,11 @@ export const useResizable = ({
     } else {
       width = 360;
     }
-
-    let height: number;
-    if (deviceType === "mobile" && isMobileLandscape) {
-      height = windowHeight - 80;
-    } else if (orientation === "landscape" && isTabletLandscape) {
-      height = windowHeight - 80;
-    } else {
-      height = windowHeight - 180;
-    }
+    
+    const height = windowHeight - 80
 
     return { width, height };
-  }, [deviceType, isMobileLandscape, isTabletLandscape, orientation, viewportSize]);
+  }, [deviceType, isMobileLandscape, orientation, viewportSize]);
 
   const getDeviceSpecificKey = useCallback(() => {
     if (!isBrowser()) return persistKey;
@@ -92,7 +85,7 @@ export const useResizable = ({
         minWidth: 200,
         maxWidth: Math.floor(vw * 0.45),
         minHeight: 200,
-        maxHeight: vh - 50,
+        maxHeight: vh - 80,
       };
     }
     return {
@@ -126,7 +119,7 @@ export const useResizable = ({
         const parsed = JSON.parse(saved);
         const savedSize = {
           width: parsed.width || initialDimensions.width,
-          height: parsed.height || initialDimensions.height,
+          height: initialDimensions.height,
         };
         return applyConstraints(savedSize);
       }
@@ -147,7 +140,7 @@ export const useResizable = ({
       if (isBrowser()) {
         try {
           const deviceKey = getDeviceSpecificKey();
-          localStorage.setItem(deviceKey, JSON.stringify(constrained));
+          localStorage.setItem(deviceKey, JSON.stringify({ width: constrained.width }));
         } catch (error) {
           console.warn("Failed to save resizable size to localStorage:", error);
         }
@@ -278,7 +271,7 @@ export const useResizable = ({
           const parsed = JSON.parse(saved);
           const savedSize = {
             width: parsed.width || initialDimensions.width,
-            height: parsed.height || initialDimensions.height,
+            height: initialDimensions.height,
           };
           // Apply current constraints to saved size
           setSize(applyConstraints(savedSize));
@@ -307,7 +300,7 @@ export const useResizable = ({
         if (isBrowser()) {
           try {
             const deviceKey = getDeviceSpecificKey();
-            localStorage.setItem(deviceKey, JSON.stringify(constrainedSize));
+            localStorage.setItem(deviceKey, JSON.stringify({ width: constrainedSize.width }));
           } catch (error) {
             console.warn(
               "Failed to save constrained size to localStorage:",

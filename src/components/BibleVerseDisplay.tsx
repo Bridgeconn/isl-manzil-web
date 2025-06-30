@@ -244,8 +244,8 @@ const BibleVerseDisplay = ({
                   {selectedChapter.value}
                 </span>
                 <span
-                  className={`themed-text text-themed antialiased tracking-wide  ml-2 cursor-pointer rounded transition-colors duration-300 ${
-                    isCurrentVerse(verseData[0]?.verse) ? "bg-blue-200" : ""
+                  className={`antialiased tracking-wide  ml-2 cursor-pointer rounded transition-colors duration-300 ${
+                    isCurrentVerse(verseData[0]?.verse) ? "themed-reverse text-themed" : "themed-text text-themed"
                   }`}
                   onClick={() => seekToVerse(verseData[0]?.verse)}
                 >
@@ -266,15 +266,15 @@ const BibleVerseDisplay = ({
                         ref={(el) => setVerseRef(verseItem.verse, el)}
                       >
                         <span
-                          className={`themed-text text-themed text-gray-500  mr-2 rounded transition-colors duration-300 ${
-                            isPlaying ? "bg-blue-200" : ""
+                          className={`mr-2 rounded transition-colors duration-300 ${
+                            isPlaying ? "themed-reverse text-themed" : "themed-text text-themed text-gray-500"
                           }`}
                         >
                           {verseItem.verse}
                         </span>
                         <span
-                          className={`themed-text text-themed antialiased tracking-wide  rounded transition-colors duration-300 ${
-                            isPlaying ? "bg-blue-200" : ""
+                          className={`antialiased tracking-wide  rounded transition-colors duration-300 ${
+                            isPlaying ? "themed-reverse text-themed" : "themed-text text-themed"
                           }`}
                         >
                           {verseItem.text}
