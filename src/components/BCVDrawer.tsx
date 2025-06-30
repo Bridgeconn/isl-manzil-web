@@ -427,7 +427,7 @@ const BCVDrawer = () => {
             {activeView === "book" && (
               <div className="flex items-center justify-end p-2">
                 <div
-                  className="relative max-w-md rounded-sm"
+                  className="relative max-w-md rounded-full"
                   style={{
                     boxShadow:
                       "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
