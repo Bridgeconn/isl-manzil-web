@@ -18,13 +18,14 @@ interface ThemeStore {
   setFontSize: (size: number) => void;
   applyTheme: () => void;
   initializeTheme: () => void;
+  validateAndSetTheme: (storedTheme: ThemeOption | null) => void;
 }
 
 const themes: ThemeOption[] = [
   {
     id: "theme1",
     name: "Theme 1",
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#FFFFFF",
     textColor: "#000000",
   },
   {
@@ -92,11 +93,31 @@ const useThemeStore = create<ThemeStore>()(
         root.style.setProperty("--font-size", `${fontSize}px`);
       },
 
-      initializeTheme: () => {
-        const { currentTheme } = get();
-        if (!currentTheme) {
+      validateAndSetTheme: (storedTheme: ThemeOption | null) => {
+        const { themes } = get();
+        
+        if (!storedTheme) {
+          set({ currentTheme: themes[0] });
+          return;
+        }
+
+        //Check if the stored theme exists in current themes
+        const isValidTheme = themes.some(theme => 
+          theme.id === storedTheme.id &&
+          theme.backgroundColor === storedTheme.backgroundColor &&
+          theme.textColor === storedTheme.textColor
+        );
+
+        if (isValidTheme) {
+          set({ currentTheme: storedTheme });
+        } else {
           set({ currentTheme: themes[0] });
         }
+      },
+
+      initializeTheme: () => {
+        const { currentTheme } = get();
+        get().validateAndSetTheme(currentTheme);
         get().applyTheme();
       },
     }),
