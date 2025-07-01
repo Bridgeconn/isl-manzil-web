@@ -249,10 +249,11 @@ const HomePage: React.FC = () => {
               <div className="w-full flex justify-between items-center gap-4">
                 <BCVDrawer />
 
-                {shouldShowContent && <ButtonHide
+                <ButtonHide
                   isVisible={showText}
                   toggle={toggleTextVisibility}
-                />}
+                  shouldShowContent={shouldShowContent}
+                />
               </div>
             </div>
           )}
