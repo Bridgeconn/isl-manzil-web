@@ -1833,7 +1833,7 @@ const CustomVideoPlayer = () => {
   };
 
   return (
-    <div className="w-full mx-auto">
+    <div className="w-full mx-auto my-auto">
       <div className="flex items-end justify-center gap-2 w-full">
         <div
           ref={playerContainerRef}
