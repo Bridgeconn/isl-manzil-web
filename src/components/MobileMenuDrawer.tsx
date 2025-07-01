@@ -18,8 +18,8 @@ const MobileMenuDrawer: React.FC<SettingsDrawerProps> = ({ open, onClose }) => {
       />
 
       <div
-        className={`fixed bottom-10 right-0 bg-white shadow-xl z-50 transform transition-transform duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`fixed bottom-0 right-0 bg-white shadow-xl z-50 transform transition-transform duration-300 ${
+          open ? "translate-y-0" : "translate-y-full"
         }`}
       >
         <Settings />
