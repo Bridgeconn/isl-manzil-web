@@ -26,6 +26,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({ isOpen, onClose }) 
   const [expandedBook, setExpandedBook] = useState<string | null>(null);
   const [filteredBooks, setFilteredBooks] = useState<BookOption[]>([]);
   const [chapterOptions, setChapterOptions] = useState<{ [bookCode: string]: ChapterOption[] }>({});
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const booksListRef = useRef<HTMLDivElement>(null);
   const selectedBookRef = useRef<HTMLDivElement>(null);
@@ -74,6 +75,22 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({ isOpen, onClose }) 
       }, 300);
     }
   }, [isOpen, selectedBook]);
+
+  useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (isSearchFocused) {
+          event.stopPropagation();
+        }
+      };
+  
+      if (isSearchFocused) {
+        document.addEventListener("keydown", handleKeyDown, true);
+        return () => {
+          document.removeEventListener("keydown", handleKeyDown, true);
+        };
+      }
+    }, [isSearchFocused]);
+  
 
   const handleBookClick = (book: BookOption) => {
     if (book.isDisabled) return;
@@ -136,6 +153,8 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({ isOpen, onClose }) 
               placeholder="Search books..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
               className="w-full pl-12 pr-10 py-3 border-2 rounded-2xl focus:border-[var(--indigo-color)] focus:outline-none text-gray-700 placeholder-gray-400"
             />
             {searchTerm && (

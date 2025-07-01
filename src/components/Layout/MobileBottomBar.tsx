@@ -43,7 +43,9 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   return (
     <>
       <div
-        className={`fixed bottom-0 left-0 right-0 ${isDrawerOpen || isMenuDrawerOpen ? 'z-40' : 'z-[999]'} h-16
+        className={`fixed bottom-0 left-0 right-0 ${
+          isDrawerOpen || isMenuDrawerOpen ? "z-40" : "z-[999]"
+        } h-16
       backdrop-blur-md bg-white/90
       shadow-[0_-4px_20px_rgba(0,0,0,0.15),0_-4px_20px_rgba(0,0,0,0.08),0_-1px_4px_rgba(0,0,0,0.04)]
       border-t border-white/50
@@ -64,7 +66,10 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           />
         </div>
 
-        <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-gray-200/60 ring-1 ring-white/50">
+        <div
+          className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full p-1 shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-gray-200/60 ring-1 ring-white/50"
+          onClick={() => setIsDrawerOpen(true)}
+        >
           <button
             className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
             title="Previous Chapter"
@@ -72,14 +77,14 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
             {canGoPrevious && (
               <ChevronLeft
                 size={20}
-                onClick={() => navigateToChapter("previous")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToChapter("previous");
+                }}
               />
             )}
           </button>
-          <span
-            className="text-sm font-medium text-gray-700 px-2 cursor-pointer"
-            onClick={() => setIsDrawerOpen(true)}
-          >
+          <span className="text-sm font-medium text-gray-700 px-2 cursor-pointer">
             {selectedBook?.label ?? "Book"}{" "}
             {selectedChapter?.label ?? "Chapter"}
           </span>
@@ -90,7 +95,10 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
             {canGoNext && (
               <ChevronRight
                 size={20}
-                onClick={() => navigateToChapter("next")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToChapter("next");
+                }}
               />
             )}
           </button>

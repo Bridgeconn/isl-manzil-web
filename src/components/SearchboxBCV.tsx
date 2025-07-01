@@ -74,12 +74,7 @@ function SearchboxBCV({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        isFocused &&
-        (event.key === " " ||
-          event.key === "ArrowLeft" ||
-          event.key === "ArrowRight")
-      ) {
+      if (isFocused && !(event.key === "Enter")) {
         event.stopPropagation();
       }
     };

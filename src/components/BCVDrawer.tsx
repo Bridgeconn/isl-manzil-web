@@ -47,6 +47,7 @@ const BCVDrawer = () => {
   const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
   const [verseOptions, setVerseOptions] = useState<VerseOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   useEffect(() => {
     if (!isInitialized && !isLoading) {
@@ -85,6 +86,21 @@ const BCVDrawer = () => {
     bibleVerseMarker,
     getAvailableVersesForBookAndChapter,
   ]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isSearchFocused) {
+        event.stopPropagation();
+      }
+    };
+
+    if (isSearchFocused) {
+      document.addEventListener("keydown", handleKeyDown, true);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown, true);
+      };
+    }
+  }, [isSearchFocused]);
 
   const openDialog = () => {
     setIsBCVDrawerOpen(true);
@@ -157,12 +173,12 @@ const BCVDrawer = () => {
             key={`chapter-${chapter.value}`}
             className={`h-12 flex items-center justify-center flex-wrap cursor-pointer transition-colors border ${
               chapter.isDisabled
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "border-gray-200 hover:bg-gray-100"
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200 shadow-sm"
+                : "border-gray-200 hover:bg-gray-100 hover:shadow-inner"
             } ${
               selectedChapter?.value === chapter.value && !chapter.isDisabled
-                ? "bg-gray-100 border-2 border-gray-400 ring-2 ring-gray-100"
-                : ""
+                ? "bg-gray-300 border-gray-200 shadow-inner transform scale-[0.98]"
+                : "shadow-sm"
             }`}
             onClick={() =>
               !chapter.isDisabled && handleChapterSelect(chapter.value)
@@ -188,11 +204,11 @@ const BCVDrawer = () => {
         {verseOptions.map((verse) => (
           <div
             key={`verse-${verse.value}`}
-            className={`h-12 border border-gray-200 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-100 
+            className={`h-12 border border-gray-200 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-100 hover:shadow-inner 
              ${
                selectedVerse?.value === verse.value
-                 ? "bg-gray-100 border-2 border-gray-400 ring-2 ring-gray-100"
-                 : "bg-white"
+                 ? "bg-gray-300 border-gray-200 shadow-inner transform scale-[0.98]"
+                 : "bg-white shadow-sm"
              }`}
             onClick={() => handleVerseSelect(verse.value)}
           >
@@ -215,15 +231,15 @@ const BCVDrawer = () => {
         {books.map((book) => (
           <div
             key={book.value}
-            className={`h-14 flex items-center sm:justify-center gap-2 cursor-pointer transition-colors border ${
+            className={`h-14 flex items-center justify-between px-4 gap-2 cursor-pointer transition-all duration-150 border ${
               book.isDisabled
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200"
-                : "hover:bg-gray-100 border-gray-200"
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200 shadow-sm"
+                : "hover:bg-gray-100 border-gray-200 hover:shadow-inner"
             } ${
               selectedBook?.value.toLowerCase() === book.value.toLowerCase() &&
               !book.isDisabled
-                ? "bg-gray-100 border-2 border-gray-400 ring-2 ring-gray-100"
-                : ""
+                ? "bg-gray-300 border-gray-200 shadow-inner transform scale-[0.98]"
+                : "shadow-sm"
             }`}
             onClick={() => handleBookSelect(book)}
             title={
@@ -236,12 +252,12 @@ const BCVDrawer = () => {
               <img
                 src={book.image}
                 alt={book.label}
-                className="w-10 h-10 object-contain"
+                className="w-11 h-11 object-contain"
               />
             ) : (
-              <div className="w-10 h-10"></div>
+              <div className="w-11 h-11"></div>
             )}
-            <span className="text-sm sm:text-lg sm:text-center">
+            <span className="text-base text-center">
               {book.label}
             </span>
           </div>
@@ -446,6 +462,8 @@ const BCVDrawer = () => {
                   placeholder="Search books..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
                   className="w-full px-4 py-2 focus:outline-none"
                 />
                 <Search

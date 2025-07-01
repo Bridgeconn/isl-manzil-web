@@ -245,7 +245,7 @@ const HomePage: React.FC = () => {
           style={getVideoContainerStyle()}
         >
           {!shouldUseMobileBottomBar && (
-            <div className="w-full mb-2">
+            <div className="w-full">
               <div className="w-full flex justify-between items-center gap-4">
                 <BCVDrawer />
 
