@@ -274,7 +274,7 @@ const BibleVerseDisplay = () => {
               }}
             >
               {introData && (
-                <div className="prose prose-themed themed-text text-themed">
+                <div className="antialiased tracking-wide prose max-w-none prose-themed themed-text text-themed">
                   <ReactMarkdown>{introData}</ReactMarkdown>
                 </div>
               )}
@@ -293,7 +293,7 @@ const BibleVerseDisplay = () => {
                       {selectedChapter.value}
                     </span>
                     <span
-                      className={`antialiased tracking-wide  ml-2 cursor-pointer rounded transition-colors duration-300 ${
+                      className={`antialiased tracking-wide ml-2 cursor-pointer rounded transition-colors duration-300 ${
                         isCurrentVerse(verseData[0]?.verse)
                           ? "themed-reverse text-themed"
                           : "themed-text text-themed"
@@ -326,7 +326,7 @@ const BibleVerseDisplay = () => {
                               {verseItem.verse}
                             </span>
                             <span
-                              className={`antialiased tracking-wide  rounded transition-colors duration-300 ${
+                              className={`antialiased tracking-wide rounded transition-colors duration-300 ${
                                 isPlaying
                                   ? "themed-reverse text-themed"
                                   : "themed-text text-themed"

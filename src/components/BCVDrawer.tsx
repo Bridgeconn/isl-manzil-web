@@ -89,18 +89,18 @@ const BCVDrawer = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isSearchFocused) {
+      if (isSearchFocused || isBCVDrawerOpen) {
         event.stopPropagation();
       }
     };
 
-    if (isSearchFocused) {
+    if (isSearchFocused || isBCVDrawerOpen) {
       document.addEventListener("keydown", handleKeyDown, true);
       return () => {
         document.removeEventListener("keydown", handleKeyDown, true);
       };
     }
-  }, [isSearchFocused]);
+  }, [isSearchFocused, isBCVDrawerOpen]);
 
   const openDialog = () => {
     setIsBCVDrawerOpen(true);
@@ -220,6 +220,13 @@ const BCVDrawer = () => {
   };
 
   const renderBookGrid = (books: BookOption[]) => {
+    if (books.length === 0) {
+      return (
+        <div className="w-full flex items-center h-14 text-nowrap ">
+          No matching books found
+        </div>
+      );
+    }
     return (
       <div
         className={`grid ${
@@ -257,9 +264,7 @@ const BCVDrawer = () => {
             ) : (
               <div className="w-11 h-11"></div>
             )}
-            <span className="text-base text-center">
-              {book.label}
-            </span>
+            <span className="text-base text-center">{book.label}</span>
           </div>
         ))}
       </div>
@@ -322,7 +327,7 @@ const BCVDrawer = () => {
           onClick={openDialog}
         >
           {selectedBook?.label ?? "Book"} {selectedChapter?.label ?? "Chapter"}{" "}
-          : {selectedVerse?.label ?? "Verse"}
+          {selectedVerse?.label ? `: ${selectedVerse?.label}` : ""}
         </span>
         <button
           className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
@@ -349,6 +354,7 @@ const BCVDrawer = () => {
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 }`}
                 onClick={() => setViewMode("list")}
+                title="List View"
               >
                 <List size={20} />
               </button>
@@ -359,6 +365,7 @@ const BCVDrawer = () => {
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 }`}
                 onClick={() => setViewMode("grid")}
+                title="Grid View"
               >
                 <LayoutGrid size={20} />
               </button>
@@ -466,10 +473,18 @@ const BCVDrawer = () => {
                   onBlur={() => setIsSearchFocused(false)}
                   className="w-full px-4 py-2 focus:outline-none"
                 />
-                <Search
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900"
-                  size={16}
-                />
+                {searchQuery === "" ? (
+                  <Search
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900"
+                    size={16}
+                  />
+                ) : (
+                  <X
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    size={16}
+                    onClick={() => setSearchQuery("")}
+                  />
+                )}
               </div>
             </div>
             <DialogClose className="h-6 w-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100">
