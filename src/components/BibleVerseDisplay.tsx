@@ -1,21 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import Papa from "papaparse";
+import ReactMarkdown from "react-markdown";
 import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 import useThemeStore from "@/store/useThemeStore";
 
-const BibleVerseDisplay = ({
-  setIsIntroDataAvailable,
-}: {
-  setIsIntroDataAvailable: (value: boolean) => void;
-}) => {
+const BibleVerseDisplay = () => {
   const { selectedBook, selectedChapter, currentPlayingVerse, seekToVerse } =
     useBibleStore();
   const { fontType, fontSize } = useThemeStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
+  const [introData, setIntroData] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const chapterCache = useRef<Record<string, VerseData[]>>({});
+  const introCache = useRef<Record<string, string>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const verseRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -29,30 +28,39 @@ const BibleVerseDisplay = ({
     import: "default",
   });
 
+  const mdFiles = import.meta.glob("/src/assets/data/books/**/*.md", {
+    query: "?raw",
+    import: "default",
+  });
+
   const scrollToVerseInContainer = (verseElement: HTMLDivElement) => {
     if (!containerRef.current || !verseElement) return;
 
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
     const verseRect = verseElement.getBoundingClientRect();
-    
+
     // Calculate the verse position relative to the container
     const verseTop = verseRect.top - containerRect.top;
     const verseBottom = verseRect.bottom - containerRect.top;
-    
+
     // Get container dimensions
     const containerHeight = container.clientHeight;
     const containerScrollTop = container.scrollTop;
-    
+
     // Calculate target scroll position to center the verse in the container
-    const targetScrollTop = containerScrollTop + verseTop - (containerHeight / 2) + (verseRect.height / 2);
-    
+    const targetScrollTop =
+      containerScrollTop +
+      verseTop -
+      containerHeight / 2 +
+      verseRect.height / 2;
+
     const isVerseVisible = verseTop >= 0 && verseBottom <= containerHeight;
-    
+
     if (!isVerseVisible) {
       container.scrollTo({
         top: Math.max(0, targetScrollTop),
-        behavior: "smooth"
+        behavior: "smooth",
       });
     }
   };
@@ -119,67 +127,100 @@ const BibleVerseDisplay = ({
     const bookCode = selectedBook.value.toLowerCase();
     const chapterNum = selectedChapter.value;
 
-    const cacheKey = `${bookCode}-${chapterNum}`;
+    const isIntro = chapterNum === 0;
 
-    if (chapterCache.current[cacheKey]) {
-      setVerseData(chapterCache.current[cacheKey]);
-      return;
-    }
+    if (isIntro) {
+      setVerseData([]);
+      const introCacheKey = `${bookCode}-intro`;
 
-    const fetchData = async () => {
-      setIsFetching(true);
-      setError(null);
+      if (introCache.current[introCacheKey]) {
+        setIntroData(introCache.current[introCacheKey]);
+        return;
+      }
 
-      try {
-        const filePath = `/src/assets/data/books/${bookCode}/${chapterNum}.csv`;
+      const fetchIntroData = async () => {
+        setIsFetching(true);
+        setError(null);
 
-        if (!csvFiles[filePath]) {
-          if (chapterNum === 0) {
-            setVerseData([]);
+        try {
+          const filePath = `/src/assets/data/books/${bookCode}/${bookCode}_intro.md`;
+
+          if (!mdFiles[filePath]) {
+            setIntroData(null);
             setIsFetching(false);
-            setIsIntroDataAvailable(false);
             return;
           }
-          throw new Error(
-            `CSV file not found for ${bookCode} chapter ${chapterNum}`
+
+          const mdText = (await mdFiles[filePath]()) as string;
+          introCache.current[introCacheKey] = mdText;
+          setIntroData(mdText);
+          setIsFetching(false);
+        } catch (err) {
+          setError(
+            `Error fetching intro data: ${
+              err instanceof Error ? err.message : String(err)
+            }`
           );
+          setIsFetching(false);
         }
+      };
 
-        const csvText = (await csvFiles[filePath]()) as string;
+      fetchIntroData();
+    } else {
+      setIntroData(null);
+      const cacheKey = `${bookCode}-${chapterNum}`;
 
-        Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            const parsedData = results.data as VerseData[];
-            chapterCache.current[cacheKey] = parsedData;
-            setVerseData(parsedData);
-            setIsFetching(false);
-          },
-          error: (error: Error) => {
-            setError(`Error parsing CSV: ${error.message}`);
-            setIsFetching(false);
-          },
-        });
-      } catch (err) {
-        setError(
-          `Error fetching verse data: ${
-            err instanceof Error ? err.message : String(err)
-          }`
-        );
-        setIsFetching(false);
+      if (chapterCache.current[cacheKey]) {
+        setVerseData(chapterCache.current[cacheKey]);
+        return;
       }
-    };
 
-    fetchData();
+      const fetchData = async () => {
+        setIsFetching(true);
+        setError(null);
+
+        try {
+          const filePath = `/src/assets/data/books/${bookCode}/${chapterNum}.csv`;
+
+          if (!csvFiles[filePath]) {
+            throw new Error(
+              `CSV file not found for ${bookCode} chapter ${chapterNum}`
+            );
+          }
+
+          const csvText = (await csvFiles[filePath]()) as string;
+
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+              const parsedData = results.data as VerseData[];
+              chapterCache.current[cacheKey] = parsedData;
+              setVerseData(parsedData);
+              setIsFetching(false);
+            },
+            error: (error: Error) => {
+              setError(`Error parsing CSV: ${error.message}`);
+              setIsFetching(false);
+            },
+          });
+        } catch (err) {
+          setError(
+            `Error fetching verse data: ${
+              err instanceof Error ? err.message : String(err)
+            }`
+          );
+          setIsFetching(false);
+        }
+      };
+
+      fetchData();
+    }
   }, [selectedBook, selectedChapter]);
 
   const renderLoadingOrError = () => {
-    if (isFetching)
-      return <p className="text-center py-4">Loading verses...</p>;
+    if (isFetching) return <p className="text-center py-4">Loading...</p>;
     if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
-    if (!verseData.length)
-      return <p className="text-center py-4">No verses available</p>;
     return null;
   };
 
@@ -221,7 +262,7 @@ const BibleVerseDisplay = ({
         <>
           {renderLoadingOrError()}
 
-          {!isFetching && !error && verseData.length > 0 && (
+          {!isFetching && !error && (
             <div
               ref={containerRef}
               className={`flex flex-col h-full overflow-y-auto custom-scroll-ultra-thin pr-3 ${
@@ -232,58 +273,81 @@ const BibleVerseDisplay = ({
                 fontSize: `${fontSize}px`,
               }}
             >
-              <div
-                className="mb-2"
-                ref={(el) => setVerseRef(verseData[0]?.verse, el)}
-                id={`verse-${verseData[0]?.verse}`}
-              >
-                <span
-                  style={{ fontSize: "1.6em" }}
-                  className="themed-text text-themed font-bold text-gray-800"
-                >
-                  {selectedChapter.value}
-                </span>
-                <span
-                  className={`antialiased tracking-wide  ml-2 cursor-pointer rounded transition-colors duration-300 ${
-                    isCurrentVerse(verseData[0]?.verse) ? "themed-reverse text-themed" : "themed-text text-themed"
-                  }`}
-                  onClick={() => seekToVerse(verseData[0]?.verse)}
-                >
-                  {verseData[0]?.text}
-                </span>
-              </div>
-
-              {verseData.length > 1 && (
-                <div className="space-y-2 ml-1">
-                  {verseData.slice(1).map((verseItem, index) => {
-                    const isPlaying = isCurrentVerse(verseItem.verse);
-                    return (
-                      <div
-                        className="cursor-pointer"
-                        key={index + 1}
-                        id={`verse-${verseItem.verse}`}
-                        onClick={() => seekToVerse(verseItem.verse)}
-                        ref={(el) => setVerseRef(verseItem.verse, el)}
-                      >
-                        <span
-                          className={`mr-2 rounded transition-colors duration-300 ${
-                            isPlaying ? "themed-reverse text-themed" : "themed-text text-themed text-gray-500"
-                          }`}
-                        >
-                          {verseItem.verse}
-                        </span>
-                        <span
-                          className={`antialiased tracking-wide  rounded transition-colors duration-300 ${
-                            isPlaying ? "themed-reverse text-themed" : "themed-text text-themed"
-                          }`}
-                        >
-                          {verseItem.text}
-                        </span>
-                      </div>
-                    );
-                  })}
+              {introData && (
+                <div className="antialiased tracking-wide prose max-w-none prose-themed themed-text text-themed">
+                  <ReactMarkdown>{introData}</ReactMarkdown>
                 </div>
               )}
+
+              {!introData && verseData.length > 0 && (
+                <>
+                  <div
+                    className="mb-2"
+                    ref={(el) => setVerseRef(verseData[0]?.verse, el)}
+                    id={`verse-${verseData[0]?.verse}`}
+                  >
+                    <span
+                      style={{ fontSize: "1.6em" }}
+                      className="themed-text text-themed font-bold text-gray-800"
+                    >
+                      {selectedChapter.value}
+                    </span>
+                    <span
+                      className={`antialiased tracking-wide ml-2 cursor-pointer rounded transition-colors duration-300 ${
+                        isCurrentVerse(verseData[0]?.verse)
+                          ? "themed-reverse text-themed"
+                          : "themed-text text-themed"
+                      }`}
+                      onClick={() => seekToVerse(verseData[0]?.verse)}
+                    >
+                      {verseData[0]?.text}
+                    </span>
+                  </div>
+
+                  {verseData.length > 1 && (
+                    <div className="space-y-2 ml-1">
+                      {verseData.slice(1).map((verseItem, index) => {
+                        const isPlaying = isCurrentVerse(verseItem.verse);
+                        return (
+                          <div
+                            className="cursor-pointer"
+                            key={index + 1}
+                            id={`verse-${verseItem.verse}`}
+                            onClick={() => seekToVerse(verseItem.verse)}
+                            ref={(el) => setVerseRef(verseItem.verse, el)}
+                          >
+                            <span
+                              className={`mr-2 rounded transition-colors duration-300 ${
+                                isPlaying
+                                  ? "themed-reverse text-themed"
+                                  : "themed-text text-themed text-gray-500"
+                              }`}
+                            >
+                              {verseItem.verse}
+                            </span>
+                            <span
+                              className={`antialiased tracking-wide rounded transition-colors duration-300 ${
+                                isPlaying
+                                  ? "themed-reverse text-themed"
+                                  : "themed-text text-themed"
+                              }`}
+                            >
+                              {verseItem.text}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {!introData &&
+                verseData.length === 0 &&
+                !isFetching &&
+                !error && (
+                  <p className="text-center py-4">No content available</p>
+                )}
             </div>
           )}
         </>

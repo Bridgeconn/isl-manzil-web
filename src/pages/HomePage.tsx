@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Resizable } from "re-resizable";
 import CustomVideoPlayer from "@/components/CustomVideoPlayer";
 import BibleVerseDisplay from "@/components/BibleVerseDisplay";
-import useBibleStore from "@/store/useBibleStore";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { useResizable } from "@/hooks/useResizable";
@@ -10,8 +9,6 @@ import ButtonHide from "@/components/ButtonHide";
 import BCVDrawer from "@/components/BCVDrawer";
 
 const HomePage: React.FC = () => {
-  const { selectedBook, selectedChapter } = useBibleStore();
-  const [isIntroDataAvailable, setIsIntroDataAvailable] = useState(false);
   const [isResizeHandleHovered, setIsResizeHandleHovered] = useState(false);
   const [isResizeHandleActive, setIsResizeHandleActive] = useState(false);
   const {
@@ -39,12 +36,6 @@ const HomePage: React.FC = () => {
     isMobileLandscape,
     persistKey: "bible-verse-container-size",
   });
-
-  const shouldShowContent = !(
-    selectedBook &&
-    selectedChapter?.value === 0 &&
-    !isIntroDataAvailable
-  );
 
   const getLayoutClasses = () => {
     if (shouldUseMobileBottomBar) {
@@ -226,17 +217,11 @@ const HomePage: React.FC = () => {
   });
 
   const renderRightSideContent = () => {
-    if (!shouldShowContent) {
-      return (
-        <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-6 custom-scroll-ultra-thin overflow-y-auto">
-          No text available for Intro video
-        </div>
-      );
-    }
 
     return (
       <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
-        <BibleVerseDisplay setIsIntroDataAvailable={setIsIntroDataAvailable} />
+        <BibleVerseDisplay
+        />
       </div>
     );
   };
@@ -269,21 +254,14 @@ const HomePage: React.FC = () => {
 
         {!isLowHeightDesktop &&
           (!isHorizontalLayout || effectiveTextPosition === "below") &&
-          (shouldShowContent ? (
+          (
             <div className={getVerticalTextContainerClasses()}>
               <div className={getVerseContentClasses()}>
                 <BibleVerseDisplay
-                  setIsIntroDataAvailable={setIsIntroDataAvailable}
                 />
               </div>
             </div>
-          ) : (
-            <div className={getVerticalTextContainerClasses()}>
-              <div className={`${getVerseContentClasses()} py-4`}>
-                No text available for Intro video
-              </div>
-            </div>
-          ))}
+          )}
 
         {(isLowHeightDesktop ||
           (isHorizontalLayout && effectiveTextPosition === "right")) && (
