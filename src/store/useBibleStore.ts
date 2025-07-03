@@ -139,7 +139,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     if (book) {
       const availableChapters = get().getAvailableChaptersForBook(book.value);
       if (availableChapters.length > 0) {
-        get().setChapter(availableChapters[1]);
+        get().setChapter(availableChapters[0]);
       } else {
         get().setChapter(null);
       }
@@ -162,6 +162,8 @@ const useBibleStore = create<BibleStore>((set, get) => ({
         get().selectedBook!.value,
         chapter.value
       );
+      console.log("chapter", chapter);
+      console.log("availableVerses", availableVerses);
       if (availableVerses.length > 0) {
         get().setVerse(availableVerses[0]);
       } else {
