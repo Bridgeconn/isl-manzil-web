@@ -177,7 +177,7 @@ const BCVDrawer = () => {
                 : "hover:bg-gray-50 border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
             } ${
               selectedChapter?.value === chapter.value && !chapter.isDisabled
-                ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98] hover:bg-gray-50"
+                ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
                 : "shadow-sm"
             }`}
             onClick={() =>
@@ -207,7 +207,7 @@ const BCVDrawer = () => {
             className={`h-12 border rounded-full border-gray-200 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-100 hover:shadow-inner 
              ${
                selectedVerse?.value === verse.value
-                 ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98] hover:bg-gray-50"
+                 ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
                  : "bg-white shadow-sm"
              }`}
             onClick={() => handleVerseSelect(verse.value)}
@@ -245,7 +245,7 @@ const BCVDrawer = () => {
             } ${
               selectedBook?.value.toLowerCase() === book.value.toLowerCase() &&
               !book.isDisabled
-                ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98] hover:bg-gray-50"
+                ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
                 : "shadow-sm"
             }`}
             onClick={() => handleBookSelect(book)}
@@ -369,9 +369,10 @@ const BCVDrawer = () => {
                 <button
                   className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "book"
-                      ? "text-gray-900 border-b-2 border-gray-900 bg-gray-50"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      ? "text-gray-900 border-b-2 border-gray-900 bg-gray-200"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
+                  style={{ borderRadius: "10px 10px 0 0" }}
                   onClick={() => setActiveView("book")}
                 >
                   Book
@@ -379,11 +380,12 @@ const BCVDrawer = () => {
                 <button
                   className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "chapter"
-                      ? "text-gray-900 border-b-2 border-gray-900 bg-gray-50"
+                      ? "text-gray-900 border-b-2 border-gray-900 bg-gray-200"
                       : !selectedBook
                       ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
+                  style={{ borderRadius: "10px 10px 0 0" }}
                   onClick={() => selectedBook && setActiveView("chapter")}
                   disabled={!selectedBook}
                 >
@@ -392,11 +394,12 @@ const BCVDrawer = () => {
                 <button
                   className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "verse"
-                      ? "text-gray-900 border-b-2 border-gray-900 bg-gray-50"
+                      ? "text-gray-900 border-b-2 border-gray-900 bg-gray-200"
                       : !selectedBook || !selectedChapter || verseOptions.length === 0
                       ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
+                  style={{ borderRadius: "10px 10px 0 0" }}
                   onClick={() =>
                     selectedBook && selectedChapter && setActiveView("verse")
                   }
@@ -416,12 +419,12 @@ const BCVDrawer = () => {
               <div
                 className="relative max-w-md rounded-full"
                 style={{
-                  boxShadow:
-                    "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
-                    "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
-                    "rgba(0, 0, 0, 0.12) 0px -1px 4px 0px",
-                  transition: "box-shadow 0.3s ease-in-out",
-                }}
+  boxShadow:
+    "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
+    "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
+    "rgba(0, 0, 0, 0.06) 0px -1px 2px 0px",
+  transition: "box-shadow 0.3s ease-in-out",
+}}
               >
                 <input
                   type="text"
