@@ -63,14 +63,19 @@ const HomePage: React.FC = () => {
   };
 
   const getVideoContainerStyle = () => {
+    const baseStyle = {
+      transition: "all 800ms ease-in-out",
+      minWidth: 0,
+    };
     if (shouldUseMobileBottomBar) {
       if (isMobileLandscape || isTabletLandscape) {
         return {
+          ...baseStyle,
           flexGrow: 1,
-          minWidth: 0,
         };
       }
       return {
+        ...baseStyle,
         width: "100%",
       };
     }
@@ -80,14 +85,14 @@ const HomePage: React.FC = () => {
       (isHorizontalLayout && textPosition === "right")
     ) {
       return {
+        ...baseStyle,
         flexGrow: 1,
-        minWidth: 0.
       };
     }
 
     return {
+      ...baseStyle,
       flexBasis: "100%",
-      minWidth: 0,
     };
   };
 
@@ -109,7 +114,9 @@ const HomePage: React.FC = () => {
         ? "max-h-90 h-full"
         : "max-h-35 h-full";
 
-    return `themed-bg verse-content-container ${maxHeightClass} w-full ${textPosition === "below" ? "max-w-6xl" : "max-w-7xl"} mx-auto my-2 bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin`;
+    return `themed-bg verse-content-container ${maxHeightClass} w-full ${
+      textPosition === "below" ? "max-w-6xl" : "max-w-7xl"
+    } mx-auto my-2 bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin`;
   };
 
   const getHorizontalTextContainerClasses = () => {
@@ -127,11 +134,11 @@ const HomePage: React.FC = () => {
     if (shouldUseResizable) {
       const widthValue = `${size?.width}px`;
       return {
-        width: widthValue,
-        opacity: 1,
-        minWidth: widthValue,
-        maxWidth: widthValue,
-        transition: isResizing ? "none" : "all 500ms ease-in-out",
+        width: showText ? widthValue : 0,
+        opacity: showText ? 1 : 0,
+        minWidth: showText ? widthValue : 0,
+        maxWidth: showText ? widthValue : 0,
+        transition: isResizing ? "none" : "all 800ms ease-in-out",
       };
     }
   };
@@ -221,16 +228,15 @@ const HomePage: React.FC = () => {
   const renderRightSideContent = () => {
     if (!shouldShowContent) {
       return (
-        <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
+        <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-6 custom-scroll-ultra-thin overflow-y-auto">
+          No text available for Intro video
         </div>
       );
     }
 
     return (
       <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
-        <BibleVerseDisplay
-          setIsIntroDataAvailable={setIsIntroDataAvailable}
-        />
+        <BibleVerseDisplay setIsIntroDataAvailable={setIsIntroDataAvailable} />
       </div>
     );
   };
@@ -241,7 +247,9 @@ const HomePage: React.FC = () => {
 
       <div className={`${getLayoutClasses()}`}>
         <div
-          className={`w-full ${textPosition === "below" ? "max-w-6xl" : "max-w-7xl"} mx-auto flex flex-col`}
+          className={`w-full ${
+            textPosition === "below" ? "max-w-6xl" : "max-w-7xl"
+          } mx-auto flex flex-col`}
           style={getVideoContainerStyle()}
         >
           {!shouldUseMobileBottomBar && (
@@ -252,7 +260,6 @@ const HomePage: React.FC = () => {
                 <ButtonHide
                   isVisible={showText}
                   toggle={toggleTextVisibility}
-                  shouldShowContent={shouldShowContent}
                 />
               </div>
             </div>
@@ -262,7 +269,7 @@ const HomePage: React.FC = () => {
 
         {!isLowHeightDesktop &&
           (!isHorizontalLayout || effectiveTextPosition === "below") &&
-          shouldShowContent && (
+          (shouldShowContent ? (
             <div className={getVerticalTextContainerClasses()}>
               <div className={getVerseContentClasses()}>
                 <BibleVerseDisplay
@@ -270,120 +277,123 @@ const HomePage: React.FC = () => {
                 />
               </div>
             </div>
-          )}
+          ) : (
+            <div className={getVerticalTextContainerClasses()}>
+              <div className={`${getVerseContentClasses()} py-4`}>
+                No text available for Intro video
+              </div>
+            </div>
+          ))}
 
         {(isLowHeightDesktop ||
-          (isHorizontalLayout && effectiveTextPosition === "right")) &&
-          (
-            <div
-              className={getHorizontalTextContainerClasses()}
-              style={{
-                ...getHorizontalTextContainerStyle(),
-                position: "relative",
-              }}
-            >
-              {shouldUseResizable ? (
-                <Resizable
-                  size={{
-                    width: size?.width,
-                    height: '100%',
-                  }}
-                  minWidth={constraints.minWidth}
-                  maxWidth={constraints.maxWidth}
-                  onResizeStart={() => {
-                    setIsResizeHandleActive(true);
-                    handleResizeStart();
-                  }}
-                  onResize={(_e, _direction, ref) => {
-                    handleResize({
-                      width: ref.offsetWidth,
-                      height: ref.offsetHeight,
-                    });
-                  }}
-                  onResizeStop={(_e, _direction, ref) => {
-                    const newSize = {
-                      width: ref.offsetWidth,
-                      height: ref.offsetHeight,
-                    };
+          (isHorizontalLayout && effectiveTextPosition === "right")) && (
+          <div
+            className={getHorizontalTextContainerClasses()}
+            style={{
+              ...getHorizontalTextContainerStyle(),
+              position: "relative",
+            }}
+          >
+            {shouldUseResizable ? (
+              <Resizable
+                size={{
+                  width: size?.width,
+                  height: "100%",
+                }}
+                minWidth={constraints.minWidth}
+                maxWidth={constraints.maxWidth}
+                onResizeStart={() => {
+                  setIsResizeHandleActive(true);
+                  handleResizeStart();
+                }}
+                onResize={(_e, _direction, ref) => {
+                  handleResize({
+                    width: ref.offsetWidth,
+                    height: ref.offsetHeight,
+                  });
+                }}
+                onResizeStop={(_e, _direction, ref) => {
+                  const newSize = {
+                    width: ref.offsetWidth,
+                    height: ref.offsetHeight,
+                  };
 
-                    handleResize(newSize);
-                    handleResizeStop();
-                    setIsResizeHandleActive(false);
-                  }}
-                  enable={{
-                    left: true,
-                  }}
-                  handleComponent={{
-                    left: (
-                      <div
-                        onMouseEnter={() => setIsResizeHandleHovered(true)}
-                        onMouseLeave={() => setIsResizeHandleHovered(false)}
-                        onTouchStart={(e) => {
-                          e.preventDefault();
-                          setIsResizeHandleActive(true);
-                        }}
-                        onTouchEnd={(e) => {
-                          e.preventDefault();
-                          setIsResizeHandleActive(false);
-                        }}
-                        onTouchMove={(e) => {
-                          e.preventDefault();
-                          if (e.touches?.[0]) {
-                            const touchX = e.touches[0].clientX;
-                            const parent =
-                              e.currentTarget.parentElement?.parentElement;
-                            const rightEdge =
-                              parent?.getBoundingClientRect()?.right ?? 0;
-                            const newWidth = rightEdge - touchX;
+                  handleResize(newSize);
+                  handleResizeStop();
+                  setIsResizeHandleActive(false);
+                }}
+                enable={{
+                  left: true,
+                }}
+                handleComponent={{
+                  left: showText ? (
+                    <div
+                      onMouseEnter={() => setIsResizeHandleHovered(true)}
+                      onMouseLeave={() => setIsResizeHandleHovered(false)}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        setIsResizeHandleActive(true);
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        setIsResizeHandleActive(false);
+                      }}
+                      onTouchMove={(e) => {
+                        e.preventDefault();
+                        if (e.touches?.[0]) {
+                          const touchX = e.touches[0].clientX;
+                          const parent =
+                            e.currentTarget.parentElement?.parentElement;
+                          const rightEdge =
+                            parent?.getBoundingClientRect()?.right ?? 0;
+                          const newWidth = rightEdge - touchX;
 
-                            if (
-                              newWidth >= constraints.minWidth &&
-                              newWidth <= constraints.maxWidth
-                            ) {
-                              handleResize({
-                                width: newWidth,
-                                height: size.height,
-                              });
-                            }
+                          if (
+                            newWidth >= constraints.minWidth &&
+                            newWidth <= constraints.maxWidth
+                          ) {
+                            handleResize({
+                              width: newWidth,
+                              height: size.height,
+                            });
                           }
-                        }}
-                        style={getResizeHandleStyle()}
-                      />
-                    ),
-                  }}
-                  handleStyles={{
-                    left: getResizeHandleStyle(),
-                  }}
-                  className="h-full"
-                  style={{
-                    ...getResizableStyle(),
-                    boxSizing: "border-box",
-                    position: "absolute",
-                    right: 0,
-                    top: 0,
-                    height: "100%",
-                    touchAction: "none",
-                  }}
-                >
-                  {renderFadeWrapper(
-                    <div className="h-full w-full">
-                      {renderRightSideContent()}
-                    </div>
-                  )}
-                </Resizable>
-              ) : showText ? (
-                renderFadeWrapper(
-                  <div className="h-full w-full">
-                    {renderRightSideContent()}
-                  </div>
-                )
-              ) : renderFadeWrapper(
+                        }
+                      }}
+                      style={getResizeHandleStyle()}
+                    />
+                  ) : undefined,
+                }}
+                handleStyles={{
+                  left: getResizeHandleStyle(),
+                }}
+                className="h-full"
+                style={{
+                  ...getResizableStyle(),
+                  boxSizing: "border-box",
+                  position: "absolute",
+                  right: 0,
+                  top: 0,
+                  height: "100%",
+                  touchAction: "none",
+                }}
+              >
+                {renderFadeWrapper(
                   <div className="h-full w-full">
                     {renderRightSideContent()}
                   </div>
                 )}
-            </div>
-          )}
+              </Resizable>
+            ) : showText ? (
+              renderFadeWrapper(
+                <div className="h-full w-full">{renderRightSideContent()}</div>
+              )
+            ) : (
+              renderFadeWrapper(
+                <div className="h-full w-full">{renderRightSideContent()}</div>
+              )
+            )}
+          </div>
+        )}
       </div>
     </>
   );

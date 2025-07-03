@@ -89,18 +89,18 @@ const BCVDrawer = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isSearchFocused) {
+      if (isSearchFocused || isBCVDrawerOpen) {
         event.stopPropagation();
       }
     };
 
-    if (isSearchFocused) {
+    if (isSearchFocused || isBCVDrawerOpen) {
       document.addEventListener("keydown", handleKeyDown, true);
       return () => {
         document.removeEventListener("keydown", handleKeyDown, true);
       };
     }
-  }, [isSearchFocused]);
+  }, [isSearchFocused, isBCVDrawerOpen]);
 
   const openDialog = () => {
     setIsBCVDrawerOpen(true);
@@ -171,13 +171,13 @@ const BCVDrawer = () => {
         {chapterOptions.map((chapter) => (
           <div
             key={`chapter-${chapter.value}`}
-            className={`h-12 flex items-center justify-center flex-wrap cursor-pointer transition-colors border ${
+            className={`h-12 rounded-full flex items-center justify-center flex-wrap cursor-pointer transition-colors border ${
               chapter.isDisabled
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200 shadow-sm"
-                : "border-gray-200 hover:bg-gray-100 hover:shadow-inner"
+                ? "bg-white text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
+                : "hover:bg-gray-50 border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
             } ${
               selectedChapter?.value === chapter.value && !chapter.isDisabled
-                ? "bg-gray-300 border-gray-200 shadow-inner transform scale-[0.98]"
+                ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
                 : "shadow-sm"
             }`}
             onClick={() =>
@@ -204,10 +204,10 @@ const BCVDrawer = () => {
         {verseOptions.map((verse) => (
           <div
             key={`verse-${verse.value}`}
-            className={`h-12 border border-gray-200 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-100 hover:shadow-inner 
+            className={`h-12 border rounded-full border-gray-200 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-100 hover:shadow-inner 
              ${
                selectedVerse?.value === verse.value
-                 ? "bg-gray-300 border-gray-200 shadow-inner transform scale-[0.98]"
+                 ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
                  : "bg-white shadow-sm"
              }`}
             onClick={() => handleVerseSelect(verse.value)}
@@ -220,54 +220,72 @@ const BCVDrawer = () => {
   };
 
   const renderBookGrid = (books: BookOption[]) => {
+    if (books.length === 0) {
+      return (
+        <div className="w-full flex items-center h-14 text-nowrap ">
+          No matching books found
+        </div>
+      );
+    }
     return (
       <div
         className={`grid ${
           viewMode === "list"
-            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-            : "grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
-        } gap-1 w-full`}
+            ? "grid-cols-1 md:grid-cols-2"
+            : "grid-cols-2 md:grid-cols-4"
+        } gap-4 w-full`}
       >
-        {books.map((book) => (
-          <div
-            key={book.value}
-            className={`h-14 flex items-center justify-between px-4 gap-2 cursor-pointer transition-all duration-150 border ${
-              book.isDisabled
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200 shadow-sm"
-                : "hover:bg-gray-100 border-gray-200 hover:shadow-inner"
-            } ${
-              selectedBook?.value.toLowerCase() === book.value.toLowerCase() &&
-              !book.isDisabled
-                ? "bg-gray-300 border-gray-200 shadow-inner transform scale-[0.98]"
-                : "shadow-sm"
-            }`}
-            onClick={() => handleBookSelect(book)}
-            title={
-              book.isDisabled
-                ? "The videos for this book are not available"
-                : book.label
-            }
-          >
-            {book.image ? (
-              <img
-                src={book.image}
-                alt={book.label}
-                className="w-11 h-11 object-contain"
-              />
-            ) : (
-              <div className="w-11 h-11"></div>
-            )}
-            <span className="text-base text-center">
-              {book.label}
-            </span>
-          </div>
-        ))}
+        {books.map((book) => {
+          const isSelected = selectedBook?.value.toLowerCase() === book.value.toLowerCase();
+
+          if (book.isDisabled) {
+            return (
+              <div
+                key={book.value}
+                className="h-14 rounded-full flex items-center px-4 gap-2 cursor-not-allowed transition-all duration-150 border border-gray-200 shadow-sm"
+                title="The videos for this book are not available"
+              >
+                {book.image ? (
+                  <img
+                    src={book.image}
+                    alt={book.label}
+                    className="w-13 h-13 object-contain opacity-50"
+                  />
+                ) : (
+                  <div className="w-13 h-13 opacity-50"></div>
+                )}
+                <span className="text-base lg:text-lg opacity-50">{book.label}</span>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={book.value}
+              className={`h-14  rounded-full flex items-center px-4 gap-2 cursor-pointer transition-all duration-150 border ${
+                isSelected ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400" : "hover:bg-gray-50 border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
+              }`}
+              onClick={() => handleBookSelect(book)}
+            >
+              {book.image ? (
+                <img
+                  src={book.image}
+                  alt={book.label}
+                  className="w-13 h-13 object-contain"
+                />
+              ) : (
+                <div className="w-13 h-13"></div>
+              )}
+              <span className="text-base lg:text-lg">{book.label}</span>
+            </div>
+          );
+        })}
       </div>
     );
   };
 
   const renderListView = () => (
-    <div className="flex overflow-y-auto max-h-full h-fit gap-4">
+    <div className="flex overflow-y-auto max-h-full h-fit gap-4 pr-1">
       <div className="flex-1">
         <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
         {renderBookGrid(oldTestamentBooks)}
@@ -281,7 +299,7 @@ const BCVDrawer = () => {
   );
 
   const renderGridView = () => (
-    <div className="flex flex-col overflow-y-auto max-h-full h-fit">
+    <div className="flex flex-col overflow-y-auto max-h-full h-fit pr-1">
       <div className="w-full mb-4">
         <h3 className={`font-bold text-lg mb-2`}>OLD TESTAMENT</h3>
         {renderBookGrid(oldTestamentBooks)}
@@ -322,7 +340,7 @@ const BCVDrawer = () => {
           onClick={openDialog}
         >
           {selectedBook?.label ?? "Book"} {selectedChapter?.label ?? "Chapter"}{" "}
-          : {selectedVerse?.label ?? "Verse"}
+          {selectedVerse?.label ? `: ${selectedVerse?.label}` : ""}
         </span>
         <button
           className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
@@ -335,127 +353,84 @@ const BCVDrawer = () => {
       </div>
 
       <Dialog open={isBCVDrawerOpen} onOpenChange={setIsBCVDrawerOpen}>
-        <DialogContent className="sm:max-w-6xl h-[calc(100vh-100px)] flex flex-col [&>button]:hidden">
-          <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 pb-2 border-b">
+        <DialogContent className="sm:max-w-6xl h-[calc(100vh-100px)] flex flex-col [&>button]:hidden pt-3">
+          <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 border-b border-gray-200">
             <div
-              className={`flex gap-1 ${
+              className={`flex items-center border border-gray-200 rounded-sm ${
                 activeView !== "book" ? "invisible" : ""
               }`}
             >
-              <button
-                className={`border border-gray-300 p-2 rounded cursor-pointer transition-colors ${
-                  viewMode === "list"
-                    ? "bg-gray-200 text-gray-800"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
-                onClick={() => setViewMode("list")}
+                <button
+                  className={`p-2 cursor-pointer ${viewMode === "list" ? "bg-gray-100" : ""}`}
+                  onClick={() => setViewMode("list")}
+                  title="List View"
               >
-                <List size={20} />
-              </button>
-              <button
-                className={`border border-gray-300 p-2 rounded cursor-pointer transition-colors ${
-                  viewMode === "grid"
-                    ? "bg-gray-200 text-gray-800"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
-                onClick={() => setViewMode("grid")}
+                  <List size={21} />
+                </button>
+                <div className="w-px h-6 bg-gray-200"></div>
+                <button
+                  className={`p-2 cursor-pointer ${viewMode === "grid" ? "bg-gray-100" : ""}`}
+                  onClick={() => setViewMode("grid")}
+                  title="Grid View"
               >
-                <LayoutGrid size={20} />
-              </button>
+                  <LayoutGrid size={21} />
+                </button>
             </div>
 
-            <div className="max-w-xl w-full mx-auto flex flex-col sm:flex-row justify-center gap-2">
-              <button
-                className={`px-4 py-2 font-semibold cursor-pointer flex-1 rounded-sm ${
-                  activeView === "book"
-                    ? "bg-gray-200 text-gray-800"
-                    : "text-gray-700 hover:bg-gray-100"
-                } ${!selectedBook && activeView === "book" ? "" : ""}`}
-                style={{
-                  backgroundColor:
+            <div className="max-w-xl w-full mx-auto flex flex-row justify-center">
+              <div className="flex w-full justify-center">
+                <button
+                  className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "book"
-                      ? "rgb(229, 231, 235)"
-                      : "rgb(255, 255, 255)",
-                  boxShadow: "rgb(128, 128, 128) 1px 1px 1px 1px",
-                  transition:
-                    "background-color 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), border-color 250ms cubic-bezier(0.4, 0, 0.2, 1), color 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: "rgb(255, 255, 255)",
-                }}
-                onClick={() => setActiveView("book")}
-              >
-                Book
-              </button>
-              <button
-                className={`px-4 py-2 font-semibold cursor-pointer flex-1 rounded-sm ${
-                  activeView === "chapter"
-                    ? "text-gray-800"
-                    : "text-gray-700 hover:bg-gray-100"
-                } ${!selectedBook ? "opacity-50 cursor-not-allowed" : ""}`}
-                style={{
-                  backgroundColor:
+                      ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  }`}
+                  style={{ borderRadius: "10px 10px 0 0" }}
+                  onClick={() => setActiveView("book")}
+                >
+                  Book
+                </button>
+                <button
+                  className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "chapter"
-                      ? "rgb(229, 231, 235)"
-                      : "rgb(255, 255, 255)",
-                  boxShadow: "rgb(128, 128, 128) 1px 1px 1px 1px",
-                  transition:
-                    "background-color 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), border-color 250ms cubic-bezier(0.4, 0, 0.2, 1), color 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: "rgb(255, 255, 255)",
-                }}
-                onClick={() => selectedBook && setActiveView("chapter")}
-                disabled={!selectedBook}
-              >
-                Chapter
-              </button>
-              <button
-                className={`px-4 py-2 font-semibold cursor-pointer flex-1 rounded-sm ${
-                  activeView === "verse"
-                    ? "text-gray-800"
-                    : "text-gray-700 hover:bg-gray-100"
-                } ${
-                  !selectedBook || !selectedChapter || verseOptions.length === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
-                style={{
-                  backgroundColor:
+                      ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
+                      : !selectedBook
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  }`}
+                  style={{ borderRadius: "10px 10px 0 0" }}
+                  onClick={() => selectedBook && setActiveView("chapter")}
+                  disabled={!selectedBook}
+                >
+                  Chapter
+                </button>
+                <button
+                  className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "verse"
-                      ? "rgb(229, 231, 235)"
-                      : "rgb(255, 255, 255)",
-                  boxShadow: "rgb(128, 128, 128) 1px 1px 1px 1px",
-                  transition:
-                    "background-color 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1), border-color 250ms cubic-bezier(0.4, 0, 0.2, 1), color 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: "rgb(255, 255, 255)",
-                }}
-                onClick={() =>
-                  selectedBook && selectedChapter && setActiveView("verse")
-                }
-                disabled={
-                  !selectedBook || !selectedChapter || verseOptions.length === 0
-                }
-              >
-                Verse
-              </button>
+                      ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
+                      : !selectedBook || !selectedChapter || verseOptions.length === 0
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  }`}
+                  style={{ borderRadius: "10px 10px 0 0" }}
+                  onClick={() =>
+                    selectedBook && selectedChapter && setActiveView("verse")
+                  }
+                  disabled={
+                    !selectedBook || !selectedChapter || verseOptions.length === 0
+                  }
+                >
+                  Verse
+                </button>
+              </div>
             </div>
             <div
-              className={`flex items-center justify-end p-2 ${
+              className={`flex items-center justify-end ${
                 activeView !== "book" ? "invisible" : ""
               }`}
             >
               <div
-                className="relative max-w-md rounded-full"
-                style={{
-                  boxShadow:
-                    "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
-                    "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
-                    "rgba(0, 0, 0, 0.12) 0px -1px 4px 0px",
-                  transition: "box-shadow 0.3s ease-in-out",
-                }}
+                className="relative max-w-md rounded-full shadow-sm border border-gray-200"
               >
                 <input
                   type="text"
@@ -466,10 +441,18 @@ const BCVDrawer = () => {
                   onBlur={() => setIsSearchFocused(false)}
                   className="w-full px-4 py-2 focus:outline-none"
                 />
-                <Search
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900"
-                  size={16}
-                />
+                {searchQuery === "" ? (
+                  <Search
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900"
+                    size={16}
+                  />
+                ) : (
+                  <X
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    size={16}
+                    onClick={() => setSearchQuery("")}
+                  />
+                )}
               </div>
             </div>
             <DialogClose className="h-6 w-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100">
@@ -482,13 +465,13 @@ const BCVDrawer = () => {
               (viewMode === "list" ? renderListView() : renderGridView())}
 
             {activeView === "chapter" && (
-              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-4">
                 {renderChapters()}
               </div>
             )}
 
             {activeView === "verse" && (
-              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-4">
                 {renderVerses()}
               </div>
             )}
