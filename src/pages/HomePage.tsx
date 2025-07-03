@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Resizable } from "re-resizable";
 import CustomVideoPlayer from "@/components/CustomVideoPlayer";
 import BibleVerseDisplay from "@/components/BibleVerseDisplay";
@@ -11,6 +11,9 @@ import BCVDrawer from "@/components/BCVDrawer";
 const HomePage: React.FC = () => {
   const [isResizeHandleHovered, setIsResizeHandleHovered] = useState(false);
   const [isResizeHandleActive, setIsResizeHandleActive] = useState(false);
+
+  const touchAreaRef = useRef<HTMLDivElement>(null);
+
   const {
     shouldUseMobileBottomBar,
     isMobilePortrait,
@@ -36,6 +39,45 @@ const HomePage: React.FC = () => {
     isMobileLandscape,
     persistKey: "bible-verse-container-size",
   });
+
+  const isTouchDevice =
+    "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0 ||
+    isMobileLandscape ||
+    isTabletLandscape;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    setIsResizeHandleActive(true);
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      if (e.touches?.[0]) {
+        const touchX = e.touches[0].clientX;
+        const parent = touchAreaRef.current?.parentElement;
+        const rightEdge = parent?.getBoundingClientRect()?.right ?? 0;
+        const newWidth = rightEdge - touchX;
+
+        if (
+          newWidth >= constraints.minWidth &&
+          newWidth <= constraints.maxWidth
+        ) {
+          handleResize({
+            width: newWidth,
+            height: size.height,
+          });
+        }
+      }
+    },
+    [constraints, size.height, handleResize]
+  );
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    setIsResizeHandleActive(false);
+  }, []);
 
   const getLayoutClasses = () => {
     if (shouldUseMobileBottomBar) {
@@ -129,7 +171,8 @@ const HomePage: React.FC = () => {
         opacity: showText ? 1 : 0,
         minWidth: showText ? widthValue : 0,
         maxWidth: showText ? widthValue : 0,
-        transition: isResizing ? "none" : "all 800ms ease-in-out",
+        transition:
+          isResizing || isResizeHandleActive ? "none" : "all 800ms ease-in-out",
       };
     }
   };
@@ -216,12 +259,47 @@ const HomePage: React.FC = () => {
     touchAction: "none",
   });
 
+  const getTouchAreaStyle = () => ({
+    position: "absolute" as const,
+    left: "0px",
+    width: isTouchDevice ? "30px" : "4px",
+    height: "100%",
+    backgroundColor: "transparent",
+    cursor: "ew-resize",
+    zIndex: 25,
+    touchAction: "none",
+  });
+
   const renderRightSideContent = () => {
 
     return (
       <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
-        <BibleVerseDisplay
-        />
+        {isTouchDevice && showText && (
+          <div
+            ref={touchAreaRef}
+            style={getTouchAreaStyle()}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: "0px",
+                width: "4px",
+                height: "100%",
+                backgroundColor: isResizeHandleActive
+                  ? "#3b82f6"
+                  : "transparent",
+                transition: "background-color 200ms ease-in-out",
+                borderLeft: isResizeHandleActive
+                  ? "2px solid #3b82f6"
+                  : "2px solid transparent",
+              }}
+            />
+          </div>
+        )}
+        <BibleVerseDisplay />
       </div>
     );
   };
@@ -308,35 +386,6 @@ const HomePage: React.FC = () => {
                     <div
                       onMouseEnter={() => setIsResizeHandleHovered(true)}
                       onMouseLeave={() => setIsResizeHandleHovered(false)}
-                      onTouchStart={(e) => {
-                        e.preventDefault();
-                        setIsResizeHandleActive(true);
-                      }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        setIsResizeHandleActive(false);
-                      }}
-                      onTouchMove={(e) => {
-                        e.preventDefault();
-                        if (e.touches?.[0]) {
-                          const touchX = e.touches[0].clientX;
-                          const parent =
-                            e.currentTarget.parentElement?.parentElement;
-                          const rightEdge =
-                            parent?.getBoundingClientRect()?.right ?? 0;
-                          const newWidth = rightEdge - touchX;
-
-                          if (
-                            newWidth >= constraints.minWidth &&
-                            newWidth <= constraints.maxWidth
-                          ) {
-                            handleResize({
-                              width: newWidth,
-                              height: size.height,
-                            });
-                          }
-                        }
-                      }}
                       style={getResizeHandleStyle()}
                     />
                   ) : undefined,
