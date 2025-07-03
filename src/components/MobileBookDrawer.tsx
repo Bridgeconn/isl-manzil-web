@@ -531,40 +531,51 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
 
     return (
       <div className={`grid ${gridCols} gap-3`}>
-        {books.map((book) => (
-          <div
-            key={book.value}
-            className={`h-14 rounded-md flex items-center px-2 sm:px-4 gap-1 sm:gap-2 cursor-pointer transition-all duration-150 border ${
-              book.isDisabled
-                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
-                : "border-gray-200 hover:bg-gray-50 hover:shadow-inner hover:transform hover:scale-[0.98]"
-            } ${
-              selectedBook?.value.toLowerCase() === book.value.toLowerCase() &&
-              !book.isDisabled
-                ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98] hover:bg-gray-50"
-                : "shadow-sm"
-            }`}
-            onClick={() => !book.isDisabled && handleBookClick(book)}
-            title={
-              book.isDisabled
-                ? "The videos for this book are not available"
-                : book.label
-            }
-          >
-            {book.image ? (
-              <img
-                src={book.image}
-                alt={book.label}
-                className="w-9 h-9 object-contain"
-              />
-            ) : (
-              <div className="w-9 h-9" />
-            )}
-            <span className="text-sm font-medium leading-tight">
-              {book.label}
-            </span>
-          </div>
-        ))}
+        {books.map((book) =>
+          book.isDisabled ? (
+            <div
+              key={book.value}
+              className="h-10 pt-1 mb-1 rounded-full flex items-center px-2 sm:px-4 gap-1 sm:gap-2 cursor-not-allowed transition-all duration-150 bg-white text-gray-500 border border-gray-200 shadow-sm"
+              title="The videos for this book are not available"
+            >
+              {book.image ? (
+                <img
+                  src={book.image}
+                  alt={book.label}
+                  className="w-9 h-9 object-contain opacity-50"
+                />
+              ) : (
+                <div className="w-9 h-9 opacity-50" />
+              )}
+              <span className="text-sm font-medium leading-tight opacity-50">
+                {book.label}
+              </span>
+            </div>
+          ) : (
+            <div
+              key={book.value}
+              className={`h-10 pt-1 mb-1 rounded-full flex items-center px-2 sm:px-4 gap-1 sm:gap-2 cursor-pointer transition-all duration-150 border border-gray-200 ${
+                selectedBook?.value.toLowerCase() === book.value.toLowerCase()
+                  ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
+                  : "hover:bg-gray-50 hover:shadow-inner hover:transform hover:scale-[0.98]"
+              }`}
+              onClick={() => handleBookClick(book)}
+            >
+              {book.image ? (
+                <img
+                  src={book.image}
+                  alt={book.label}
+                  className="w-9 h-9 object-contain"
+                />
+              ) : (
+                <div className="w-9 h-9" />
+              )}
+              <span className="text-sm font-medium leading-tight">
+                {book.label}
+              </span>
+            </div>
+          )
+        )}
       </div>
     );
   };
@@ -595,7 +606,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
     </div>
   );
 
-  const renderBooks = () => {
+    const renderBooks = () => {
     if (deviceType === "tablet") {
       return viewMode === "list"
         ? renderTabletListView()
@@ -603,47 +614,68 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
     }
 
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {filteredBooks.map((book) => (
-          <div
-            key={book.value}
-            className={`h-14 rounded-md flex items-center pl-2 sm:pl-4 lg:pl-8 gap-1 sm:gap-2 lg:gap-4 cursor-pointer transition-all duration-150 border ${
-              book.isDisabled
-                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
-                : "border-gray-200"
-            } ${
-              selectedBook?.value.toLowerCase() === book.value.toLowerCase() &&
-              !book.isDisabled
-                ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
-                : "shadow-sm"
-            }`}
-            onClick={() => !book.isDisabled && handleBookClick(book)}
-          >
-            {book.image ? (
-              <img
-                src={book.image}
-                alt={book.label}
-                className="w-9 h-9 object-contain"
-              />
-            ) : (
-              <div className="w-9 h-9" />
-            )}
-            <span className="text-sm font-medium leading-tight">
-              {book.label}
-            </span>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pr-2">
+        {filteredBooks.map((book) => {
+          const isSelected = selectedBook?.value.toLowerCase() === book.value.toLowerCase();
+          
+          if (book.isDisabled) {
+            return (
+              <div
+                key={book.value}
+                className="h-10 pt-1 mb-1 rounded-full flex items-center lg:pl-8 gap-1 sm:gap-2 lg:gap-4 cursor-not-allowed transition-all duration-150 bg-white text-gray-500 border border-gray-200 shadow-sm"
+              >
+                {book.image ? (
+                  <img
+                    src={book.image}
+                    alt={book.label}
+                    className="w-9 h-9 object-contain opacity-50"
+                  />
+                ) : (
+                  <div className="w-9 h-9 opacity-50" />
+                )}
+                <span className="text-sm font-medium leading-tight">
+                  {book.label}
+                </span>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={book.value}
+              className={`h-10 pt-1 mb-1 rounded-full flex items-center lg:pl-8 gap-1 sm:gap-2 lg:gap-4 cursor-pointer transition-all duration-150 border border-gray-200 ${
+                isSelected
+                  ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
+                  : "shadow-sm"
+              }`}
+              onClick={() => handleBookClick(book)}
+            >
+              {book.image ? (
+                <img
+                  src={book.image}
+                  alt={book.label}
+                  className="w-9 h-9 object-contain"
+                />
+              ) : (
+                <div className="w-9 h-9" />
+              )}
+              <span className="text-sm font-medium leading-tight">
+                {book.label}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   };
 
   const renderChapters = () => (
-    <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+    <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 pr-2">
       {chapterOptions.map((chapter) => (
         <div
           key={chapter.value}
           onClick={() => !chapter.isDisabled && handleChapterClick(chapter)}
-          className={`h-12 rounded-md text-sm flex items-center justify-center cursor-pointer transition-colors border ${
+          className={`h-10 rounded-full text-sm flex items-center justify-center cursor-pointer transition-colors border ${
             chapter.isDisabled
               ? "bg-white text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
               : "border-gray-200"
@@ -660,12 +692,12 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   );
 
   const renderVerses = () => (
-    <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+    <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 pr-2">
       {verseOptions.map((verse) => (
         <div
           key={verse.value}
           onClick={() => handleVerseClick(verse)}
-          className={`h-12 border rounded-md text-sm border-gray-200 flex items-center justify-center cursor-pointer ${
+          className={`h-10 border rounded-full text-sm border-gray-200 flex items-center justify-center cursor-pointer ${
             selectedVerse?.value === verse.value
               ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
               : "bg-white shadow-sm"
