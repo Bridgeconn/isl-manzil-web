@@ -1,36 +1,98 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, ChevronDown, X } from 'lucide-react';
-import useBibleStore from '@/store/useBibleStore';
-import { BookOption, ChapterOption } from '../types/Navigation';
+import React, { useState, useEffect, useRef } from "react";
+import { Search, X, List, LayoutGrid } from "lucide-react";
+import useBibleStore from "@/store/useBibleStore";
+import { BookOption, ChapterOption, VerseOption } from "../types/Navigation";
+import BookData from "../assets/data/book_codes.json";
+import useDeviceDetection from "@/hooks/useDeviceDetection";
 
 interface MobileBookDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({ isOpen, onClose }) => {
+type ViewType = "Book" | "Chapter" | "Verse";
+type DropdownType = "list" | "grid";
+
+const verseUtils = {
+  normalizeVerse: (verse: string | number) => {
+    return verse.toString().includes("-")
+      ? verse.toString().replace("-", "_")
+      : verse.toString();
+  },
+
+  parseVerseRange: (verseLabel: string | number) => {
+    const label = verseLabel.toString();
+
+    if (/^\d+$/.test(label)) {
+      const num = parseInt(label);
+      return { start: num, end: num, isSingle: true };
+    }
+
+    const rangeMatch = label.match(/^(\d+)[-_](\d+)$/);
+    if (rangeMatch) {
+      return {
+        start: parseInt(rangeMatch[1]),
+        end: parseInt(rangeMatch[2]),
+        isSingle: false,
+      };
+    }
+
+    return null;
+  },
+
+  isVerseInRange: (
+    targetVerse: string | number,
+    verseLabel: string | number
+  ) => {
+    const range = verseUtils.parseVerseRange(verseLabel);
+    if (!range) return false;
+
+    const target = parseInt(targetVerse.toString());
+    if (isNaN(target)) return false;
+
+    return target >= range.start && target <= range.end;
+  },
+};
+
+const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const {
     selectedBook,
     selectedChapter,
+    selectedVerse,
     setBook,
     setChapter,
+    setVerse,
     availableData,
     isLoading,
     isInitialized,
     initializeAvailableData,
     getAvailableChaptersForBook,
+    getAvailableVersesForBookAndChapter,
     loadVideoForCurrentSelection,
+    setCurrentPlayingVerse,
+    getBibleVerseMarker,
+    bibleVerseMarker,
   } = useBibleStore();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [expandedBook, setExpandedBook] = useState<string | null>(null);
+  const { deviceType, isMobileLandscape } = useDeviceDetection();
+
+  const [activeView, setActiveView] = useState<ViewType>("Book");
+  const [viewMode, setViewMode] = useState<DropdownType>("list");
+  const [searchTerm, setSearchTerm] = useState("");
   const [filteredBooks, setFilteredBooks] = useState<BookOption[]>([]);
-  const [chapterOptions, setChapterOptions] = useState<{ [bookCode: string]: ChapterOption[] }>({});
+  const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
+  const [verseOptions, setVerseOptions] = useState<VerseOption[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   const booksListRef = useRef<HTMLDivElement>(null);
-  const selectedBookRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Initialize data
   useEffect(() => {
     if (!isInitialized && !isLoading) {
       initializeAvailableData();
@@ -38,94 +100,582 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({ isOpen, onClose }) 
   }, [isInitialized, isLoading, initializeAvailableData]);
 
   useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredBooks(availableData.books || []);
+    if (selectedBook) {
+      const chapters = getAvailableChaptersForBook(selectedBook.value);
+      setChapterOptions(chapters);
     } else {
-      const filtered = (availableData.books || []).filter(book =>
+      setChapterOptions([]);
+    }
+  }, [selectedBook, getAvailableChaptersForBook]);
+
+  useEffect(() => {
+    if (selectedBook && selectedChapter) {
+      getBibleVerseMarker();
+    }
+  }, [selectedBook, selectedChapter, getBibleVerseMarker]);
+
+  useEffect(() => {
+    if (selectedBook && selectedChapter) {
+      const verses = getAvailableVersesForBookAndChapter(
+        selectedBook.value,
+        selectedChapter.value
+      );
+      setVerseOptions(verses);
+    } else {
+      setVerseOptions([]);
+    }
+  }, [
+    selectedBook,
+    selectedChapter,
+    bibleVerseMarker,
+    getAvailableVersesForBookAndChapter,
+  ]);
+
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredBooks(availableData.books || []);
+      setErrorMessage("");
+    } else {
+      const filtered = (availableData.books || []).filter((book) =>
         book.label.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredBooks(filtered);
+      setErrorMessage("");
     }
   }, [searchTerm, availableData.books]);
 
   useEffect(() => {
-    const newChapterOptions: { [bookCode: string]: ChapterOption[] } = {};
-    availableData.books?.forEach(book => {
-      newChapterOptions[book.value] = getAvailableChaptersForBook(book.value);
-    });
-    setChapterOptions(newChapterOptions);
-  }, [availableData.books, getAvailableChaptersForBook]);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleSearchSubmit();
+      }
+      event.stopPropagation();
+    };
 
-  useEffect(() => {
-    if (isOpen && selectedBook) {
-      setExpandedBook(selectedBook.value);
-      setTimeout(() => {
-        if (selectedBookRef.current && booksListRef.current) {
-          const bookElement = selectedBookRef.current;
-          const container = booksListRef.current;
-          const containerTop = container.scrollTop;
-          const containerBottom = containerTop + container.clientHeight;
-          const elementTop = bookElement.offsetTop;
-          const elementBottom = elementTop + bookElement.clientHeight;
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [isSearchFocused, searchTerm]);
 
-          if (elementTop < containerTop || elementBottom > containerBottom) {
-            bookElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }
-      }, 300);
+  const oldTestamentBooks = filteredBooks.filter((book) => book.bookId <= 39);
+  const newTestamentBooks = filteredBooks.filter((book) => book.bookId >= 40);
+
+  oldTestamentBooks.sort((a, b) => a.bookId - b.bookId);
+  newTestamentBooks.sort((a, b) => a.bookId - b.bookId);
+
+  const findBook = (searchTerm: string) => {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+
+    const mappedBookName = BookData.find(
+      (book) =>
+        book.book.toLowerCase() === lowerSearchTerm ||
+        book.bookCode.toLowerCase() === lowerSearchTerm
+    );
+
+    if (mappedBookName) {
+      return availableData.books.find(
+        (book) => book.label.toLowerCase() === mappedBookName.book.toLowerCase()
+      );
     }
-  }, [isOpen, selectedBook]);
 
-  useEffect(() => {
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (isSearchFocused) {
-          event.stopPropagation();
-        }
+    return availableData.books.find(
+      (book) =>
+        book.label.toLowerCase() === lowerSearchTerm ||
+        book.value.toLowerCase() === lowerSearchTerm
+    );
+  };
+
+  const findVerseInAvailableVerses = (
+    availableVerses: VerseOption[],
+    targetVerse: string
+  ) => {
+    return availableVerses.find((v) => {
+      const normalizedVerseValue = verseUtils.normalizeVerse(
+        v.value.toString()
+      );
+      const normalizedVerseLabel = verseUtils.normalizeVerse(v.label);
+      targetVerse = verseUtils.normalizeVerse(targetVerse);
+
+      if (
+        normalizedVerseLabel.toLowerCase() === targetVerse.toLowerCase() ||
+        normalizedVerseValue === targetVerse
+      ) {
+        return true;
+      }
+
+      return verseUtils.isVerseInRange(targetVerse, v.label);
+    });
+  };
+
+  const parseBCV = (input: string) => {
+    if (!input || input.trim() === "") {
+      return {
+        error: "Invalid format. Use: John 3:16 or Genesis 1",
       };
-  
-      if (isSearchFocused) {
-        document.addEventListener("keydown", handleKeyDown, true);
-        return () => {
-          document.removeEventListener("keydown", handleKeyDown, true);
+    }
+
+    let cleanInput = input.trim();
+
+    if (cleanInput.includes(":")) {
+      cleanInput = cleanInput.replace(/\s*:\s*/g, ":");
+      const colonParts = cleanInput.split(":");
+
+      if (colonParts.length !== 2) {
+        return {
+          error: "Invalid format. Use: John 3:16 or Genesis 1",
         };
       }
-    }, [isSearchFocused]);
-  
 
-  const handleBookClick = (book: BookOption) => {
-    if (book.isDisabled) return;
-    
-    if (expandedBook === book.value) {
-      setExpandedBook(null);
+      const bookAndChapter = colonParts[0];
+      const verseStr = colonParts[1].trim();
+      const verseNum = verseStr !== "Intro" ? parseInt(verseStr, 10) : 0;
+
+      if (isNaN(verseNum)) {
+        return {
+          error: "Invalid format. Use: John 3:16 or Genesis 1",
+        };
+      }
+
+      const parts = bookAndChapter.trim().split(/\s+/);
+
+      if (parts.length < 2) {
+        return {
+          error: "Invalid format. Use: John 3:16 or Genesis 1",
+        };
+      }
+
+      const chapterStr = parts[parts.length - 1];
+      const chapterNum = chapterStr !== "Intro" ? parseInt(chapterStr, 10) : 0;
+
+      if (isNaN(chapterNum)) {
+        return {
+          error: "Invalid format. Use: John 3:16 or Genesis 1",
+        };
+      }
+
+      const bookParts = parts.slice(0, -1);
+      const bookStr = bookParts.join(" ");
+
+      const foundBook = findBook(bookStr);
+
+      if (!foundBook) {
+        return { error: "Book not found" };
+      }
+
+      return {
+        book: foundBook,
+        chapter: chapterNum,
+        verse: verseNum,
+        isValid: true,
+      };
+    }
+
+    const parts = cleanInput.split(/\s+/);
+
+    if (parts.length < 2) {
+      return {
+        error: "Invalid format. Use: John 3:16 or Genesis 1",
+      };
+    }
+
+    let bookStr: string;
+    let chapterStr: string;
+    let verseStr: string | null = null;
+
+    if (parts.length === 2) {
+      bookStr = parts[0];
+      chapterStr = parts[1];
+    } else if (parts.length === 3) {
+      const firstPart = parts[0];
+      const secondPart = parts[1];
+      const thirdPart = parts[2];
+
+      if (/^\d+$/.test(firstPart) && !/^\d+$/.test(secondPart)) {
+        bookStr = `${firstPart} ${secondPart}`;
+        chapterStr = thirdPart;
+      } else {
+        bookStr = firstPart;
+        chapterStr = secondPart;
+        verseStr = thirdPart;
+      }
+    } else if (parts.length === 4) {
+      const firstPart = parts[0];
+      const secondPart = parts[1];
+      const thirdPart = parts[2];
+      const fourthPart = parts[3];
+
+      if (/^\d+$/.test(firstPart)) {
+        bookStr = `${firstPart} ${secondPart}`;
+        chapterStr = thirdPart;
+        verseStr = fourthPart;
+      } else {
+        return {
+          error: "Invalid format. Use: John 3:16 or Genesis 1",
+        };
+      }
     } else {
-      setExpandedBook(book.value);
+      return {
+        error: "Invalid format. Use: John 3:16 or Genesis 1",
+      };
+    }
+
+    const chapterNum = chapterStr !== "Intro" ? parseInt(chapterStr, 10) : 0;
+    if (isNaN(chapterNum)) {
+      return {
+        error: "Invalid format. Use: John 3:16 or Genesis 1",
+      };
+    }
+
+    let verseNum: string | null = null;
+    if (verseStr) {
+      verseNum = verseStr !== "Intro" ? verseStr : "0";
+    }
+
+    const foundBook = findBook(bookStr);
+
+    if (!foundBook) {
+      return { error: "Book not found" };
+    }
+
+    return {
+      book: foundBook,
+      chapter: chapterNum,
+      verse: verseNum,
+      isValid: true,
+    };
+  };
+
+  const handleSearchSubmit = async () => {
+    if (!searchTerm.trim()) return;
+
+    const parseResult = parseBCV(searchTerm);
+
+    if (!parseResult.isValid) {
+      setErrorMessage(parseResult.error ?? "Invalid Bible reference");
+      return;
+    }
+
+    await handleBibleReferenceSearch(searchTerm);
+  };
+
+  const handleBibleReferenceSearch = async (searchInput: string) => {
+    setIsSearching(true);
+    setErrorMessage("");
+
+    try {
+      const parseResult = parseBCV(searchInput);
+
+      if (!parseResult.isValid) {
+        setErrorMessage(parseResult.error ?? "");
+        return;
+      }
+
+      const { book, chapter, verse } = parseResult;
+
+      // Validate chapter
+      const availableChapters = getAvailableChaptersForBook(book.value);
+      const foundChapter = availableChapters.find((ch) => ch.value === chapter);
+
+      if (!foundChapter || foundChapter.isDisabled) {
+        setErrorMessage("Chapter not found");
+        return;
+      }
+
+      // Validate verse if provided
+      if (verse !== null) {
+        const availableVerses = getAvailableVersesForBookAndChapter(
+          book.value,
+          chapter
+        );
+        const foundVerse = findVerseInAvailableVerses(
+          availableVerses,
+          verse.toString()
+        );
+
+        if (!foundVerse) {
+          setErrorMessage("Verse not found");
+          return;
+        }
+      }
+
+      // Navigate to the reference
+      const isBookChange = !selectedBook || selectedBook.value !== book.value;
+      const isChapterChange =
+        !selectedChapter || selectedChapter.value !== chapter;
+
+      if (isBookChange) {
+        setBook(book);
+      }
+
+      if (isChapterChange || isBookChange) {
+        setChapter(foundChapter);
+      }
+
+      if (verse !== null) {
+        const delay = isBookChange
+          ? 800
+          : isChapterChange || isBookChange
+          ? 500
+          : 150;
+        setTimeout(() => {
+          const availableVerses = getAvailableVersesForBookAndChapter(
+            book.value,
+            chapter
+          );
+          const foundVerse = findVerseInAvailableVerses(
+            availableVerses,
+            verse.toString()
+          );
+
+          if (foundVerse) {
+            setVerse(foundVerse);
+            setCurrentPlayingVerse(foundVerse.label);
+            setActiveView("Verse");
+          }
+        }, delay);
+      } else {
+        setActiveView("Chapter");
+      }
+
+      setSearchTerm("");
+      setErrorMessage("");
+      onClose();
+
+      setTimeout(() => {
+        loadVideoForCurrentSelection();
+      }, 100);
+    } catch (error) {
+      console.error("Search error:", error);
+      setErrorMessage("An error occurred while searching");
+    } finally {
+      setIsSearching(false);
     }
   };
 
-  const handleChapterClick = (book: BookOption, chapter: ChapterOption) => {
-    if (chapter.isDisabled) return;
-    
+  const handleBookClick = (book: BookOption) => {
+    if (book.isDisabled) return;
+
     setBook(book);
+    setActiveView("Chapter");
+  };
+
+  const handleChapterClick = (chapter: ChapterOption) => {
+    if (chapter.isDisabled) return;
+
     setChapter(chapter);
-    
+    setActiveView("Verse");
+
+    setTimeout(() => {
+      loadVideoForCurrentSelection();
+    }, 100);
+  };
+
+  const handleVerseClick = (verse: VerseOption) => {
+    setVerse(verse);
+    setCurrentPlayingVerse(verse.label);
+
     onClose();
-    setExpandedBook(null);
-    setSearchTerm('');
-    
+
     setTimeout(() => {
       loadVideoForCurrentSelection();
     }, 100);
   };
 
   const clearSearch = () => {
-    setSearchTerm('');
+    setSearchTerm("");
+    setErrorMessage("");
   };
 
   const handleClose = () => {
     onClose();
-    setExpandedBook(null);
-    setSearchTerm('');
+    setSearchTerm("");
+    setErrorMessage("");
+    setActiveView("Book");
   };
+
+  const handleTabClick = (tab: ViewType) => {
+    if (tab === "Book") {
+      setActiveView("Book");
+    } else if (tab === "Chapter" && selectedBook) {
+      setActiveView("Chapter");
+    } else if (
+      tab === "Verse" &&
+      selectedBook &&
+      selectedChapter &&
+      verseOptions.length > 0
+    ) {
+      setActiveView("Verse");
+    }
+  };
+
+  const handleSearchButtonClick = () => {
+    handleSearchSubmit();
+  };
+
+  const renderBookGrid = (books: BookOption[]) => {
+    if (books.length === 0) {
+      return (
+        <div className="w-full flex items-center h-14 text-nowrap">
+          No matching books found
+        </div>
+      );
+    }
+    const gridCols =
+      deviceType === "tablet"
+        ? viewMode === "list"
+          ? "grid-cols-2"
+          : "grid-cols-4"
+        : "grid-cols-2 sm:grid-cols-4";
+
+    return (
+      <div className={`grid ${gridCols} gap-3`}>
+        {books.map((book) => (
+          <div
+            key={book.value}
+            className={`h-14 rounded-md flex items-center px-2 sm:px-4 gap-1 sm:gap-2 cursor-pointer transition-all duration-150 border ${
+              book.isDisabled
+                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
+                : "border-gray-200 hover:bg-gray-50 hover:shadow-inner hover:transform hover:scale-[0.98]"
+            } ${
+              selectedBook?.value.toLowerCase() === book.value.toLowerCase() &&
+              !book.isDisabled
+                ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98] hover:bg-gray-50"
+                : "shadow-sm"
+            }`}
+            onClick={() => !book.isDisabled && handleBookClick(book)}
+            title={
+              book.isDisabled
+                ? "The videos for this book are not available"
+                : book.label
+            }
+          >
+            {book.image ? (
+              <img
+                src={book.image}
+                alt={book.label}
+                className="w-9 h-9 object-contain"
+              />
+            ) : (
+              <div className="w-9 h-9" />
+            )}
+            <span className="text-sm font-medium leading-tight">
+              {book.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderTabletListView = () => (
+    <div className="flex overflow-y-auto max-h-full h-fit gap-4 pr-1">
+      <div className="flex-1">
+        <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
+        {renderBookGrid(oldTestamentBooks)}
+      </div>
+      <div className="flex-1">
+        <h3 className="font-bold text-lg text-center mb-2">NEW TESTAMENT</h3>
+        {renderBookGrid(newTestamentBooks)}
+      </div>
+    </div>
+  );
+
+  const renderTabletGridView = () => (
+    <div className="flex flex-col overflow-y-auto max-h-full h-fit pr-1">
+      <div className="w-full mb-4">
+        <h3 className="font-bold text-lg mb-2">OLD TESTAMENT</h3>
+        {renderBookGrid(oldTestamentBooks)}
+      </div>
+      <div className="w-full">
+        <h3 className="font-bold text-lg mb-2">NEW TESTAMENT</h3>
+        {renderBookGrid(newTestamentBooks)}
+      </div>
+    </div>
+  );
+
+  const renderBooks = () => {
+    if (deviceType === "tablet") {
+      return viewMode === "list"
+        ? renderTabletListView()
+        : renderTabletGridView();
+    }
+
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {filteredBooks.map((book) => (
+          <div
+            key={book.value}
+            className={`h-14 rounded-md flex items-center pl-2 sm:pl-4 lg:pl-8 gap-1 sm:gap-2 lg:gap-4 cursor-pointer transition-all duration-150 border ${
+              book.isDisabled
+                ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
+                : "border-gray-200"
+            } ${
+              selectedBook?.value.toLowerCase() === book.value.toLowerCase() &&
+              !book.isDisabled
+                ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
+                : "shadow-sm"
+            }`}
+            onClick={() => !book.isDisabled && handleBookClick(book)}
+          >
+            {book.image ? (
+              <img
+                src={book.image}
+                alt={book.label}
+                className="w-9 h-9 object-contain"
+              />
+            ) : (
+              <div className="w-9 h-9" />
+            )}
+            <span className="text-sm font-medium leading-tight">
+              {book.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderChapters = () => (
+    <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+      {chapterOptions.map((chapter) => (
+        <div
+          key={chapter.value}
+          onClick={() => !chapter.isDisabled && handleChapterClick(chapter)}
+          className={`h-12 rounded-md text-sm flex items-center justify-center cursor-pointer transition-colors border ${
+            chapter.isDisabled
+              ? "bg-white text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
+              : "border-gray-200"
+          } ${
+            selectedChapter?.value === chapter.value && !chapter.isDisabled
+              ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
+              : "shadow-sm"
+          }`}
+        >
+          {chapter.label}
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderVerses = () => (
+    <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+      {verseOptions.map((verse) => (
+        <div
+          key={verse.value}
+          onClick={() => handleVerseClick(verse)}
+          className={`h-12 border rounded-md text-sm border-gray-200 flex items-center justify-center cursor-pointer ${
+            selectedVerse?.value === verse.value
+              ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
+              : "bg-white shadow-sm"
+          }`}
+        >
+          {verse.label}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <>
@@ -136,126 +686,144 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({ isOpen, onClose }) 
         />
       )}
 
-      <div className={`fixed inset-0 z-50 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
-        isOpen ? 'translate-y-0' : 'translate-y-full'
-      }`}>
+      <div
+        className={`fixed inset-0 z-50 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
+          isOpen ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
         <div className="px-6 py-4 h-full overflow-hidden flex flex-col">
           <div className="flex justify-center mb-4">
             <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
           </div>
 
-          <div className="relative mb-6 pr-1">
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <Search size={20} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search books..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-              className="w-full pl-12 pr-10 py-3 border-2 rounded-2xl focus:border-[var(--indigo-color)] focus:outline-none text-gray-700 placeholder-gray-400"
-            />
-            {searchTerm && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X size={20} />
-              </button>
-            )}
-          </div>
-
-          {/* Books List */}
-          <div ref={booksListRef} className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
-            {filteredBooks.length === 0 ? (
-              <div className="flex items-center justify-center h-full min-h-[200px] text-gray-500">
-                {searchTerm ? `No books found matching "${searchTerm}"` : 'No books available'}
-              </div>
-            ) : (
-              filteredBooks.map((book) => (
-                <div 
-                  key={book.value} 
-                  ref={selectedBook?.value === book.value ? selectedBookRef : null}
-                  className="border-2 rounded-xl overflow-hidden"
+          <div className="flex items-center gap-3 mb-4">
+            {deviceType === "tablet" && activeView === "Book" && (
+              <div className="flex items-center border border-gray-200 rounded-sm">
+                <button
+                  className={`p-2 cursor-pointer ${
+                    viewMode === "list" ? "bg-gray-100" : ""
+                  }`}
+                  onClick={() => setViewMode("list")}
                 >
-                  <button
-                    onClick={() => handleBookClick(book)}
-                    disabled={book.isDisabled}
-                    className={`w-full flex items-center justify-between p-2 transition-colors duration-200 ${
-                      book.isDisabled 
-                        ? 'opacity-50 cursor-not-allowed' 
-                        : 'hover:bg-[var(--indigo-color)]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {book.image ? (
-                        <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                          <img
-                            src={book.image}
-                            alt={book.label}
-                            className="w-10 h-10 object-contain"
-                          />
-                        </div>
-                      ): (
-                        <div className='w-10 h-10' />
-                      )}
-                      <span className={`font-medium text-left ${
-                        book.isDisabled ? 'text-gray-400' : 'text-gray-700'
-                      }`}>
-                        {book.label}
-                      </span>
-                    </div>
-                    {!book.isDisabled && (
-                      <ChevronDown
-                        size={20}
-                        className={`text-[var(--indigo-color)]-500 transition-transform duration-200 ${
-                          expandedBook === book.value ? 'rotate-180' : ''
-                        }`}
-                      />
-                    )}
-                  </button>
-
-                  {/* Chapters Grid */}
-                  {expandedBook === book.value && chapterOptions[book.value] && (
-                    <div className="px-4 pb-4 border-t">
-                      <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 mt-3">
-                        {chapterOptions[book.value].map((chapter) => {
-                          const isSelected = selectedBook?.value === book.value && selectedChapter?.value === chapter.value;
-                          
-                          return (
-                            <button
-                              key={chapter.value}
-                              onClick={() => handleChapterClick(book, chapter)}
-                              disabled={chapter.isDisabled}
-                              className={`py-2 px-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                                chapter.isDisabled
-                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                  : isSelected
-                                    ? 'bg-[var(--indigo-color)] text-white font-bold'
-                                    : 'bg-white text-[var(--indigo-color)]-500 hover:bg-[var(--indigo-color)] hover:text-white border border-[var(--indigo-color)]'
-                              }`}
-                            >
-                              {chapter.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
+                  <List size={21} />
+                </button>
+                <div className="w-px h-6 bg-gray-200"></div>
+                <button
+                  className={`p-2 cursor-pointer ${
+                    viewMode === "grid" ? "bg-gray-100" : ""
+                  }`}
+                  onClick={() => setViewMode("grid")}
+                >
+                  <LayoutGrid size={21} />
+                </button>
+              </div>
             )}
-          </div>
 
-          <div className="pt-4 flex-shrink-0">
+            <div className="flex-1 relative">
+              <button
+                onClick={handleSearchButtonClick}
+                disabled={isSearching}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors"
+              >
+                <Search size={20} />
+              </button>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder={`${
+                  deviceType === "tablet" || isMobileLandscape
+                    ? "Search books or Bible reference (e.g., John 3:16)..."
+                    : "Search books"
+                }`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+                className="w-full pl-12 pr-10 py-3 border-2 rounded-full focus:border-gray-400 focus:outline-none text-gray-700 placeholder-gray-400"
+                disabled={isSearching}
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  disabled={isSearching}
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
             <button
               onClick={handleClose}
-              className="w-full py-3 bg-[var(--indigo-color)] text-white rounded-xl font-medium"
+              className="p-2 text-gray-500 rounded-full"
             >
-              Close
+              <X size={24} />
             </button>
+          </div>
+
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{errorMessage}</p>
+            </div>
+          )}
+
+          <div className="flex mb-6 bg-gray-100 rounded-xl p-1">
+            {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {
+              const isDisabled =
+                (tab === "Chapter" && !selectedBook) ||
+                (tab === "Verse" &&
+                  (!selectedBook ||
+                    !selectedChapter ||
+                    verseOptions.length === 0));
+
+              return (
+                <button
+                  key={tab}
+                  onClick={() => !isDisabled && handleTabClick(tab)}
+                  disabled={isDisabled}
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm lg:text-base font-medium transition-colors duration-200 ${
+                    activeView === tab
+                      ? "text-gray-900 border-b-2 border-gray-900 bg-gray-50"
+                      : isDisabled
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
+
+          <div ref={booksListRef} className="flex-1 min-h-0 overflow-y-auto">
+            {activeView === "Book" &&
+              (filteredBooks.length === 0 ? (
+                <div className="flex items-center justify-center h-full min-h-[200px] text-gray-500">
+                  {searchTerm
+                    ? `No books found matching "${searchTerm}"`
+                    : "No books available"}
+                </div>
+              ) : (
+                renderBooks()
+              ))}
+
+            {activeView === "Chapter" &&
+              (chapterOptions.length === 0 ? (
+                <div className="flex items-center justify-center h-full min-h-[200px] text-gray-500">
+                  No chapters available
+                </div>
+              ) : (
+                renderChapters()
+              ))}
+
+            {activeView === "Verse" &&
+              (verseOptions.length === 0 ? (
+                <div className="flex items-center justify-center h-full min-h-[200px] text-gray-500">
+                  No verses available
+                </div>
+              ) : (
+                renderVerses()
+              ))}
           </div>
         </div>
       </div>
