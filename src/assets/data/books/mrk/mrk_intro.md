@@ -1,4 +1,4 @@
-## An introduction to the GOSPEL OF MARK
+## An introduction to the Gospel of Mark
 1. The Gospel of Mark consists of 16 chapters, written by John Mark. According to the testimony of the early church fathers, John Mark is an associate of the apostles. He was able to learn about the life of Jesus directly from apostle Peter and wrote in large part on the information given by him.
 
 2. Mark was the son of Mary, cousin of Barnabas, and a colleague of the Apostle Paul.

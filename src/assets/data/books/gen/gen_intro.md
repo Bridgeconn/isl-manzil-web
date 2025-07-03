@@ -1,4 +1,4 @@
-## AN INTRODUCTION TO THE BOOK OF GENESIS
+## An introduction to the Book of Genesis
 
 Genesis which means beginning. It tells the story of how the world began and how God created all things, including animals of different kind and human beings both male and female.
 

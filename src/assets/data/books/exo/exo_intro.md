@@ -1,4 +1,4 @@
-## INTRODUCTION TO THE BOOK OF EXODUS
+## An introduction to the Book of Exodus
 
 The name of the book is Exodus which means departure. In the book of Exodus, the author describes Jacob and his family continuing to live in the region of Goshen which is in Egypt. Later, Pharaoh, king of Egypt made the Israelites enslaved, oppressed, suffered, and worked hard. But all this while, we could learn that God shows His faithfulness, power, love, holiness to the people. He made a covenant with the people of Israelites. This book is written by Moses. He was adopted by one of Pharaoh’s daughters. And as he grew up, he was well educated and well qualified in the house of the Pharaoh.
 

@@ -1,4 +1,4 @@
-## AN INTRODUCTION TO THE EPISTLE OF TITUS
+## An introduction to the Epistle of Titus
 
 The book of Titus in the Bible is a letter written by Paul to Titus consisting of three chapters. Titus was a Gentile and a Co-worker of the apostle Paul among the non-Jewish people. In this letter, Paul called himself as servant of God and the Apostle of Christ. Apostle Paul accompanied Titus to the Crete Island which is the largest Island in the country of Greece. The reason Paul left Titus in Crete Island is to complete the unfinished work for the Churches.
 
