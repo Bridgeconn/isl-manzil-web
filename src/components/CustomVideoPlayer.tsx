@@ -1847,8 +1847,7 @@ const CustomVideoPlayer = () => {
               : ""
           }`}
           style={{
-            aspectRatio:
-              isFullscreen || shouldUseMobileBottomBar ? "unset" : "16/9",
+            aspectRatio: "16/9",
             maxHeight:
               isFullscreen &&
               (shouldUseMobileBottomBar ||
