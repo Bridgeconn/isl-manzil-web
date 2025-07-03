@@ -40,12 +40,6 @@ const HomePage: React.FC = () => {
     persistKey: "bible-verse-container-size",
   });
 
-  const shouldShowContent = !(
-    selectedBook &&
-    selectedChapter?.value === 0 &&
-    !isIntroDataAvailable
-  );
-
   const isTouchDevice =
     "ontouchstart" in window ||
     navigator.maxTouchPoints > 0 ||
@@ -305,7 +299,7 @@ const HomePage: React.FC = () => {
             />
           </div>
         )}
-        <BibleVerseDisplay setIsIntroDataAvailable={setIsIntroDataAvailable} />
+        <BibleVerseDisplay />
       </div>
     );
   };
