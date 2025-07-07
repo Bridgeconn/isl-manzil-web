@@ -68,6 +68,25 @@
   color: inherit !important;
 }
 
+.prose-themed h1,
+.prose-themed h2,
+.prose-themed h3,
+.prose-themed h4,
+.prose-themed h5,
+.prose-themed h6 {
+  margin-top: 0 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose-themed p{
+  margin-bottom: 0 !important;
+  margin-top: 0.25rem !important;
+}
+
+.prose-themed ol{
+  margin-bottom: 0 !important;
+}
+
 .settings-open .video-player-container {
   pointer-events: none;
 }
