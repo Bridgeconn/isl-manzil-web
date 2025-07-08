@@ -79,39 +79,48 @@ const BCVDrawer = () => {
   }, [selectedBook, selectedChapter, getBibleVerseMarker]);
 
   useEffect(() => {
-  const fetchVerses = async () => {
-    if (selectedBook && selectedChapter) {
-      try {
-        const verses = await getAvailableVersesForBookAndChapter(
-          selectedBook.value,
-          selectedChapter.value
-        );
-        setVerseOptions(verses);
-      } catch (error) {
-        console.error('Error fetching verses:', error);
+    const fetchVerses = async () => {
+      if (selectedBook && selectedChapter) {
+        try {
+          const verses = await getAvailableVersesForBookAndChapter(
+            selectedBook.value,
+            selectedChapter.value
+          );
+          setVerseOptions(verses);
+        } catch (error) {
+          console.error("Error fetching verses:", error);
+          setVerseOptions([]);
+        }
+      } else {
         setVerseOptions([]);
       }
-    } else {
-      setVerseOptions([]);
-    }
-  };
+    };
 
-  fetchVerses();
-}, [
-  selectedBook,
-  selectedChapter,
-  bibleVerseMarker,
-  getAvailableVersesForBookAndChapter,
-]);
+    fetchVerses();
+  }, [
+    selectedBook,
+    selectedChapter,
+    bibleVerseMarker,
+    getAvailableVersesForBookAndChapter,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isSearchFocused || isBCVDrawerOpen) {
-        if (event.key === "Enter" && isSearchFocused) {
-          event.preventDefault();
-          handleSearchSubmit();
+      if (isBCVDrawerOpen) {
+        if (isSearchFocused) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            handleSearchSubmit();
+          }
+          event.stopPropagation();
+          return;
         }
-        event.stopPropagation();
+
+        const videoPlayerKeys = ["f", " ", "ArrowLeft", "ArrowRight"];
+        if (videoPlayerKeys.includes(event.key)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
       }
     };
 
@@ -204,7 +213,7 @@ const BCVDrawer = () => {
           : isChapterChange || isBookChange
           ? 500
           : 150;
-        setTimeout(async() => {
+        setTimeout(async () => {
           const availableVerses = await getAvailableVersesForBookAndChapter(
             book!.value,
             chapter!
