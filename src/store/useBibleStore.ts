@@ -60,13 +60,17 @@ interface BibleStore {
   getAvailableVersesForBookAndChapter: (
     bookCode: string,
     chapter: number
-  ) => VerseOption[];
+  ) => Promise<VerseOption[]>;
   getVideoIdByBookAndChapter: (
     book: string,
     chapter: number
   ) => Promise<number | null>;
   loadVideoForCurrentSelection: () => void;
   getBibleVerseMarker: () => Promise<VerseMarkerType[] | null>;
+  getBibleVerseMarkerForBookAndChapter: (
+    bookLabel: string,
+    chapter: number
+  ) => Promise<VerseMarkerType[] | null>;
   findVerseMarkerForVerse: (verseNumber: number) => VerseMarkerType | null;
   isVerseInRange: (verseNumber: number, verseRange: string) => boolean;
 }
@@ -158,7 +162,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     // Auto-set first verse when chapter changes
     if (chapter && get().selectedBook) {
       await get().getBibleVerseMarker();
-      const availableVerses = get().getAvailableVersesForBookAndChapter(
+      const availableVerses = await get().getAvailableVersesForBookAndChapter(
         get().selectedBook!.value,
         chapter.value
       );
@@ -167,7 +171,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       } else {
         get().setVerse(null);
       }
-     } else {
+    } else {
       get().setVerse(null);
     }
   },
@@ -361,11 +365,75 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     return [introChapter, ...allChapters];
   },
 
-  getAvailableVersesForBookAndChapter: (
+  getBibleVerseMarkerForBookAndChapter: async (
+    bookLabel: string,
+    chapter: number
+  ): Promise<VerseMarkerType[] | null> => {
+    if (chapter === 0) {
+      return [];
+    }
+
+    try {
+      const csvFiles = import.meta.glob(
+        "/src/assets/data/verse_markers/*.csv",
+        {
+          query: "?raw",
+          import: "default",
+        }
+      );
+
+      const filePath = `/src/assets/data/verse_markers/${bookLabel}_${chapter}.csv`;
+
+      if (!csvFiles[filePath]) {
+        console.warn(
+          `Verse marker file not found: ${bookLabel}_${chapter}.csv`
+        );
+        return [];
+      }
+
+      const csvText = (await csvFiles[filePath]()) as string;
+      const parsedData = await Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+      });
+
+      const formattedVerseMarkerData: VerseMarkerType[] = parsedData.data.map(
+        (row: any, index) => {
+          return {
+            id: index + 1,
+            verse: row.verse.toString().trim() || "",
+            time: row.time.toString().trim() || "",
+          };
+        }
+      );
+
+      const isIntroAvailable = formattedVerseMarkerData.some((v) =>
+        ["00:00:00:00", "00:00:00", "0:00:00"].includes(v.time)
+      );
+
+      if (!isIntroAvailable) {
+        const introVerse = {
+          id: 0,
+          verse: "Intro",
+          time: "00:00:00:00",
+        };
+        return [introVerse, ...formattedVerseMarkerData];
+      } else {
+        return formattedVerseMarkerData;
+      }
+    } catch (err) {
+      console.error(
+        `Failed to load verse markers for ${bookLabel}_${chapter}:`,
+        err
+      );
+      return null;
+    }
+  },
+
+  getAvailableVersesForBookAndChapter: async (
     bookCode: string,
     chapter: number
-  ): VerseOption[] => {
-    const { bibleVerseMarker } = get();
+  ): Promise<VerseOption[]> => {
     const bookCodeUpper = bookCode.toUpperCase();
     const chapterIndex = chapter - 1;
 
@@ -376,7 +444,17 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     const maxVerses = parseInt(
       typedVersificationData.maxVerses[bookCodeUpper]?.[chapterIndex] || "0"
     );
-
+    const bookData = bookCodesData.find(
+      (book) => book.bookCode.toLowerCase() === bookCode.toLowerCase()
+    );
+    if (!bookData) {
+      console.warn(`Book not found for code: ${bookCode}`);
+      return [];
+    }
+    const bibleVerseMarker = await get().getBibleVerseMarkerForBookAndChapter(
+      bookData.book,
+      chapter
+    );
     if (bibleVerseMarker && bibleVerseMarker.length > 0) {
       const verseOptions: VerseOption[] = [];
       const processedVerses = new Set<number>();
@@ -536,62 +614,19 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       set({ bibleVerseMarker: [], currentPlayingVerse: null });
       return null;
     }
-    try {
-      const csvFiles = import.meta.glob(
-        "/src/assets/data/verse_markers/*.csv",
-        {
-          query: "?raw",
-          import: "default",
-        }
-      );
-      const filePath = `/src/assets/data/verse_markers/${selectedBook.label}_${selectedChapter.value}.csv`;
-      if (!csvFiles[filePath]) {
-        set({ bibleVerseMarker: [], currentPlayingVerse: null });
-        console.warn(
-          `Verse marker file not found: ${selectedBook.label}_${selectedChapter.value}.csv`
-        );
-        return [];
-      }
-      const csvText = (await csvFiles[filePath]()) as string;
-      const parsedData = await Papa.parse(csvText, {
-        header: true,
-        skipEmptyLines: true,
-      });
-      const formattedVerseMarkerData: VerseMarkerType[] = parsedData.data.map(
-        (row: any, index) => {
-          return {
-            id: index + 1,
-            verse: row.verse.toString().trim() || "",
-            time: row.time.toString().trim() || "",
-          };
-        }
-      );
-      const isIntroAvailable = formattedVerseMarkerData.some((v) =>
-        ["00:00:00:00", "00:00:00", "0:00:00"].includes(v.time)
-      );
-      if (!isIntroAvailable) {
-        const introVerse = {
-          id: 0,
-          verse: "Intro",
-          time: "00:00:00:00",
-        };
-        set({
-          bibleVerseMarker: [introVerse, ...formattedVerseMarkerData],
-          currentPlayingVerse: null,
-        });
-        return [introVerse, ...formattedVerseMarkerData];
-      } else {
-        set({
-          bibleVerseMarker: formattedVerseMarkerData,
-          currentPlayingVerse: null,
-        });
-        return formattedVerseMarkerData;
-      }
-    } catch (err) {
-      console.error(`Failed to load verse markers:`, err);
-      set({ bibleVerseMarker: [], currentPlayingVerse: null });
-      return null;
-    }
+
+    const verseMarkers = await get().getBibleVerseMarkerForBookAndChapter(
+      selectedBook.label,
+      selectedChapter.value
+    );
+
+    // Update the store state with the fetched data
+    set({
+      bibleVerseMarker: verseMarkers || [],
+      currentPlayingVerse: null,
+    });
+
+    return verseMarkers;
   },
   seekToVerse: async (verse: string) => {
     const { bibleVerseMarker } = get();

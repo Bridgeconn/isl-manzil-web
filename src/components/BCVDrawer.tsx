@@ -19,6 +19,11 @@ import { BookOption } from "@/types/Navigation";
 import { ChapterOption } from "@/types/Navigation";
 import { VerseOption } from "@/types/Navigation";
 
+import {
+  parseBibleReference,
+  findVerseInAvailableVerses,
+} from "@/utils/bibleReferenceUtils";
+
 type ViewType = "book" | "chapter" | "verse";
 type DropdownType = "list" | "grid";
 
@@ -40,6 +45,7 @@ const BCVDrawer = () => {
     getAvailableVersesForBookAndChapter,
     bibleVerseMarker,
     getBibleVerseMarker,
+    setCurrentPlayingVerse,
   } = useBibleStore();
 
   const [activeView, setActiveView] = useState<ViewType>("book");
@@ -48,6 +54,8 @@ const BCVDrawer = () => {
   const [verseOptions, setVerseOptions] = useState<VerseOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     if (!isInitialized && !isLoading) {
@@ -71,25 +79,38 @@ const BCVDrawer = () => {
   }, [selectedBook, selectedChapter, getBibleVerseMarker]);
 
   useEffect(() => {
+  const fetchVerses = async () => {
     if (selectedBook && selectedChapter) {
-      const verses = getAvailableVersesForBookAndChapter(
-        selectedBook.value,
-        selectedChapter.value
-      );
-      setVerseOptions(verses);
+      try {
+        const verses = await getAvailableVersesForBookAndChapter(
+          selectedBook.value,
+          selectedChapter.value
+        );
+        setVerseOptions(verses);
+      } catch (error) {
+        console.error('Error fetching verses:', error);
+        setVerseOptions([]);
+      }
     } else {
       setVerseOptions([]);
     }
-  }, [
-    selectedBook,
-    selectedChapter,
-    bibleVerseMarker,
-    getAvailableVersesForBookAndChapter,
-  ]);
+  };
+
+  fetchVerses();
+}, [
+  selectedBook,
+  selectedChapter,
+  bibleVerseMarker,
+  getAvailableVersesForBookAndChapter,
+]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isSearchFocused || isBCVDrawerOpen) {
+        if (event.key === "Enter" && isSearchFocused) {
+          event.preventDefault();
+          handleSearchSubmit();
+        }
         event.stopPropagation();
       }
     };
@@ -100,12 +121,125 @@ const BCVDrawer = () => {
         document.removeEventListener("keydown", handleKeyDown, true);
       };
     }
-  }, [isSearchFocused, isBCVDrawerOpen]);
+  }, [isSearchFocused, isBCVDrawerOpen, searchQuery]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  };
+
+  const handleSearchSubmit = async () => {
+    if (!searchQuery.trim()) return;
+
+    const parseResult = parseBibleReference(searchQuery, availableData.books);
+
+    if (!parseResult.isValid) {
+      setErrorMessage(parseResult.error ?? "Invalid Bible reference");
+      return;
+    }
+
+    await handleBibleReferenceSearch(searchQuery);
+  };
+
+  const handleBibleReferenceSearch = async (searchInput: string) => {
+    setIsSearching(true);
+    setErrorMessage("");
+
+    try {
+      const parseResult = parseBibleReference(searchInput, availableData.books);
+
+      if (!parseResult.isValid) {
+        setErrorMessage(parseResult.error ?? "");
+        return;
+      }
+
+      const { book, chapter, verse } = parseResult;
+
+      // Validate chapter
+      const availableChapters = getAvailableChaptersForBook(book!.value);
+      const foundChapter = availableChapters.find((ch) => ch.value === chapter);
+
+      if (!foundChapter || foundChapter.isDisabled) {
+        setErrorMessage("Chapter not found");
+        return;
+      }
+
+      // Validate verse if provided
+      if (verse !== null) {
+        const availableVerses = await getAvailableVersesForBookAndChapter(
+          book!.value,
+          chapter!
+        );
+        const foundVerse = findVerseInAvailableVerses(
+          availableVerses,
+          verse!.toString()
+        );
+
+        if (!foundVerse) {
+          setErrorMessage("Verse not found");
+          return;
+        }
+      }
+
+      // Navigate to the reference
+      const isBookChange = !selectedBook || selectedBook.value !== book!.value;
+      const isChapterChange =
+        !selectedChapter || selectedChapter.value !== chapter;
+
+      if (isBookChange) {
+        setBook(book!);
+      }
+
+      if (isChapterChange || isBookChange) {
+        setChapter(foundChapter);
+      }
+
+      if (verse !== null) {
+        const delay = isBookChange
+          ? 800
+          : isChapterChange || isBookChange
+          ? 500
+          : 150;
+        setTimeout(async() => {
+          const availableVerses = await getAvailableVersesForBookAndChapter(
+            book!.value,
+            chapter!
+          );
+          const foundVerse = findVerseInAvailableVerses(
+            availableVerses,
+            verse!.toString()
+          );
+
+          if (foundVerse) {
+            setVerse(foundVerse);
+            setCurrentPlayingVerse(foundVerse.label);
+            setActiveView("verse");
+          }
+        }, delay);
+      } else {
+        setActiveView("chapter");
+      }
+
+      setSearchQuery("");
+      setErrorMessage("");
+      setIsBCVDrawerOpen(false);
+    } catch (error) {
+      console.error("Search error:", error);
+      setErrorMessage("An error occurred while searching");
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const openDialog = () => {
     setIsBCVDrawerOpen(true);
     setActiveView("book");
     setSearchQuery("");
+    setErrorMessage("");
   };
 
   const handleBookSelect = (bookOption: BookOption) => {
@@ -236,7 +370,8 @@ const BCVDrawer = () => {
         } gap-4 w-full`}
       >
         {books.map((book) => {
-          const isSelected = selectedBook?.value.toLowerCase() === book.value.toLowerCase();
+          const isSelected =
+            selectedBook?.value.toLowerCase() === book.value.toLowerCase();
 
           if (book.isDisabled) {
             return (
@@ -254,7 +389,9 @@ const BCVDrawer = () => {
                 ) : (
                   <div className="w-13 h-13 opacity-50"></div>
                 )}
-                <span className="text-base lg:text-lg opacity-50">{book.label}</span>
+                <span className="text-base lg:text-lg opacity-50">
+                  {book.label}
+                </span>
               </div>
             );
           }
@@ -263,7 +400,9 @@ const BCVDrawer = () => {
             <div
               key={book.value}
               className={`h-14  rounded-full flex items-center px-4 gap-2 cursor-pointer transition-all duration-150 border ${
-                isSelected ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400" : "hover:bg-gray-50 border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
+                isSelected
+                  ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
+                  : "hover:bg-gray-50 border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
               }`}
               onClick={() => handleBookSelect(book)}
             >
@@ -360,21 +499,25 @@ const BCVDrawer = () => {
                 activeView !== "book" ? "invisible" : ""
               }`}
             >
-                <button
-                  className={`p-2 cursor-pointer ${viewMode === "list" ? "bg-gray-100" : ""}`}
-                  onClick={() => setViewMode("list")}
-                  title="List View"
+              <button
+                className={`p-2 cursor-pointer ${
+                  viewMode === "list" ? "bg-gray-100" : ""
+                }`}
+                onClick={() => setViewMode("list")}
+                title="List View"
               >
-                  <List size={21} />
-                </button>
-                <div className="w-px h-6 bg-gray-200"></div>
-                <button
-                  className={`p-2 cursor-pointer ${viewMode === "grid" ? "bg-gray-100" : ""}`}
-                  onClick={() => setViewMode("grid")}
-                  title="Grid View"
+                <List size={21} />
+              </button>
+              <div className="w-px h-6 bg-gray-200"></div>
+              <button
+                className={`p-2 cursor-pointer ${
+                  viewMode === "grid" ? "bg-gray-100" : ""
+                }`}
+                onClick={() => setViewMode("grid")}
+                title="Grid View"
               >
-                  <LayoutGrid size={21} />
-                </button>
+                <LayoutGrid size={21} />
+              </button>
             </div>
 
             <div className="max-w-xl w-full mx-auto flex flex-row justify-center">
@@ -408,7 +551,9 @@ const BCVDrawer = () => {
                   className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "verse"
                       ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
-                      : !selectedBook || !selectedChapter || verseOptions.length === 0
+                      : !selectedBook ||
+                        !selectedChapter ||
+                        verseOptions.length === 0
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
@@ -417,7 +562,9 @@ const BCVDrawer = () => {
                     selectedBook && selectedChapter && setActiveView("verse")
                   }
                   disabled={
-                    !selectedBook || !selectedChapter || verseOptions.length === 0
+                    !selectedBook ||
+                    !selectedChapter ||
+                    verseOptions.length === 0
                   }
                 >
                   Verse
@@ -429,29 +576,45 @@ const BCVDrawer = () => {
                 activeView !== "book" ? "invisible" : ""
               }`}
             >
-              <div
-                className="relative max-w-md rounded-full shadow-sm border border-gray-200"
-              >
-                <input
-                  type="text"
-                  placeholder="Search books..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setIsSearchFocused(false)}
-                  className="w-full px-4 py-2 focus:outline-none"
-                />
-                {searchQuery === "" ? (
-                  <Search
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900"
-                    size={16}
+              <div className="flex flex-col items-end relative">
+                <div className="relative max-w-md rounded-full shadow-sm border border-gray-200">
+                  <input
+                    type="text"
+                    placeholder="Search books..."
+                    value={searchQuery}
+                    onChange={handleInputChange}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    className="w-full px-4 py-2 focus:outline-none"
+                    disabled={isSearching}
                   />
-                ) : (
-                  <X
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    size={16}
-                    onClick={() => setSearchQuery("")}
-                  />
+                  {searchQuery === "" ? (
+                    <Search
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900 cursor-pointer"
+                      size={16}
+                      onClick={handleSearchSubmit}
+                    />
+                  ) : (
+                    <X
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      size={16}
+                      onClick={() => {
+                        setSearchQuery("");
+                        setErrorMessage("");
+                      }}
+                    />
+                  )}
+                </div>
+                {errorMessage && (
+                  <div className="absolute top-full mt-2 right-0 z-50 max-w-md w-full">
+                    <div className="bg-red-50 border border-red-200 rounded-lg shadow-lg p-3 animate-in fade-in-0 zoom-in-95 duration-200">
+                      <div className="flex items-center">
+                        <p className="themed-text text-themed text-sm font-medium">
+                          {errorMessage}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
