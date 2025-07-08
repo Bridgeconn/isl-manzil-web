@@ -156,10 +156,6 @@ const HomePage: React.FC = () => {
     const baseClasses =
       "flex-shrink-0 h-full transition-all duration-800 ease-in-out overflow-hidden";
 
-    if (shouldUseMobileBottomBar && (isMobileLandscape || isTabletLandscape)) {
-      return baseClasses + " overflow-y-auto";
-    }
-
     return baseClasses;
   };
 
@@ -273,7 +269,7 @@ const HomePage: React.FC = () => {
   const renderRightSideContent = () => {
 
     return (
-      <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin overflow-y-auto">
+      <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2">
         {isTouchDevice && showText && (
           <div
             ref={touchAreaRef}
