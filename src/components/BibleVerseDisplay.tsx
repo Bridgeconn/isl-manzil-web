@@ -346,7 +346,7 @@ const BibleVerseDisplay = () => {
                 verseData.length === 0 &&
                 !isFetching &&
                 !error && (
-                  <p className="text-center py-4">No content available</p>
+                  <p className="text-center py-4 text-themed themed-text">No content available</p>
                 )}
             </div>
           )}
