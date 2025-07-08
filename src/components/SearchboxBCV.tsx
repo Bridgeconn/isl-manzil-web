@@ -3,6 +3,7 @@ import useBibleStore from "@/store/useBibleStore";
 import BookData from "../assets/data/book_codes.json";
 import { VerseOption } from "@/types/Navigation";
 import { Search, X } from "lucide-react";
+import SearchboxTooltip from "./SearchboxToolTip";
 
 interface SearchboxBCVProps {
   placeholder?: string;
@@ -58,6 +59,7 @@ function SearchboxBCV({
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -428,7 +430,11 @@ function SearchboxBCV({
           transition: "box-shadow 0.3s ease-in-out",
         }}
       >
-        <div className="flex items-center p-2 px-4 gap-1">
+        <div
+          className="flex items-center p-2 px-4 gap-1 relative"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <input
             ref={inputRef}
             type="text"
@@ -441,6 +447,7 @@ function SearchboxBCV({
             className="flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis"
             disabled={isSearching}
           />
+
           <div className="flex items-center gap-1 flex-shrink-0">
             {inputValue && (
               <button
@@ -463,6 +470,7 @@ function SearchboxBCV({
           </div>
         </div>
       </div>
+      {isHovered && <SearchboxTooltip />}
 
       {errorMessage && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 border border-red-300 rounded-md shadow-lg z-50 p-2 text-xs">
