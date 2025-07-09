@@ -204,7 +204,7 @@ const CustomVideoPlayer = () => {
       : "http://localhost:5173";
 
   const shareUrl = useMemo(() => {
-    return selectedBook?.value && selectedChapter?.value
+    return selectedBook?.value && selectedChapter?.value.toString()    //selectedChapter.value as 0 becomes false
       ? `${BASE_URL}/bible/${selectedBook.value}/${selectedChapter.value}`
       : `${BASE_URL}/bible`;
   }, [selectedBook, selectedChapter]);

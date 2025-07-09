@@ -6,8 +6,13 @@ import useBibleStore from "@/store/useBibleStore";
 import useThemeStore from "@/store/useThemeStore";
 
 const BibleVerseDisplay = () => {
-  const { selectedBook, selectedChapter, currentPlayingVerse, seekToVerse } =
-    useBibleStore();
+  const {
+    availableData,
+    selectedBook,
+    selectedChapter,
+    currentPlayingVerse,
+    seekToVerse,
+  } = useBibleStore();
   const { fontType, fontSize } = useThemeStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [introData, setIntroData] = useState<string | null>(null);
@@ -17,6 +22,12 @@ const BibleVerseDisplay = () => {
   const introCache = useRef<Record<string, string>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const verseRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const hasFetchedRef = useRef(false);
+
+  const pathParts =
+    typeof window !== "undefined" ? window.location.pathname.split("/") : [];
+  const urlBook = pathParts[2] || null;
+  const urlChapter = pathParts[3] ? Number(pathParts[3]) : null;
 
   // Clear refs when data changes
   useEffect(() => {
@@ -122,10 +133,18 @@ const BibleVerseDisplay = () => {
   }, [currentPlayingVerse, verseData]);
 
   useEffect(() => {
-    if (!selectedBook || !selectedChapter) return;
-
+    if (!selectedBook || !selectedChapter || !availableData) return;
     const bookCode = selectedBook.value.toLowerCase();
     const chapterNum = selectedChapter.value;
+
+    if (!hasFetchedRef.current) {
+      if (urlBook && urlChapter !== null) {
+        if (bookCode !== urlBook || chapterNum !== urlChapter) {
+          return;
+        }
+      }
+      hasFetchedRef.current = true;
+    }
 
     const isIntro = chapterNum === 0;
 
@@ -256,6 +275,14 @@ const BibleVerseDisplay = () => {
     verseRefs.current[normalizedVerseNumber] = element;
   };
 
+  console.log(
+    "in bible verse display",
+    "selected book",
+    selectedBook,
+    "selected chapter",
+    selectedChapter
+  );
+
   return (
     <>
       {selectedBook && selectedChapter && (
@@ -346,7 +373,9 @@ const BibleVerseDisplay = () => {
                 verseData.length === 0 &&
                 !isFetching &&
                 !error && (
-                  <p className="text-center py-4 text-themed themed-text">No content available</p>
+                  <p className="text-center py-4 text-themed themed-text">
+                    No content available
+                  </p>
                 )}
             </div>
           )}
