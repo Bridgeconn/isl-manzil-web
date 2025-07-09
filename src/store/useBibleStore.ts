@@ -153,13 +153,13 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   setChapter: async (chapter: ChapterOption | null) => {
     set({
       selectedChapter: chapter,
+      selectedVerse: null,
       currentPlayingVerse: null,
       bibleVerseMarker: [],
     });
 
     // Auto-set first verse when chapter changes
     if (chapter && get().selectedBook) {
-      await get().getBibleVerseMarker();
       const availableVerses = await get().getAvailableVersesForBookAndChapter(
         get().selectedBook!.value,
         chapter.value

@@ -204,7 +204,7 @@ const CustomVideoPlayer = () => {
       : "http://localhost:5173";
 
   const shareUrl = useMemo(() => {
-    return selectedBook?.value && selectedChapter?.value.toString()    //selectedChapter.value as 0 becomes false
+    return selectedBook?.value && selectedChapter?.value.toString()
       ? `${BASE_URL}/bible/${selectedBook.value}/${selectedChapter.value}`
       : `${BASE_URL}/bible`;
   }, [selectedBook, selectedChapter]);
@@ -567,10 +567,10 @@ const CustomVideoPlayer = () => {
         prevSelectedBook.current = currentBook;
         prevSelectedChapter.current = null;
         prevSelectedVerse.current = null;
+        pendingVerseSeekRef.current = null;
 
         // Don't jump on book change
         if (currentVerse === 0) {
-          pendingVerseSeekRef.current = null;
           prevSelectedVerse.current = 0;
           prevSelectedChapter.current = currentChapter;
           return;
@@ -578,17 +578,22 @@ const CustomVideoPlayer = () => {
       }
 
       if (prevSelectedChapter.current !== currentChapter) {
-        prevSelectedVerse.current = null;
         prevSelectedChapter.current = currentChapter;
+        prevSelectedVerse.current = null;
+        pendingVerseSeekRef.current = null;
         if (currentVerse === 0) {
-          pendingVerseSeekRef.current = null;
           prevSelectedVerse.current = 0;
           return;
         }
       }
 
       if (!isPlayerReady || isManualSeekingRef.current) {
-        if (currentVerse !== 0) {
+        if (
+          currentVerse !== 0 &&
+          (isManualVerseSelection ||
+            (prevSelectedBook.current === currentBook &&
+              prevSelectedChapter.current === currentChapter))
+        ) {
           pendingVerseSeekRef.current = currentVerse;
         }
         return;
@@ -609,6 +614,7 @@ const CustomVideoPlayer = () => {
     selectedChapter,
     jumpToVerse,
     isPlayerReady,
+    isManualVerseSelection,
   ]);
 
   // Handle video ID changes
