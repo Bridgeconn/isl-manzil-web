@@ -275,14 +275,6 @@ const BibleVerseDisplay = () => {
     verseRefs.current[normalizedVerseNumber] = element;
   };
 
-  console.log(
-    "in bible verse display",
-    "selected book",
-    selectedBook,
-    "selected chapter",
-    selectedChapter
-  );
-
   return (
     <>
       {selectedBook && selectedChapter && (
