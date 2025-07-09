@@ -71,7 +71,7 @@ interface BibleStore {
     bookLabel: string,
     chapter: number
   ) => Promise<VerseMarkerType[] | null>;
-  findVerseMarkerForVerse: (verseNumber: number) => VerseMarkerType | null;
+  findVerseMarkerForVerse: (verseNumber: number) => Promise<VerseMarkerType | null>;
   isVerseInRange: (verseNumber: number, verseRange: string) => boolean;
 }
 
@@ -97,7 +97,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   // Helper function to check if a verse number is within a verse range
   isVerseInRange: (verseNumber: number, verseRange: string): boolean => {
     const trimmedRange = verseRange.trim();
-
     // If it's a single verse (no dash), check for exact match
     if (!trimmedRange.includes("-")) {
       if (verseRange === "Intro" && verseNumber === 0) {
@@ -121,9 +120,8 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
 
   // Helper function to find verse marker for a specific verse number
-  findVerseMarkerForVerse: (verseNumber: number): VerseMarkerType | null => {
-    const { bibleVerseMarker } = get();
-
+  findVerseMarkerForVerse: async (verseNumber: number): Promise<VerseMarkerType | null> => {
+    const bibleVerseMarker = await get().getBibleVerseMarkerForBookAndChapter(get().selectedBook!.label, get().selectedChapter!.value);
     if (!bibleVerseMarker || bibleVerseMarker.length === 0) {
       return null;
     }

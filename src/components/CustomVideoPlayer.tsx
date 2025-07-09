@@ -531,8 +531,7 @@ const CustomVideoPlayer = () => {
   const jumpToVerse = useCallback(
     async (verseNumber: number) => {
       if (!vimeoPlayerRef.current || !isPlayerReady) return;
-
-      const verseMarker = findVerseMarkerForVerse(verseNumber);
+      const verseMarker = await findVerseMarkerForVerse(verseNumber);
       if (!verseMarker) {
         console.warn(`Verse ${verseNumber} marker not found`);
         return;
@@ -595,9 +594,9 @@ const CustomVideoPlayer = () => {
       }
 
       if (prevSelectedVerse.current !== currentVerse) {
+        await jumpToVerse(currentVerse);
         prevSelectedVerse.current = currentVerse;
         userInteractedRef.current = false;
-        await jumpToVerse(currentVerse);
         pendingVerseSeekRef.current = null;
       }
     };
