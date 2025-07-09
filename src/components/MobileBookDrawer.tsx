@@ -254,7 +254,11 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
     if (chapter.isDisabled) return;
 
     setChapter(chapter);
-    setActiveView("Verse");
+    if(chapter.value !== 0){
+      setActiveView("Verse");
+      return;
+    }
+    onClose();
 
   };
 
