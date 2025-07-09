@@ -43,7 +43,7 @@ export const useChapterNavigation = () => {
   }, [selectedBook, selectedChapter, typedVersificationData]);
 
   // Navigate to previous chapter
-  const goToPreviousChapter = () => {
+  const goToPreviousChapter = async () => {
     if (!selectedBook || !selectedChapter || !navigationState.canGoPrevious) {
       return;
     }
@@ -62,7 +62,7 @@ export const useChapterNavigation = () => {
       };
       setChapter(prevChapter);
       
-      const availableVerses = getAvailableVersesForBookAndChapter(
+      const availableVerses = await getAvailableVersesForBookAndChapter(
         selectedBook.value,
         prevChapterValue
       );
@@ -92,7 +92,7 @@ export const useChapterNavigation = () => {
           setChapter(lastChapter);
           
           // Set first available verse of that chapter
-          const availableVerses = getAvailableVersesForBookAndChapter(
+          const availableVerses = await getAvailableVersesForBookAndChapter(
             prevBook.bookCode,
             lastChapter.value
           );
@@ -105,7 +105,7 @@ export const useChapterNavigation = () => {
   };
 
   // Navigate to next chapter
-  const goToNextChapter = () => {
+  const goToNextChapter = async () => {
     if (!selectedBook || !selectedChapter || !navigationState.canGoNext) {
       return;
     }
@@ -128,7 +128,7 @@ export const useChapterNavigation = () => {
       setChapter(nextChapter);
       
       // Set first available verse for the next chapter
-      const availableVerses = getAvailableVersesForBookAndChapter(
+      const availableVerses = await getAvailableVersesForBookAndChapter(
         selectedBook.value,
         nextChapterValue
       );
@@ -155,7 +155,7 @@ export const useChapterNavigation = () => {
           setChapter(firstAvailableChapter);
           
           // Set first available verse for that chapter
-          const availableVerses = getAvailableVersesForBookAndChapter(
+          const availableVerses = await getAvailableVersesForBookAndChapter(
             nextBook.bookCode,
             firstAvailableChapter.value
           );
