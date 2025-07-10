@@ -22,7 +22,7 @@ const MobileMenuDrawer: React.FC<SettingsDrawerProps> = ({ open, onClose }) => {
           open ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <Settings />
+        <Settings onCloseDrawer={onClose} />
       </div>
     </>
   );
