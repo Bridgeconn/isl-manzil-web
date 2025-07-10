@@ -28,6 +28,8 @@ import { useVimeoDownload } from "@/hooks/useVimeoDownload";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
+import versificationData from "../assets/data/versification.json";
+import { VersificationData } from "../types/bible";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -216,17 +218,37 @@ const CustomVideoPlayer = () => {
 
     if (!bookCode || !chapterNumber || availableData.books.length === 0) return;
 
-    const matchedBook = availableData.books.find((b) => b.value === bookCode);
+    const matchedBook = availableData.books?.find((b) => b.value === bookCode);
     const chapterList = matchedBook
       ? availableData.chapters[matchedBook.value]
       : [];
-    const matchedChapter = chapterList.find(
+    const matchedChapter = chapterList?.find(
       (c) => String(c.value) === String(chapterNumber)
     );
+    const typedVersificationData = versificationData as VersificationData;
+  
+    const checkMaxChapters =
+      typedVersificationData?.maxVerses[matchedBook!.value.toUpperCase()]
+        .length;
 
-    if (matchedBook && matchedChapter) {
-      setBook(matchedBook);
+    const isValidChapter =
+      Number(chapterNumber) >= 0 && Number(chapterNumber) <= checkMaxChapters;
+
+    const chapterOption = {
+      label:
+        chapterNumber.toString() === "0" ? "Intro" : chapterNumber.toString(),
+      value: Number(chapterNumber),
+    };
+    if (matchedBook) setBook(matchedBook);
+    if (matchedChapter) {
       setChapter(matchedChapter);
+    } else if (isValidChapter) {
+      setChapter(chapterOption);
+    } else {
+      setChapter({
+        label: "Intro",
+        value: 0
+      });
     }
   }, [availableData.books, availableData.chapters, setBook, setChapter]);
 

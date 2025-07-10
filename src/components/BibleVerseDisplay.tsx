@@ -134,16 +134,18 @@ const BibleVerseDisplay = () => {
 
   useEffect(() => {
     if (!selectedBook || !selectedChapter || !availableData) return;
-    const bookCode = selectedBook.value.toLowerCase();
-    const chapterNum = selectedChapter.value;
+    let bookCode = selectedBook.value.toLowerCase();
+    let chapterNum = selectedChapter.value;
 
     if (!hasFetchedRef.current) {
       if (urlBook && urlChapter !== null) {
         if (bookCode !== urlBook || chapterNum !== urlChapter) {
+          bookCode = urlBook;
+          chapterNum = urlChapter;
+          hasFetchedRef.current = true;
           return;
         }
       }
-      hasFetchedRef.current = true;
     }
 
     const isIntro = chapterNum === 0;
