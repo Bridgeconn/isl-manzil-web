@@ -112,10 +112,17 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           </section>
         </div>
 
-        <DialogFooter className="p-3 border-t flex !justify-center">
+        <DialogFooter className="p-3 border-t flex ">
           <button
             onClick={onClose}
-            className="text-sm px-4 py-2 border rounded hover:bg-gray-200 cursor-pointer"
+            className="
+            text-sm sm:text-base
+            px-2 py-1 sm:px-4 sm:py-2
+            border rounded
+            hover:bg-gray-200 cursor-pointer
+            w-24 sm:w-auto
+            mx-auto
+          "
           >
             CLOSE
           </button>
