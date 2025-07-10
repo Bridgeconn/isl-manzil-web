@@ -311,12 +311,11 @@ function SearchboxBCV({
     }
 
     if (verse !== null) {
-      const availableVerses = getAvailableVersesForBookAndChapter(
+      const availableVerses = await getAvailableVersesForBookAndChapter(
         book.value,
         chapter
       );
       const foundVerse = findVerseInAvailableVerses(availableVerses, verse);
-
       if (!foundVerse) {
         setErrorMessage("Verse not found");
         return false;
@@ -341,8 +340,8 @@ function SearchboxBCV({
         : isChapterChange || isBookChange
         ? 500
         : 150;
-      setTimeout(() => {
-        const availableVerses = getAvailableVersesForBookAndChapter(
+      setTimeout(async() => {
+        const availableVerses = await getAvailableVersesForBookAndChapter(
           book.value,
           chapter
         );

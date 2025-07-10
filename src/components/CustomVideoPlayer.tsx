@@ -115,8 +115,7 @@ const CustomVideoPlayer = () => {
   } = useBibleStore();
 
   const { deviceType, shouldUseMobileBottomBar } = useDeviceDetection();
-   const {  textPosition } =
-      useLayoutControl();
+  const { textPosition } = useLayoutControl();
   const { getDownloadOptions, downloadVideo, error, loading } =
     useVimeoDownload();
 
@@ -531,8 +530,7 @@ const CustomVideoPlayer = () => {
   const jumpToVerse = useCallback(
     async (verseNumber: number) => {
       if (!vimeoPlayerRef.current || !isPlayerReady) return;
-
-      const verseMarker = findVerseMarkerForVerse(verseNumber);
+      const verseMarker = await findVerseMarkerForVerse(verseNumber);
       if (!verseMarker) {
         console.warn(`Verse ${verseNumber} marker not found`);
         return;
@@ -572,6 +570,7 @@ const CustomVideoPlayer = () => {
 
         // Don't jump on book change
         if (currentVerse === 0) {
+          pendingVerseSeekRef.current = null;
           prevSelectedVerse.current = 0;
           prevSelectedChapter.current = currentChapter;
           return;
@@ -582,6 +581,7 @@ const CustomVideoPlayer = () => {
         prevSelectedVerse.current = null;
         prevSelectedChapter.current = currentChapter;
         if (currentVerse === 0) {
+          pendingVerseSeekRef.current = null;
           prevSelectedVerse.current = 0;
           return;
         }
@@ -595,9 +595,9 @@ const CustomVideoPlayer = () => {
       }
 
       if (prevSelectedVerse.current !== currentVerse) {
+        await jumpToVerse(currentVerse);
         prevSelectedVerse.current = currentVerse;
         userInteractedRef.current = false;
-        await jumpToVerse(currentVerse);
         pendingVerseSeekRef.current = null;
       }
     };
@@ -1838,7 +1838,9 @@ const CustomVideoPlayer = () => {
         <div
           ref={playerContainerRef}
           className={`video-player-container relative w-full ${
-            shouldUseMobileBottomBar || textPosition === "below" ? "max-w-6xl" : "max-w-7xl"
+            shouldUseMobileBottomBar || textPosition === "below"
+              ? "max-w-6xl"
+              : "max-w-7xl"
           } mx-auto overflow-hidden ${
             isFullscreen &&
             (shouldUseMobileBottomBar ||

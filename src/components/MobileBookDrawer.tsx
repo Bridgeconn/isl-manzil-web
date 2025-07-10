@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, X, List, LayoutGrid } from "lucide-react";
 import useBibleStore from "@/store/useBibleStore";
 import { BookOption, ChapterOption, VerseOption } from "../types/Navigation";
-import BookData from "../assets/data/book_codes.json";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
+import {
+  parseBibleReference,
+  findVerseInAvailableVerses,
+} from "@/utils/bibleReferenceUtils";
 
 interface MobileBookDrawerProps {
   isOpen: boolean;
@@ -12,47 +15,6 @@ interface MobileBookDrawerProps {
 
 type ViewType = "Book" | "Chapter" | "Verse";
 type DropdownType = "list" | "grid";
-
-const verseUtils = {
-  normalizeVerse: (verse: string | number) => {
-    return verse.toString().includes("-")
-      ? verse.toString().replace("-", "_")
-      : verse.toString();
-  },
-
-  parseVerseRange: (verseLabel: string | number) => {
-    const label = verseLabel.toString();
-
-    if (/^\d+$/.test(label)) {
-      const num = parseInt(label);
-      return { start: num, end: num, isSingle: true };
-    }
-
-    const rangeMatch = label.match(/^(\d+)[-_](\d+)$/);
-    if (rangeMatch) {
-      return {
-        start: parseInt(rangeMatch[1]),
-        end: parseInt(rangeMatch[2]),
-        isSingle: false,
-      };
-    }
-
-    return null;
-  },
-
-  isVerseInRange: (
-    targetVerse: string | number,
-    verseLabel: string | number
-  ) => {
-    const range = verseUtils.parseVerseRange(verseLabel);
-    if (!range) return false;
-
-    const target = parseInt(targetVerse.toString());
-    if (isNaN(target)) return false;
-
-    return target >= range.start && target <= range.end;
-  },
-};
 
 const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   isOpen,
@@ -115,21 +77,30 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   }, [selectedBook, selectedChapter, getBibleVerseMarker]);
 
   useEffect(() => {
+  const fetchVerses = async () => {
     if (selectedBook && selectedChapter) {
-      const verses = getAvailableVersesForBookAndChapter(
-        selectedBook.value,
-        selectedChapter.value
-      );
-      setVerseOptions(verses);
+      try {
+        const verses = await getAvailableVersesForBookAndChapter(
+          selectedBook.value,
+          selectedChapter.value
+        );
+        setVerseOptions(verses);
+      } catch (error) {
+        console.error('Error fetching verses:', error);
+        setVerseOptions([]);
+      }
     } else {
       setVerseOptions([]);
     }
-  }, [
-    selectedBook,
-    selectedChapter,
-    bibleVerseMarker,
-    getAvailableVersesForBookAndChapter,
-  ]);
+  };
+
+  fetchVerses();
+}, [
+  selectedBook,
+  selectedChapter,
+  bibleVerseMarker,
+  getAvailableVersesForBookAndChapter,
+]);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
@@ -165,192 +136,10 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   oldTestamentBooks.sort((a, b) => a.bookId - b.bookId);
   newTestamentBooks.sort((a, b) => a.bookId - b.bookId);
 
-  const findBook = (searchTerm: string) => {
-    const lowerSearchTerm = searchTerm.toLowerCase();
-
-    const mappedBookName = BookData.find(
-      (book) =>
-        book.book.toLowerCase() === lowerSearchTerm ||
-        book.bookCode.toLowerCase() === lowerSearchTerm
-    );
-
-    if (mappedBookName) {
-      return availableData.books.find(
-        (book) => book.label.toLowerCase() === mappedBookName.book.toLowerCase()
-      );
-    }
-
-    return availableData.books.find(
-      (book) =>
-        book.label.toLowerCase() === lowerSearchTerm ||
-        book.value.toLowerCase() === lowerSearchTerm
-    );
-  };
-
-  const findVerseInAvailableVerses = (
-    availableVerses: VerseOption[],
-    targetVerse: string
-  ) => {
-    return availableVerses.find((v) => {
-      const normalizedVerseValue = verseUtils.normalizeVerse(
-        v.value.toString()
-      );
-      const normalizedVerseLabel = verseUtils.normalizeVerse(v.label);
-      targetVerse = verseUtils.normalizeVerse(targetVerse);
-
-      if (
-        normalizedVerseLabel.toLowerCase() === targetVerse.toLowerCase() ||
-        normalizedVerseValue === targetVerse
-      ) {
-        return true;
-      }
-
-      return verseUtils.isVerseInRange(targetVerse, v.label);
-    });
-  };
-
-  const parseBCV = (input: string) => {
-    if (!input || input.trim() === "") {
-      return {
-        error: "Invalid format. Use: John 3:16 or Genesis 1",
-      };
-    }
-
-    let cleanInput = input.trim();
-
-    if (cleanInput.includes(":")) {
-      cleanInput = cleanInput.replace(/\s*:\s*/g, ":");
-      const colonParts = cleanInput.split(":");
-
-      if (colonParts.length !== 2) {
-        return {
-          error: "Invalid format. Use: John 3:16 or Genesis 1",
-        };
-      }
-
-      const bookAndChapter = colonParts[0];
-      const verseStr = colonParts[1].trim();
-      const verseNum = verseStr !== "Intro" ? parseInt(verseStr, 10) : 0;
-
-      if (isNaN(verseNum)) {
-        return {
-          error: "Invalid format. Use: John 3:16 or Genesis 1",
-        };
-      }
-
-      const parts = bookAndChapter.trim().split(/\s+/);
-
-      if (parts.length < 2) {
-        return {
-          error: "Invalid format. Use: John 3:16 or Genesis 1",
-        };
-      }
-
-      const chapterStr = parts[parts.length - 1];
-      const chapterNum = chapterStr !== "Intro" ? parseInt(chapterStr, 10) : 0;
-
-      if (isNaN(chapterNum)) {
-        return {
-          error: "Invalid format. Use: John 3:16 or Genesis 1",
-        };
-      }
-
-      const bookParts = parts.slice(0, -1);
-      const bookStr = bookParts.join(" ");
-
-      const foundBook = findBook(bookStr);
-
-      if (!foundBook) {
-        return { error: "Book not found" };
-      }
-
-      return {
-        book: foundBook,
-        chapter: chapterNum,
-        verse: verseNum,
-        isValid: true,
-      };
-    }
-
-    const parts = cleanInput.split(/\s+/);
-
-    if (parts.length < 2) {
-      return {
-        error: "Invalid format. Use: John 3:16 or Genesis 1",
-      };
-    }
-
-    let bookStr: string;
-    let chapterStr: string;
-    let verseStr: string | null = null;
-
-    if (parts.length === 2) {
-      bookStr = parts[0];
-      chapterStr = parts[1];
-    } else if (parts.length === 3) {
-      const firstPart = parts[0];
-      const secondPart = parts[1];
-      const thirdPart = parts[2];
-
-      if (/^\d+$/.test(firstPart) && !/^\d+$/.test(secondPart)) {
-        bookStr = `${firstPart} ${secondPart}`;
-        chapterStr = thirdPart;
-      } else {
-        bookStr = firstPart;
-        chapterStr = secondPart;
-        verseStr = thirdPart;
-      }
-    } else if (parts.length === 4) {
-      const firstPart = parts[0];
-      const secondPart = parts[1];
-      const thirdPart = parts[2];
-      const fourthPart = parts[3];
-
-      if (/^\d+$/.test(firstPart)) {
-        bookStr = `${firstPart} ${secondPart}`;
-        chapterStr = thirdPart;
-        verseStr = fourthPart;
-      } else {
-        return {
-          error: "Invalid format. Use: John 3:16 or Genesis 1",
-        };
-      }
-    } else {
-      return {
-        error: "Invalid format. Use: John 3:16 or Genesis 1",
-      };
-    }
-
-    const chapterNum = chapterStr !== "Intro" ? parseInt(chapterStr, 10) : 0;
-    if (isNaN(chapterNum)) {
-      return {
-        error: "Invalid format. Use: John 3:16 or Genesis 1",
-      };
-    }
-
-    let verseNum: string | null = null;
-    if (verseStr) {
-      verseNum = verseStr !== "Intro" ? verseStr : "0";
-    }
-
-    const foundBook = findBook(bookStr);
-
-    if (!foundBook) {
-      return { error: "Book not found" };
-    }
-
-    return {
-      book: foundBook,
-      chapter: chapterNum,
-      verse: verseNum,
-      isValid: true,
-    };
-  };
-
   const handleSearchSubmit = async () => {
     if (!searchTerm.trim()) return;
 
-    const parseResult = parseBCV(searchTerm);
+    const parseResult = parseBibleReference(searchTerm, availableData.books);
 
     if (!parseResult.isValid) {
       setErrorMessage(parseResult.error ?? "Invalid Bible reference");
@@ -365,7 +154,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
     setErrorMessage("");
 
     try {
-      const parseResult = parseBCV(searchInput);
+      const parseResult = parseBibleReference(searchInput, availableData.books);
 
       if (!parseResult.isValid) {
         setErrorMessage(parseResult.error ?? "");
@@ -375,7 +164,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
       const { book, chapter, verse } = parseResult;
 
       // Validate chapter
-      const availableChapters = getAvailableChaptersForBook(book.value);
+      const availableChapters = getAvailableChaptersForBook(book!.value);
       const foundChapter = availableChapters.find((ch) => ch.value === chapter);
 
       if (!foundChapter || foundChapter.isDisabled) {
@@ -385,13 +174,13 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
 
       // Validate verse if provided
       if (verse !== null) {
-        const availableVerses = getAvailableVersesForBookAndChapter(
-          book.value,
-          chapter
+        const availableVerses = await getAvailableVersesForBookAndChapter(
+          book!.value,
+          chapter!
         );
         const foundVerse = findVerseInAvailableVerses(
           availableVerses,
-          verse.toString()
+          verse!.toString()
         );
 
         if (!foundVerse) {
@@ -401,12 +190,12 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
       }
 
       // Navigate to the reference
-      const isBookChange = !selectedBook || selectedBook.value !== book.value;
+      const isBookChange = !selectedBook || selectedBook.value !== book!.value;
       const isChapterChange =
         !selectedChapter || selectedChapter.value !== chapter;
 
       if (isBookChange) {
-        setBook(book);
+        setBook(book!);
       }
 
       if (isChapterChange || isBookChange) {
@@ -419,14 +208,14 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           : isChapterChange || isBookChange
           ? 500
           : 150;
-        setTimeout(() => {
-          const availableVerses = getAvailableVersesForBookAndChapter(
-            book.value,
-            chapter
+        setTimeout(async() => {
+          const availableVerses = await getAvailableVersesForBookAndChapter(
+            book!.value,
+            chapter!
           );
           const foundVerse = findVerseInAvailableVerses(
             availableVerses,
-            verse.toString()
+            verse!.toString()
           );
 
           if (foundVerse) {
@@ -465,11 +254,12 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
     if (chapter.isDisabled) return;
 
     setChapter(chapter);
-    setActiveView("Verse");
+    if(chapter.value !== 0){
+      setActiveView("Verse");
+      return;
+    }
+    onClose();
 
-    setTimeout(() => {
-      loadVideoForCurrentSelection();
-    }, 100);
   };
 
   const handleVerseClick = (verse: VerseOption) => {
@@ -477,10 +267,6 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
     setCurrentPlayingVerse(verse.label);
 
     onClose();
-
-    setTimeout(() => {
-      loadVideoForCurrentSelection();
-    }, 100);
   };
 
   const clearSearch = () => {
@@ -795,7 +581,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           {/* Error Message */}
           {errorMessage && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{errorMessage}</p>
+              <p className="themed-text text-themed text-sm">{errorMessage}</p>
             </div>
           )}
 
