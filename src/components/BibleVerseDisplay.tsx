@@ -4,6 +4,9 @@ import ReactMarkdown from "react-markdown";
 import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 import useThemeStore from "@/store/useThemeStore";
+import LicenseERVPopUp from "./LicenseERVPopUp";
+
+import { IoInformationCircleOutline } from "react-icons/io5";
 
 const BibleVerseDisplay = () => {
   const { selectedBook, selectedChapter, currentPlayingVerse, seekToVerse } =
@@ -17,6 +20,7 @@ const BibleVerseDisplay = () => {
   const introCache = useRef<Record<string, string>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const verseRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [showTooltip, setShowTooltip] = useState(false);
 
   // Clear refs when data changes
   useEffect(() => {
@@ -273,6 +277,30 @@ const BibleVerseDisplay = () => {
                 fontSize: `${fontSize}px`,
               }}
             >
+              <div
+                className="relative mb-4 ml-1 text-sm text-gray-700"
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+              >
+                <a
+                  href="https://www.bibleleague.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 mt-4  font-semibold text-lg cursor-pointer"
+                >
+                  <span>Easy-to-Read Version</span>
+                  <span className="w-6 h-6 flex items-center justify-center rounded-full  text-gray-700  cursor-pointer">
+                    <IoInformationCircleOutline size={24} />
+                  </span>
+                </a>
+
+                {showTooltip && (
+                  <div className="absolute top-full mt-2   z-50">
+                    <LicenseERVPopUp />
+                  </div>
+                )}
+              </div>
+
               {introData && (
                 <div className="antialiased tracking-wide prose max-w-none prose-themed themed-text text-themed">
                   <ReactMarkdown>{introData}</ReactMarkdown>
@@ -346,7 +374,9 @@ const BibleVerseDisplay = () => {
                 verseData.length === 0 &&
                 !isFetching &&
                 !error && (
-                  <p className="text-center py-4 text-themed themed-text">No content available</p>
+                  <p className="text-center py-4 text-themed themed-text">
+                    No content available
+                  </p>
                 )}
             </div>
           )}
