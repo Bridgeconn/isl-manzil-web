@@ -316,7 +316,7 @@ const BCVDrawer = () => {
             key={`chapter-${chapter.value}`}
             className={`h-12 rounded-full flex items-center justify-center flex-wrap cursor-pointer transition-colors border ${
               chapter.isDisabled
-                ? "bg-white text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
+                ? "bg-white text-gray-500 hover:cursor-not-allowed border-gray-200 shadow-sm"
                 : "hover:bg-gray-50 border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
             } ${
               selectedChapter?.value === chapter.value && !chapter.isDisabled
@@ -329,7 +329,7 @@ const BCVDrawer = () => {
             title={
               chapter.isDisabled
                 ? "The video for this Chapter is not available"
-                : `Chapter ${chapter.value}`
+                : chapter.value === 0 ? "Introduction" : `Chapter ${chapter.value}`
             }
           >
             {chapter.label}
