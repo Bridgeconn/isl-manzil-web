@@ -32,6 +32,22 @@ const Settings: React.FC = () => {
       onTouchStart={handleContainerClick}
     >
       <div className="space-y-2 sm:space-y-4">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+
+            const url = import.meta.env.VITE_FEEDBACK_FORM_URL;
+
+            if (url) {
+              window.open(url, "_blank");
+            } else {
+              alert("Feedback form URL is not defined!");
+            }
+          }}
+          className="w-full px-4 py-2 text-sm font-semibold text-center text-black-700 border border-black-300 rounded hover:bg-gray-100 focus:bg-gray-100 transition-all"
+        >
+          Feedback
+        </button>
         <h4 className="text-base font-semibold text-gray-700 mb-3">Theme</h4>
 
         <div className="grid grid-cols-3 gap-2">
@@ -135,23 +151,23 @@ const Settings: React.FC = () => {
         </div>
       </div>
       {/* Toggle text position */}
-      {(!isLowHeightDesktop && !shouldUseMobileBottomBar) && (
-      <div className="mt-4 flex items-center gap-4">
-        <h4 className="text-base font-semibold text-gray-700">
-          Text position
-        </h4>
+      {!isLowHeightDesktop && !shouldUseMobileBottomBar && (
+        <div className="mt-4 flex items-center gap-4">
+          <h4 className="text-base font-semibold text-gray-700">
+            Text position
+          </h4>
 
-        {canTogglePosition && (
-          <div onClick={(e) => e.stopPropagation()}>
-            <LayoutControlButtons
-              textPosition={textPosition}
-              onTogglePosition={() => {
-                toggleTextPosition();
-              }}
-            />
-          </div>
-        )}
-      </div>
+          {canTogglePosition && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <LayoutControlButtons
+                textPosition={textPosition}
+                onTogglePosition={() => {
+                  toggleTextPosition();
+                }}
+              />
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
