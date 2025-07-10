@@ -6,7 +6,7 @@ Moses, the Prophet, and the leader of Israel was an author of Pentateuch. The fi
 Bible doesn’t tell exactly when and where Genesis was written, but it was probably written by Moses during the years of Israelites encampment in the wilderness at Sinai.
 
 And it may be written to early Israelites after their Exodus from slavery in Egypt before they entered to the land of Canaan.
-### Purpose of this Book:
+### Purpose of this Book
 1. Explains the “ family-history” of the nation of Israel.
 2. Explains the story of how the Israelites found itself in slavery in Egypt and it was not an accident but also part of God’s perfect plan.
 3. Shows that the God of Abraham, the God of Isaac, and the God of Jacob was the same God who created the world.
