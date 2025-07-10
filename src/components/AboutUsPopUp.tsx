@@ -6,23 +6,37 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import useThemeStore from "@/store/useThemeStore";
 
 const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
   showAbout,
   onClose,
 }) => {
+  const { fontType, fontSize, currentTheme } = useThemeStore();
+
   return (
     <Dialog open={showAbout} onOpenChange={onClose}>
-      <DialogContent className="w-full !max-w-4xl max-h-[90vh] bg-white rounded shadow-xl flex flex-col overflow-hidden z-[9999]">
-        <DialogHeader className="p-4 border-b">
-          <DialogTitle className="text-xl font-semibold">
+      <DialogContent className="w-full !max-w-4xl max-h-[90vh] bg-white rounded shadow-xl flex flex-col overflow-hidden z-[9999] themed-bg">
+        <DialogHeader className="pb-4 border-b">
+          <DialogTitle
+            className={`text-xl font-semibold ${
+              fontType === "serif" ? "font-serif" : "font-sans"
+            }`}
+            style={{ color: currentTheme?.textColor }}
+          >
             About ISL Bible
           </DialogTitle>
         </DialogHeader>
 
         <div
-          className="space-y-4 text-sm text-gray-800 overflow-y-auto grow"
-          style={{ WebkitOverflowScrolling: "touch" }}
+          className={`space-y-4 text-sm text-gray-800 overflow-y-auto custom-scroll-ultra-thin grow antialiased tracking-wide pr-2 ${
+            fontType === "serif" ? "font-serif" : "font-sans"
+          }`}
+          style={{
+            WebkitOverflowScrolling: "touch",
+            fontSize: `${fontSize}px`,
+            color: currentTheme?.textColor,
+          }}
         >
           <section>
             <h3 className="text-lg font-semibold">The ISLV Bible Website</h3>
@@ -110,14 +124,30 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
               islvbible@bridgeconn.com
             </a>
           </section>
+          <section className="py-2 text-center text-sm hover:text-gray-500">
+            <a
+              href="https://bridgeconn.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              © Bridge Connectivity Solutions Pvt. Ltd. 2025
+            </a>
+          </section>
         </div>
 
         <DialogFooter className="p-3 border-t flex !justify-center">
           <button
             onClick={onClose}
-            className="text-sm px-4 py-2 border rounded hover:bg-gray-200 cursor-pointer"
+            className={`text-sm px-4 py-2 border rounded cursor-pointer ${
+              fontType === "serif" ? "font-serif" : "font-sans"
+            }`}
+            style={{
+              color: currentTheme?.textColor,
+              borderColor: currentTheme?.textColor,
+              fontSize: `${fontSize}px`,
+            }}
           >
-            CLOSE
+            Close
           </button>
         </DialogFooter>
       </DialogContent>
