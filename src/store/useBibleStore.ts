@@ -49,7 +49,7 @@ interface BibleStore {
   isManualVerseSelection: boolean;
 
   setBook: (book: BookOption | null) => void;
-  setChapter: (chapter: ChapterOption | null) => void;
+  setChapter: (chapter: ChapterOption | null, shouldSetFirstVerse?: boolean) => void;
   setVerse: (verse: VerseOption | null) => void;
   setCurrentVideoId: (videoId: number | null) => void;
   setCurrentPlayingVerse: (verse: string | null) => void;
@@ -150,7 +150,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     }
   },
 
-  setChapter: async (chapter: ChapterOption | null) => {
+  setChapter: async (chapter: ChapterOption | null, shouldSetFirstVerse: boolean = true) => {
     set({
       selectedChapter: chapter,
       currentPlayingVerse: null,
@@ -158,8 +158,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     });
 
     // Auto-set first verse when chapter changes
-    if (chapter && get().selectedBook) {
-      await get().getBibleVerseMarker();
+    if (shouldSetFirstVerse && chapter && get().selectedBook) {
       const availableVerses = await get().getAvailableVersesForBookAndChapter(
         get().selectedBook!.value,
         chapter.value
@@ -169,8 +168,6 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       } else {
         get().setVerse(null);
       }
-    } else {
-      get().setVerse(null);
     }
   },
 

@@ -204,7 +204,7 @@ const BCVDrawer = () => {
       }
 
       if (isChapterChange || isBookChange) {
-        setChapter(foundChapter);
+        setChapter(foundChapter, verse === null);
       }
 
       if (verse !== null) {
