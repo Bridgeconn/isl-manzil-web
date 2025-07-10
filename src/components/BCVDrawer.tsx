@@ -329,7 +329,9 @@ const BCVDrawer = () => {
             title={
               chapter.isDisabled
                 ? "The video for this Chapter is not available"
-                : chapter.value === 0 ? "Introduction" : `Chapter ${chapter.value}`
+                : chapter.value === 0
+                ? "Introduction"
+                : `Chapter ${chapter.value}`
             }
           >
             {chapter.label}
@@ -487,9 +489,13 @@ const BCVDrawer = () => {
           className="text-sm font-medium text-gray-700 px-2 cursor-pointer"
           onClick={openDialog}
         >
-          {selectedBook?.label ?? "Book"} {selectedChapter?.label ?? "Chapter"}{" "}
-          {selectedVerse?.label ? `: ${selectedVerse?.label}` : ""}
+          {selectedBook?.label ?? "Book"}{" "}
+          {selectedChapter?.label === "0"
+            ? "Intro"
+            : selectedChapter?.label ?? "Chapter"}{" "}
+          {selectedVerse?.label ? `: ${selectedVerse.label}` : ""}
         </span>
+
         <button
           className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
           title="Next Chapter"
