@@ -295,10 +295,25 @@ const BCVDrawer = () => {
     setIsBCVDrawerOpen(false);
   };
 
-  // Filter books based on search query
-  const filteredBooks = availableData.books.filter((book) =>
-    book.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const getSearchBookName = (query: string) => {
+    const trimmed = query.trim().toLowerCase();
+    const match = trimmed.match(/^([1-3]?\s?[a-z]+)/i);
+    return match ? match[0].replace(/\s+/g, " ").trim() : trimmed;
+  };
+
+  const normalizedSearch = getSearchBookName(searchQuery);
+
+  const filteredBooks = availableData.books.filter((book) => {
+    const label = book.label.toLowerCase();
+    const value = book.value.toLowerCase();
+    const normalizedLabel = label.replace(/\s+/g, " ").trim();
+
+    return (
+      normalizedLabel.startsWith(normalizedSearch) ||
+      normalizedLabel.includes(normalizedSearch) ||
+      value.startsWith(normalizedSearch)
+    );
+  });
 
   const oldTestamentBooks = filteredBooks.filter((book) => book.bookId <= 39);
   const newTestamentBooks = filteredBooks.filter((book) => book.bookId >= 40);
