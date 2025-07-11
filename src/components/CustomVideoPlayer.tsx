@@ -206,7 +206,9 @@ const CustomVideoPlayer = () => {
       : "http://localhost:5173";
 
   const shareUrl = useMemo(() => {
-    const chapterLabel = ["0", "Intro"].includes(selectedChapter! && selectedChapter?.label)
+    const chapterLabel = ["0", "Intro"].includes(
+      selectedChapter! && selectedChapter?.label
+    )
       ? "Introduction"
       : selectedChapter?.label;
 
