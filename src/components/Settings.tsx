@@ -4,9 +4,13 @@ import LayoutControlButtons from "./LayoutControlButtons";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
 import AboutUsPopUp from "./AboutUsPopUp";
+import { IoInformationCircleOutline } from "react-icons/io5";
+
 interface SettingsProps {
   onCloseDrawer?: () => void;
 }
+
+const feedbackUrl = import.meta.env.VITE_FEEDBACK_FORM_URL;
 
 const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
   const [showAbout, setShowAbout] = useState(false);
@@ -44,32 +48,32 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
           onMouseDown={handleContainerClick}
           onTouchStart={handleContainerClick}
         >
-          <div className="space-y-2 sm:space-y-4">
-            <button
-              onClick={() => {
-                setShowAbout(true);
-                onCloseDrawer?.();
-              }}
-              className="w-full px-4 py-2 text-sm font-semibold text-center text-black-700 border border-black-300 rounded hover:bg-gray-100 focus:bg-gray-100 transition-all"
-            >
-              About Us
-            </button>
-            <button
+          <div
+            className="w-full mb-4 flex gap-2 items-center cursor-pointer text-base font-semibold text-gray-700 hover:text-black"
+            onClick={() => {
+              setShowAbout(true);
+              onCloseDrawer?.();
+            }}
+          >
+            <h4>About us</h4>
+            <IoInformationCircleOutline size={18} />
+          </div>
+          {feedbackUrl && (
+            <h4
               onClick={(e) => {
                 e.stopPropagation();
 
-                const url = import.meta.env.VITE_FEEDBACK_FORM_URL;
-
-                if (url) {
-                  window.open(url, "_blank");
-                } else {
-                  alert("Feedback form URL is not defined!");
+                if (feedbackUrl) {
+                  window.open(feedbackUrl, "_blank");
                 }
               }}
-              className="w-full px-4 py-2 text-sm font-semibold text-center text-black-700 border border-black-300 rounded hover:bg-gray-100 focus:bg-gray-100 transition-all"
+              className="text-base font-semibold text-gray-700 mb-4 cursor-pointer hover:text-black"
             >
               Feedback
-            </button>
+            </h4>
+          )}
+          <div className="mb-4 border-b border-gray-200" />
+          <div className="space-y-2 sm:space-y-4">
             <h4 className="text-base font-semibold text-gray-700 mb-3">
               Theme
             </h4>
