@@ -10,6 +10,8 @@ interface SettingsProps {
   onCloseDrawer?: () => void;
 }
 
+const feedbackUrl = import.meta.env.VITE_FEEDBACK_FORM_URL;
+
 const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
   const [showAbout, setShowAbout] = useState(false);
   const {
@@ -47,32 +49,30 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
           onTouchStart={handleContainerClick}
         >
           <div
-              className="w-full mb-4 flex gap-2 items-center cursor-pointer text-base font-semibold text-gray-700 hover:text-black"
-              onClick={() => {
-                setShowAbout(true);
-                onCloseDrawer?.();
-              }}
-            >
-              <h4>About us</h4>
-              <IoInformationCircleOutline size={18}  />
-            </div>
+            className="w-full mb-4 flex gap-2 items-center cursor-pointer text-base font-semibold text-gray-700 hover:text-black"
+            onClick={() => {
+              setShowAbout(true);
+              onCloseDrawer?.();
+            }}
+          >
+            <h4>About us</h4>
+            <IoInformationCircleOutline size={18} />
+          </div>
+          {feedbackUrl && (
             <h4
               onClick={(e) => {
                 e.stopPropagation();
 
-                const url = import.meta.env.VITE_FEEDBACK_FORM_URL;
-
-                if (url) {
-                  window.open(url, "_blank");
-                } else {
-                  alert("Feedback form URL is not defined!");
+                if (feedbackUrl) {
+                  window.open(feedbackUrl, "_blank");
                 }
               }}
               className="text-base font-semibold text-gray-700 mb-4 cursor-pointer hover:text-black"
             >
               Feedback
             </h4>
-            <div className="mb-4 border-b border-gray-200" />
+          )}
+          <div className="mb-4 border-b border-gray-200" />
           <div className="space-y-2 sm:space-y-4">
             <h4 className="text-base font-semibold text-gray-700 mb-3">
               Theme
