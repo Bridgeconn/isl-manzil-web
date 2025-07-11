@@ -206,15 +206,19 @@ const CustomVideoPlayer = () => {
       : "http://localhost:5173";
 
   const shareUrl = useMemo(() => {
+    const chapterLabel = ["0", "Intro"].includes(selectedChapter! && selectedChapter?.label)
+      ? "Introduction"
+      : selectedChapter?.label;
+
     return selectedBook?.value && selectedChapter?.value.toString()
-      ? `${BASE_URL}/bible/${selectedBook.value}/${selectedChapter.value}`
+      ? `${BASE_URL}/bible/${selectedBook.value}/${chapterLabel}`
       : `${BASE_URL}/bible`;
   }, [selectedBook, selectedChapter]);
 
   useEffect(() => {
     const pathParts = window.location.pathname.split("/");
     const bookCode = pathParts[2];
-    const chapterNumber = pathParts[3];
+    const chapterNumber = pathParts[3] === "Introduction" ? "0" : pathParts[3];
 
     if (!bookCode || !chapterNumber || availableData.books.length === 0) return;
 
@@ -226,7 +230,6 @@ const CustomVideoPlayer = () => {
       (c) => String(c.value) === String(chapterNumber)
     );
     const typedVersificationData = versificationData as VersificationData;
-  
     const checkMaxChapters =
       typedVersificationData?.maxVerses[matchedBook!.value.toUpperCase()]
         .length;
@@ -247,7 +250,7 @@ const CustomVideoPlayer = () => {
     } else {
       setChapter({
         label: "Intro",
-        value: 0
+        value: 0,
       });
     }
   }, [availableData.books, availableData.chapters, setBook, setChapter]);
