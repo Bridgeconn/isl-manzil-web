@@ -153,6 +153,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   setChapter: async (chapter: ChapterOption | null, shouldSetFirstVerse: boolean = true) => {
     set({
       selectedChapter: chapter,
+      selectedVerse: null,
       currentPlayingVerse: null,
       bibleVerseMarker: [],
     });
