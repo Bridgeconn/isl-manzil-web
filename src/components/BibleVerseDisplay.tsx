@@ -9,8 +9,13 @@ import LicenseERVPopUp from "./LicenseERVPopUp";
 import { IoInformationCircleOutline } from "react-icons/io5";
 
 const BibleVerseDisplay = () => {
-  const { selectedBook, selectedChapter, currentPlayingVerse, seekToVerse } =
-    useBibleStore();
+  const {
+    availableData,
+    selectedBook,
+    selectedChapter,
+    currentPlayingVerse,
+    seekToVerse,
+  } = useBibleStore();
   const { fontType, fontSize } = useThemeStore();
   const [verseData, setVerseData] = useState<VerseData[]>([]);
   const [introData, setIntroData] = useState<string | null>(null);
@@ -21,6 +26,12 @@ const BibleVerseDisplay = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const verseRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [showTooltip, setShowTooltip] = useState(false);
+  const hasFetchedRef = useRef(false);
+
+  const pathParts =
+    typeof window !== "undefined" ? window.location.pathname.split("/") : [];
+  const urlBook = pathParts[2] || null;
+  const urlChapter = pathParts[3] ? Number(pathParts[3]) : null;
 
   // Clear refs when data changes
   useEffect(() => {
@@ -126,10 +137,20 @@ const BibleVerseDisplay = () => {
   }, [currentPlayingVerse, verseData]);
 
   useEffect(() => {
-    if (!selectedBook || !selectedChapter) return;
+    if (!selectedBook || !selectedChapter || !availableData) return;
+    let bookCode = selectedBook.value.toLowerCase();
+    let chapterNum = selectedChapter.value;
 
-    const bookCode = selectedBook.value.toLowerCase();
-    const chapterNum = selectedChapter.value;
+    if (!hasFetchedRef.current) {
+      if (urlBook && urlChapter !== null) {
+        if (bookCode !== urlBook || chapterNum !== urlChapter) {
+          bookCode = urlBook;
+          chapterNum = urlChapter;
+          hasFetchedRef.current = true;
+          return;
+        }
+      }
+    }
 
     const isIntro = chapterNum === 0;
 
