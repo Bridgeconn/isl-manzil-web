@@ -14,6 +14,12 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      if (target.closest('[role="dialog"]')) {
+        // setIsSettingsOpen(false)
+        return;
+      }
       if (
         settingsRef.current &&
         !settingsRef.current.contains(event.target as Node)
@@ -57,23 +63,23 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
           ))}
         </div>
         <div className="flex items-center justify-between gap-8 flex-1">
-        <SearchboxBCV />
-        <div className="h-14 w-18 flex-shrink-0" ref={settingsRef}>
-          <img
-            src={SettingGif}
-            alt="Settings"
-            className="w-full h-full object-contain cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsSettingsOpen((prev) => !prev);
-            }}
-          />
-          {isSettingsOpen && (
-            <div className="absolute top-full right-0 z-50">
-              <Settings />
-            </div>
-          )}
-        </div>
+          <SearchboxBCV />
+          <div className="h-14 w-18 flex-shrink-0" ref={settingsRef}>
+            <img
+              src={SettingGif}
+              alt="Settings"
+              className="w-full h-full object-contain cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSettingsOpen((prev) => !prev);
+              }}
+            />
+            {isSettingsOpen && (
+              <div className="absolute top-full right-0 z-50">
+                <Settings />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>
