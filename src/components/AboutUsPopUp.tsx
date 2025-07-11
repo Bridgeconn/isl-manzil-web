@@ -5,7 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
+import { X } from "lucide-react";
 import useThemeStore from "@/store/useThemeStore";
 
 const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
@@ -16,8 +18,14 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
 
   return (
     <Dialog open={showAbout} onOpenChange={onClose}>
-      <DialogContent className="w-full !max-w-4xl max-h-[90vh] bg-white rounded shadow-xl flex flex-col overflow-hidden z-[9999] themed-bg">
-        <DialogHeader className="pb-4 border-b">
+      <DialogContent className="w-full !max-w-4xl max-h-[90vh] bg-white rounded shadow-xl flex flex-col overflow-hidden z-[9999] p-0 gap-0 [&>button.absolute.right-4.top-4]:hidden themed-bg">
+        <DialogClose
+          className="absolute right-5 top-5 rounded-md cursor-pointer focus:outline-none"
+          asChild
+        >
+          <X style={{ color: currentTheme?.textColor, width: "20px", height: "20px" }} />
+        </DialogClose>
+        <DialogHeader className="p-4 border-b">
           <DialogTitle
             className={`text-xl font-semibold ${
               fontType === "serif" ? "font-serif" : "font-sans"
@@ -29,7 +37,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
         </DialogHeader>
 
         <div
-          className={`space-y-4 text-sm text-gray-800 overflow-y-auto custom-scroll-ultra-thin grow antialiased tracking-wide pr-2 ${
+          className={`space-y-4 text-sm text-gray-800 overflow-y-auto custom-scroll-ultra-thin grow antialiased tracking-wide p-4 ${
             fontType === "serif" ? "font-serif" : "font-sans"
           }`}
           style={{
@@ -135,10 +143,17 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           </section>
         </div>
 
-        <DialogFooter className="p-3 border-t flex !justify-center">
+        <DialogFooter className="p-3 border-t flex ">
           <button
             onClick={onClose}
-            className={`text-sm px-4 py-2 border rounded cursor-pointer ${
+            className={`
+            text-sm sm:text-base
+            px-2 py-1 sm:px-4 sm:py-2
+            border rounded
+            cursor-pointer
+            w-24 sm:w-auto
+            mx-auto
+           ${
               fontType === "serif" ? "font-serif" : "font-sans"
             }`}
             style={{

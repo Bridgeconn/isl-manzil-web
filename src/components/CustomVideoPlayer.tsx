@@ -28,6 +28,8 @@ import { useVimeoDownload } from "@/hooks/useVimeoDownload";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
+import versificationData from "../assets/data/versification.json";
+import { VersificationData } from "../types/bible";
 
 const FilledPlayIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -204,7 +206,7 @@ const CustomVideoPlayer = () => {
       : "http://localhost:5173";
 
   const shareUrl = useMemo(() => {
-    return selectedBook?.value && selectedChapter?.value
+    return selectedBook?.value && selectedChapter?.value.toString()
       ? `${BASE_URL}/bible/${selectedBook.value}/${selectedChapter.value}`
       : `${BASE_URL}/bible`;
   }, [selectedBook, selectedChapter]);
@@ -216,17 +218,37 @@ const CustomVideoPlayer = () => {
 
     if (!bookCode || !chapterNumber || availableData.books.length === 0) return;
 
-    const matchedBook = availableData.books.find((b) => b.value === bookCode);
+    const matchedBook = availableData.books?.find((b) => b.value === bookCode);
     const chapterList = matchedBook
       ? availableData.chapters[matchedBook.value]
       : [];
-    const matchedChapter = chapterList.find(
+    const matchedChapter = chapterList?.find(
       (c) => String(c.value) === String(chapterNumber)
     );
+    const typedVersificationData = versificationData as VersificationData;
+  
+    const checkMaxChapters =
+      typedVersificationData?.maxVerses[matchedBook!.value.toUpperCase()]
+        .length;
 
-    if (matchedBook && matchedChapter) {
-      setBook(matchedBook);
+    const isValidChapter =
+      Number(chapterNumber) >= 0 && Number(chapterNumber) <= checkMaxChapters;
+
+    const chapterOption = {
+      label:
+        chapterNumber.toString() === "0" ? "Intro" : chapterNumber.toString(),
+      value: Number(chapterNumber),
+    };
+    if (matchedBook) setBook(matchedBook);
+    if (matchedChapter) {
       setChapter(matchedChapter);
+    } else if (isValidChapter) {
+      setChapter(chapterOption);
+    } else {
+      setChapter({
+        label: "Intro",
+        value: 0
+      });
     }
   }, [availableData.books, availableData.chapters, setBook, setChapter]);
 
@@ -567,10 +589,10 @@ const CustomVideoPlayer = () => {
         prevSelectedBook.current = currentBook;
         prevSelectedChapter.current = null;
         prevSelectedVerse.current = null;
+        pendingVerseSeekRef.current = null;
 
         // Don't jump on book change
         if (currentVerse === 0) {
-          pendingVerseSeekRef.current = null;
           prevSelectedVerse.current = 0;
           prevSelectedChapter.current = currentChapter;
           return;
@@ -578,17 +600,22 @@ const CustomVideoPlayer = () => {
       }
 
       if (prevSelectedChapter.current !== currentChapter) {
-        prevSelectedVerse.current = null;
         prevSelectedChapter.current = currentChapter;
+        prevSelectedVerse.current = null;
+        pendingVerseSeekRef.current = null;
         if (currentVerse === 0) {
-          pendingVerseSeekRef.current = null;
           prevSelectedVerse.current = 0;
           return;
         }
       }
 
       if (!isPlayerReady || isManualSeekingRef.current) {
-        if (currentVerse !== 0) {
+        if (
+          currentVerse !== 0 &&
+          (isManualVerseSelection ||
+            (prevSelectedBook.current === currentBook &&
+              prevSelectedChapter.current === currentChapter))
+        ) {
           pendingVerseSeekRef.current = currentVerse;
         }
         return;
@@ -609,6 +636,7 @@ const CustomVideoPlayer = () => {
     selectedChapter,
     jumpToVerse,
     isPlayerReady,
+    isManualVerseSelection,
   ]);
 
   // Handle video ID changes
