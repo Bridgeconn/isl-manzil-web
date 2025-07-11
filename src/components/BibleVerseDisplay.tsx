@@ -299,24 +299,26 @@ const BibleVerseDisplay = () => {
               }}
             >
               <div
-                className="relative mb-4 ml-1 text-sm text-gray-700"
+                className="relative flex items-center gap-1 mb-4 text-gray-700 cursor-pointer"
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
               >
+                <span className="font-semibold text-sm md:text-base themed-text">
+                  Easy-to-Read Version
+                </span>
                 <a
                   href="https://www.bibleleague.org"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 mt-4  font-semibold text-lg cursor-pointer"
+                  className="font-semibold text-sm md:text-base"
                 >
-                  <span>Easy-to-Read Version</span>
-                  <span className="w-6 h-6 flex items-center justify-center rounded-full  text-gray-700  cursor-pointer">
-                    <IoInformationCircleOutline size={24} />
+                  <span className="text-gray-700 cursor-pointer themed-text">
+                    <IoInformationCircleOutline size={22} />
                   </span>
                 </a>
 
                 {showTooltip && (
-                  <div className="absolute top-full mt-2   z-50">
+                  <div className="absolute top-full mt-2 z-50">
                     <LicenseERVPopUp />
                   </div>
                 )}
