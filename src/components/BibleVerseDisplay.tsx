@@ -244,7 +244,7 @@ const BibleVerseDisplay = () => {
   }, [selectedBook, selectedChapter]);
 
   const renderLoadingOrError = () => {
-    if (isFetching) return <p className="text-center py-4">Loading...</p>;
+    if (isFetching) return <p className="text-center py-4 text-themed themed-text">Loading...</p>;
     if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
     return null;
   };

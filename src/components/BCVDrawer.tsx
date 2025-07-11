@@ -342,7 +342,9 @@ const BCVDrawer = () => {
               !chapter.isDisabled && handleChapterSelect(chapter.value)
             }
             title={
-              chapter.isDisabled
+              chapter.value === 0 && chapter.isDisabled
+                ? "Introduction video is not available"
+                : chapter.isDisabled
                 ? "The video for this Chapter is not available"
                 : chapter.value === 0
                 ? "Introduction"
