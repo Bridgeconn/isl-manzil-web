@@ -5,7 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
+import { X } from "lucide-react";
 
 const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
   showAbout,
@@ -13,7 +15,13 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
 }) => {
   return (
     <Dialog open={showAbout} onOpenChange={onClose}>
-      <DialogContent className="w-full !max-w-4xl max-h-[90vh] bg-white rounded shadow-xl flex flex-col overflow-hidden z-[9999]">
+      <DialogContent className="w-full !max-w-4xl max-h-[90vh] bg-white rounded shadow-xl flex flex-col overflow-hidden z-[9999] p-0 gap-0 [&>button.absolute.right-4.top-4]:hidden">
+        <DialogClose
+          className="absolute right-5 top-5 rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none"
+          asChild
+        >
+          <X style={{ width: "20px", height: "20px" }} />
+        </DialogClose>
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="text-xl font-semibold">
             About ISL Bible
@@ -21,7 +29,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
         </DialogHeader>
 
         <div
-          className="space-y-4 text-sm text-gray-800 overflow-y-auto grow"
+          className="space-y-4 text-sm text-gray-800 overflow-y-auto grow p-4"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           <section>
@@ -124,7 +132,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             mx-auto
           "
           >
-            CLOSE
+            Close
           </button>
         </DialogFooter>
       </DialogContent>
