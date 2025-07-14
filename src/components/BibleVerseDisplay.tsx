@@ -30,7 +30,11 @@ const BibleVerseDisplay = () => {
   const pathParts =
     typeof window !== "undefined" ? window.location.pathname.split("/") : [];
   const urlBook = pathParts[2] || null;
-  const urlChapter = pathParts[3] ? Number(pathParts[3]) : null;
+  const urlChapter = ["Introduction", "Intro"].includes(pathParts[3])
+    ? 0
+    : pathParts[3]
+    ? Number(pathParts[3])
+    : null;
 
   // Clear refs when data changes
   useEffect(() => {
@@ -136,20 +140,29 @@ const BibleVerseDisplay = () => {
   }, [currentPlayingVerse, verseData]);
 
   useEffect(() => {
-    if (!selectedBook || !selectedChapter || !availableData) return;
-    let bookCode = selectedBook.value.toLowerCase();
-    let chapterNum = selectedChapter.value;
-
     if (!hasFetchedRef.current) {
       if (urlBook && urlChapter !== null) {
-        if (bookCode !== urlBook || chapterNum !== urlChapter) {
-          bookCode = urlBook;
-          chapterNum = urlChapter;
-          hasFetchedRef.current = true;
+        const parsedChapter = Number(urlChapter);
+
+        const isFallbackToIntro =
+          selectedBook?.value === urlBook && selectedChapter?.value === 0;
+
+        const isExactMatch =
+          selectedBook?.value === urlBook &&
+          selectedChapter?.value === parsedChapter;
+
+        if (!isExactMatch && !isFallbackToIntro) {
           return;
         }
       }
+      hasFetchedRef.current = true;
     }
+
+    if (!selectedBook || !selectedChapter || !availableData) return;
+    setIntroData(null);
+    setVerseData([]);
+    const bookCode = selectedBook.value.toLowerCase();
+    const chapterNum = selectedChapter.value;
 
     const isIntro = chapterNum === 0;
 
