@@ -23,7 +23,13 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           className="absolute right-5 top-5 rounded-md cursor-pointer focus:outline-none"
           asChild
         >
-          <X style={{ color: currentTheme?.textColor, width: "20px", height: "20px" }} />
+          <X
+            style={{
+              color: currentTheme?.textColor,
+              width: "20px",
+              height: "20px",
+            }}
+          />
         </DialogClose>
         <DialogHeader className="p-4 border-b">
           <DialogTitle
@@ -153,9 +159,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             cursor-pointer
             w-24 sm:w-auto
             mx-auto
-           ${
-              fontType === "serif" ? "font-serif" : "font-sans"
-            }`}
+             ${fontType === "serif" ? "font-serif" : "font-sans"}`}
             style={{
               color: currentTheme?.textColor,
               borderColor: currentTheme?.textColor,

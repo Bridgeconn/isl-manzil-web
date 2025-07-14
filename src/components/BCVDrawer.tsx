@@ -204,7 +204,7 @@ const BCVDrawer = () => {
       }
 
       if (isChapterChange || isBookChange) {
-        setChapter(foundChapter);
+        setChapter(foundChapter, verse === null);
       }
 
       if (verse !== null) {
@@ -295,10 +295,25 @@ const BCVDrawer = () => {
     setIsBCVDrawerOpen(false);
   };
 
-  // Filter books based on search query
-  const filteredBooks = availableData.books.filter((book) =>
-    book.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const getSearchBookName = (query: string) => {
+    const trimmed = query.trim().toLowerCase();
+    const match = trimmed.match(/^([1-3]?\s?[a-z]+)/i);
+    return match ? match[0].replace(/\s+/g, " ").trim() : trimmed;
+  };
+
+  const normalizedSearch = getSearchBookName(searchQuery);
+
+  const filteredBooks = availableData.books.filter((book) => {
+    const label = book.label.toLowerCase();
+    const value = book.value.toLowerCase();
+    const normalizedLabel = label.replace(/\s+/g, " ").trim();
+
+    return (
+      normalizedLabel.startsWith(normalizedSearch) ||
+      normalizedLabel.includes(normalizedSearch) ||
+      value.startsWith(normalizedSearch)
+    );
+  });
 
   const oldTestamentBooks = filteredBooks.filter((book) => book.bookId <= 39);
   const newTestamentBooks = filteredBooks.filter((book) => book.bookId >= 40);
@@ -327,7 +342,9 @@ const BCVDrawer = () => {
               !chapter.isDisabled && handleChapterSelect(chapter.value)
             }
             title={
-              chapter.isDisabled
+              chapter.value === 0 && chapter.isDisabled
+                ? "Introduction video is not available"
+                : chapter.isDisabled
                 ? "The video for this Chapter is not available"
                 : chapter.value === 0
                 ? "Introduction"
@@ -592,7 +609,7 @@ const BCVDrawer = () => {
               }`}
             >
               <div className="flex flex-col items-end relative">
-                <div className="relative max-w-md rounded-full shadow-sm border border-gray-200">
+                <div className="flex items-center border border-gray-200 rounded-full shadow-sm px-4 py-2 gap-2 max-w-[280px] w-full">
                   <input
                     type="text"
                     placeholder="Search books..."
@@ -600,28 +617,38 @@ const BCVDrawer = () => {
                     onChange={handleInputChange}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className="w-full px-4 py-2 focus:outline-none"
+                    className="flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis"
                     disabled={isSearching}
                   />
-                  {searchQuery === "" ? (
-                    <Search
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900 cursor-pointer"
-                      size={16}
-                      onClick={handleSearchSubmit}
-                    />
-                  ) : (
-                    <X
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                      size={16}
+                  {searchQuery && (
+                    <span
+                      title="Clear"
+                      className="text-gray-600 hover:text-gray-800 cursor-pointer"
                       onClick={() => {
                         setSearchQuery("");
                         setErrorMessage("");
                       }}
-                    />
+                    >
+                      <X size={16} strokeWidth={2.5}/>
+                    </span>
                   )}
+                  <span
+                    title="Search"
+                    className={`text-blue-700 hover:text-blue-900 cursor-pointer ${
+                      !searchQuery.trim() ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={() => {
+                      if (searchQuery.trim()) {
+                        handleSearchSubmit();
+                      }
+                    }}
+                  >
+                    <Search size={16} strokeWidth={2.5} />
+                  </span>
                 </div>
+
                 {errorMessage && (
-                  <div className="absolute top-full mt-2 right-0 z-50 max-w-md w-full">
+                  <div className="absolute top-full mt-2 right-0 z-50 max-w-[280px] w-full">
                     <div className="bg-red-50 border border-red-200 rounded-lg shadow-lg p-3 animate-in fade-in-0 zoom-in-95 duration-200">
                       <div className="flex items-center">
                         <p className="themed-text text-themed text-sm font-medium">
