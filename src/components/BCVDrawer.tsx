@@ -607,7 +607,7 @@ const BCVDrawer = () => {
               }`}
             >
               <div className="flex flex-col items-end relative">
-                <div className="relative max-w-md rounded-full shadow-sm border border-gray-200">
+                <div className="flex items-center border border-gray-200 rounded-full shadow-sm px-4 py-2 gap-2 max-w-[280px] w-full">
                   <input
                     type="text"
                     placeholder="Search books..."
@@ -615,28 +615,38 @@ const BCVDrawer = () => {
                     onChange={handleInputChange}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className="w-full px-4 py-2 focus:outline-none"
+                    className="flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis"
                     disabled={isSearching}
                   />
-                  {searchQuery === "" ? (
-                    <Search
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-700 hover:text-blue-900 cursor-pointer"
-                      size={16}
-                      onClick={handleSearchSubmit}
-                    />
-                  ) : (
-                    <X
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                      size={16}
+                  {searchQuery && (
+                    <span
+                      title="Clear"
+                      className="text-gray-600 hover:text-gray-800 cursor-pointer"
                       onClick={() => {
                         setSearchQuery("");
                         setErrorMessage("");
                       }}
-                    />
+                    >
+                      <X size={16} strokeWidth={2.5}/>
+                    </span>
                   )}
+                  <span
+                    title="Search"
+                    className={`text-blue-700 hover:text-blue-900 cursor-pointer ${
+                      !searchQuery.trim() ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={() => {
+                      if (searchQuery.trim()) {
+                        handleSearchSubmit();
+                      }
+                    }}
+                  >
+                    <Search size={16} strokeWidth={2.5} />
+                  </span>
                 </div>
+
                 {errorMessage && (
-                  <div className="absolute top-full mt-2 right-0 z-50 max-w-md w-full">
+                  <div className="absolute top-full mt-2 right-0 z-50 max-w-[280px] w-full">
                     <div className="bg-red-50 border border-red-200 rounded-lg shadow-lg p-3 animate-in fade-in-0 zoom-in-95 duration-200">
                       <div className="flex items-center">
                         <p className="themed-text text-themed text-sm font-medium">
