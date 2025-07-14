@@ -6,6 +6,7 @@ export interface ThemeOption {
   name: string;
   backgroundColor: string;
   textColor: string;
+  verseColor: string;
 }
 
 interface ThemeStore {
@@ -27,18 +28,21 @@ const themes: ThemeOption[] = [
     name: "Theme 1",
     backgroundColor: "#FFFFFF",
     textColor: "#000000",
+    verseColor: "#777777"
   },
   {
     id: "theme2",
     name: "Theme 2",
     backgroundColor: "#FFFFFF",
     textColor: "#000063",
+    verseColor: "#777777"
   },
   {
     id: "theme3",
     name: "Theme 3",
     backgroundColor: "#001F3F",
     textColor: "#E0E0E0",
+    verseColor: "#ADD8E6"
   },
 ];
 
@@ -77,11 +81,13 @@ const useThemeStore = create<ThemeStore>()(
             currentTheme.backgroundColor
           );
           root.style.setProperty("--theme-text-color", currentTheme.textColor);
+          root.style.setProperty("--verse-color", currentTheme.verseColor);
           mainElement?.classList.add("theme-active");
         } else {
           mainElement?.classList.remove("theme-active");
           root.style.removeProperty("--theme-bg-color");
           root.style.removeProperty("--theme-text-color");
+          root.style.removeProperty("--verse-color");
         }
 
         const fontFamily =
@@ -105,7 +111,7 @@ const useThemeStore = create<ThemeStore>()(
         const isValidTheme = themes.some(theme => 
           theme.id === storedTheme.id &&
           theme.backgroundColor === storedTheme.backgroundColor &&
-          theme.textColor === storedTheme.textColor
+          theme.textColor === storedTheme.textColor && theme.verseColor === storedTheme.verseColor
         );
 
         if (isValidTheme) {

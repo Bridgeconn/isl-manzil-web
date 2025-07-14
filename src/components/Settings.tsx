@@ -4,7 +4,7 @@ import LayoutControlButtons from "./LayoutControlButtons";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
 import AboutUsPopUp from "./AboutUsPopUp";
-import { IoInformationCircleOutline } from "react-icons/io5";
+import { Info } from 'lucide-react';
 
 interface SettingsProps {
   onCloseDrawer?: () => void;
@@ -56,7 +56,7 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
             }}
           >
             <h4>About us</h4>
-            <IoInformationCircleOutline size={18} />
+            <Info size={18} />
           </div>
           {feedbackUrl && (
             <h4
