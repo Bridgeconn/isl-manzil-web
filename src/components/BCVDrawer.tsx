@@ -58,10 +58,10 @@ const BCVDrawer = () => {
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    if (!isInitialized && !isLoading) {
+    if (!isInitialized && !isLoading && isBCVDrawerOpen) {
       initializeAvailableData();
     }
-  }, [isInitialized, isLoading, initializeAvailableData]);
+  }, [isInitialized, isLoading, isBCVDrawerOpen, initializeAvailableData]);
 
   useEffect(() => {
     if (selectedBook) {

@@ -48,14 +48,17 @@ interface BibleStore {
   currentLoadingRequest: string | null;
   isManualVerseSelection: boolean;
 
-  setBook: (book: BookOption | null) => void;
-  setChapter: (chapter: ChapterOption | null, shouldSetFirstVerse?: boolean) => void;
+  setBook: (book: BookOption | null, skipAutoSetChapter?: boolean) => void;
+  setChapter: (
+    chapter: ChapterOption | null,
+    shouldSetFirstVerse?: boolean
+  ) => void;
   setVerse: (verse: VerseOption | null) => void;
   setCurrentVideoId: (videoId: number | null) => void;
   setCurrentPlayingVerse: (verse: string | null) => void;
   getCurrentVerseFromTime: (currentTime: number) => string | null;
   getVideoUrlData: () => Promise<VideoLinkRowData[] | null>;
-  initializeAvailableData: () => Promise<void>;
+  initializeAvailableData: (shouldAutoSelect?: boolean) => Promise<void>;
   getAvailableChaptersForBook: (bookCode: string) => ChapterOption[];
   getAvailableVersesForBookAndChapter: (
     bookCode: string,
@@ -71,7 +74,9 @@ interface BibleStore {
     bookLabel: string,
     chapter: number
   ) => Promise<VerseMarkerType[] | null>;
-  findVerseMarkerForVerse: (verseNumber: number) => Promise<VerseMarkerType | null>;
+  findVerseMarkerForVerse: (
+    verseNumber: number
+  ) => Promise<VerseMarkerType | null>;
   isVerseInRange: (verseNumber: number, verseRange: string) => boolean;
 }
 
@@ -120,8 +125,13 @@ const useBibleStore = create<BibleStore>((set, get) => ({
   },
 
   // Helper function to find verse marker for a specific verse number
-  findVerseMarkerForVerse: async (verseNumber: number): Promise<VerseMarkerType | null> => {
-    const bibleVerseMarker = await get().getBibleVerseMarkerForBookAndChapter(get().selectedBook!.label, get().selectedChapter!.value);
+  findVerseMarkerForVerse: async (
+    verseNumber: number
+  ): Promise<VerseMarkerType | null> => {
+    const bibleVerseMarker = await get().getBibleVerseMarkerForBookAndChapter(
+      get().selectedBook!.label,
+      get().selectedChapter!.value
+    );
     if (!bibleVerseMarker || bibleVerseMarker.length === 0) {
       return null;
     }
@@ -134,23 +144,26 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     );
   },
 
-  setBook: (book: BookOption | null) => {
+  setBook: (book: BookOption | null, skipAutoSetChapter = false) => {
     set({ selectedBook: book, currentPlayingVerse: null });
 
     // Auto-set first available chapter when book changes
-    if (book) {
+    if (!skipAutoSetChapter && book) {
       const availableChapters = get().getAvailableChaptersForBook(book.value);
       if (availableChapters.length > 0) {
         get().setChapter(availableChapters[0]);
       } else {
         get().setChapter(null);
       }
-    } else {
+    } else if (!book) {
       get().setChapter(null);
     }
   },
 
-  setChapter: async (chapter: ChapterOption | null, shouldSetFirstVerse: boolean = true) => {
+  setChapter: async (
+    chapter: ChapterOption | null,
+    shouldSetFirstVerse: boolean = true
+  ) => {
     set({
       selectedChapter: chapter,
       selectedVerse: null,
@@ -255,7 +268,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
     }
   },
 
-  initializeAvailableData: async () => {
+  initializeAvailableData: async (shouldAutoSelect: boolean = true) => {
     set({ isLoading: true });
 
     try {
@@ -317,9 +330,11 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       });
 
       // Auto-select first available book
-      const firstAvailableBook = books.find((book) => !book.isDisabled);
-      if (firstAvailableBook && !get().selectedBook) {
-        get().setBook(firstAvailableBook);
+      if(shouldAutoSelect){
+        const firstAvailableBook = books.find((book) => !book.isDisabled);
+        if (firstAvailableBook && !get().selectedBook) {
+          get().setBook(firstAvailableBook, false);
+        }
       }
     } catch (error) {
       console.error("Error initializing available data:", error);
