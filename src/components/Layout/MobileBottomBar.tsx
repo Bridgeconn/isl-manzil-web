@@ -86,7 +86,9 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           </button>
           <span className="text-sm font-medium text-gray-700 px-2 cursor-pointer">
             {selectedBook?.label ?? "Book"}{" "}
-            {selectedChapter?.label ?? "Chapter"}
+            {selectedChapter?.label === "0"
+              ? "Intro"
+              : selectedChapter?.label ?? "Chapter"}
           </span>
           <button
             className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
