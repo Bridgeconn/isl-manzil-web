@@ -400,8 +400,8 @@ const BibleVerseDisplay = () => {
                     No content available
                   </p>
                 )}
-              {introData ||
-                (verseData.length > 0 && !error && !isFetching && (
+              {(introData ||
+                verseData.length > 0) && !error && !isFetching && (
                   <div
                     className="relative flex items-center gap-2 my-6 text-gray-700 cursor-pointer"
                     onMouseEnter={() => setShowTooltip(true)}
@@ -427,7 +427,7 @@ const BibleVerseDisplay = () => {
                       </div>
                     )}
                   </div>
-                ))}
+                )}
             </div>
           )}
         </>
