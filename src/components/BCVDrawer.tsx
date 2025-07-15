@@ -4,8 +4,6 @@ import useBibleStore from "@/store/useBibleStore";
 import {
   ChevronLeft,
   ChevronRight,
-  List,
-  LayoutGrid,
   X,
   Search,
 } from "lucide-react";
@@ -25,7 +23,6 @@ import {
 } from "@/utils/bibleReferenceUtils";
 
 type ViewType = "book" | "chapter" | "verse";
-type DropdownType = "list" | "grid";
 
 const BCVDrawer = () => {
   const { selectedBook, selectedChapter, selectedVerse } = useBibleStore();
@@ -49,7 +46,6 @@ const BCVDrawer = () => {
   } = useBibleStore();
 
   const [activeView, setActiveView] = useState<ViewType>("book");
-  const [viewMode, setViewMode] = useState<DropdownType>("list");
   const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
   const [verseOptions, setVerseOptions] = useState<VerseOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -402,11 +398,7 @@ const BCVDrawer = () => {
     }
     return (
       <div
-        className={`grid ${
-          viewMode === "list"
-            ? "grid-cols-1 md:grid-cols-2"
-            : "grid-cols-2 md:grid-cols-4"
-        } gap-4 w-full`}
+        className={`grid grid-cols-1 md:grid-cols-2 gap-4 w-full`}
       >
         {books.map((book) => {
           const isSelected =
@@ -476,20 +468,6 @@ const BCVDrawer = () => {
     </div>
   );
 
-  const renderGridView = () => (
-    <div className="flex flex-col overflow-y-auto max-h-full h-fit pr-1">
-      <div className="w-full mb-4">
-        <h3 className={`font-bold text-lg mb-2`}>OLD TESTAMENT</h3>
-        {renderBookGrid(oldTestamentBooks)}
-      </div>
-
-      <div className="w-full">
-        <h3 className="font-bold text-lg mb-2">NEW TESTAMENT</h3>
-        {renderBookGrid(newTestamentBooks)}
-      </div>
-    </div>
-  );
-
   return (
     <>
       <div
@@ -543,33 +521,7 @@ const BCVDrawer = () => {
       <Dialog open={isBCVDrawerOpen} onOpenChange={setIsBCVDrawerOpen}>
         <DialogContent className="sm:max-w-6xl h-[calc(100vh-100px)] flex flex-col [&>button]:hidden pt-3">
           <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 border-b border-gray-200">
-            <div
-              className={`flex items-center border border-gray-200 rounded-sm ${
-                activeView !== "book" ? "invisible" : ""
-              }`}
-            >
-              <button
-                className={`p-2 cursor-pointer ${
-                  viewMode === "list" ? "bg-gray-100" : ""
-                }`}
-                onClick={() => setViewMode("list")}
-                title="List View"
-              >
-                <List size={21} />
-              </button>
-              <div className="w-px h-6 bg-gray-200"></div>
-              <button
-                className={`p-2 cursor-pointer ${
-                  viewMode === "grid" ? "bg-gray-100" : ""
-                }`}
-                onClick={() => setViewMode("grid")}
-                title="Grid View"
-              >
-                <LayoutGrid size={21} />
-              </button>
-            </div>
-
-            <div className="max-w-xl w-full mx-auto flex flex-row justify-center">
+            <div className="max-w-xl w-full flex flex-row justify-start">
               <div className="flex w-full justify-center">
                 <button
                   className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
@@ -621,7 +573,7 @@ const BCVDrawer = () => {
               </div>
             </div>
             <div
-              className={`flex items-center justify-end ${
+              className={`flex items-center justify-end ml-auto ${
                 activeView !== "book" ? "invisible" : ""
               }`}
             >
@@ -683,8 +635,7 @@ const BCVDrawer = () => {
           </DialogHeader>
 
           <div className="overflow-y-auto flex-grow">
-            {activeView === "book" &&
-              (viewMode === "list" ? renderListView() : renderGridView())}
+            {activeView === "book" && renderListView()}
 
             {activeView === "chapter" && (
               <div className="grid grid-cols-5 sm:grid-cols-10 gap-4">
