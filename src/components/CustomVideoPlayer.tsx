@@ -686,6 +686,7 @@ const CustomVideoPlayer = () => {
           byline: false,
           portrait: false,
           autopause: false,
+          autoplay: true,
         };
         // Ensure the DOM element is ready
         await new Promise((resolve) => setTimeout(resolve, 100));

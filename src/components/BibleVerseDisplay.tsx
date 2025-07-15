@@ -4,6 +4,8 @@ import ReactMarkdown from "react-markdown";
 import { VerseData } from "@/types/bible";
 import useBibleStore from "@/store/useBibleStore";
 import useThemeStore from "@/store/useThemeStore";
+import LicenseERVPopUp from "./LicenseERVPopUp";
+import { Info } from "lucide-react";
 
 const BibleVerseDisplay = () => {
   const {
@@ -22,6 +24,7 @@ const BibleVerseDisplay = () => {
   const introCache = useRef<Record<string, string>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const verseRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [showTooltip, setShowTooltip] = useState(false);
   const hasFetchedRef = useRef(false);
 
   const pathParts =
@@ -276,7 +279,10 @@ const BibleVerseDisplay = () => {
   }, [selectedBook, selectedChapter]);
 
   const renderLoadingOrError = () => {
-    if (isFetching) return <p className="text-center py-4">Loading...</p>;
+    if (isFetching)
+      return (
+        <p className="text-center py-4 text-themed themed-text">Loading...</p>
+      );
     if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
     return null;
   };
@@ -366,31 +372,41 @@ const BibleVerseDisplay = () => {
                       {verseData.slice(1).map((verseItem, index) => {
                         const isPlaying = isCurrentVerse(verseItem.verse);
                         return (
-                          <div
-                            className="cursor-pointer"
-                            key={index + 1}
-                            id={`verse-${verseItem.verse}`}
-                            onClick={() => seekToVerse(verseItem.verse)}
-                            ref={(el) => setVerseRef(verseItem.verse, el)}
-                          >
-                            <span
-                              className={`mr-2 rounded transition-colors duration-300 ${
-                                isPlaying
-                                  ? "themed-reverse text-themed"
-                                  : "themed-text text-themed text-gray-500"
+                          <div>
+                            <div
+                              className={`inline cursor-pointer ${
+                                isPlaying ? "themed-reverse" : ""
                               }`}
+                              key={index + 1}
+                              id={`verse-${verseItem.verse}`}
+                              onClick={() => seekToVerse(verseItem.verse)}
+                              ref={(el) => setVerseRef(verseItem.verse, el)}
                             >
-                              {verseItem.verse}
-                            </span>
-                            <span
-                              className={`antialiased tracking-wide rounded transition-colors duration-300 ${
-                                isPlaying
-                                  ? "themed-reverse text-themed"
-                                  : "themed-text text-themed"
-                              }`}
-                            >
-                              {verseItem.text}
-                            </span>
+                              <span
+                                className={`mr-2 rounded transition-colors duration-300`}
+                                style={{
+                                  fontWeight: 600,
+                                  paddingLeft: "3px",
+                                  bottom: "3px",
+                                  position: "relative",
+                                  fontSize: "0.8em",
+                                  color: isPlaying
+                                    ? undefined
+                                    : "var(--verse-color)",
+                                }}
+                              >
+                                {verseItem.verse}
+                              </span>
+                              <span
+                                className={`antialiased tracking-wide rounded transition-colors duration-300 ${
+                                  isPlaying
+                                    ? "themed-reverse text-themed"
+                                    : "text-themed themed-text"
+                                }`}
+                              >
+                                {verseItem.text}
+                              </span>
+                            </div>
                           </div>
                         );
                       })}
@@ -406,6 +422,34 @@ const BibleVerseDisplay = () => {
                   <p className="text-center py-4 text-themed themed-text">
                     No content available
                   </p>
+                )}
+              {(introData ||
+                verseData.length > 0) && !error && !isFetching && (
+                  <div
+                    className="relative flex items-center gap-2 my-6 text-gray-700 cursor-pointer"
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                  >
+                    <span className="italic text-sm md:text-base text-[var(--verse-color)]">
+                      Easy-to-Read Version
+                    </span>
+                    <a
+                      href="https://www.bibleleague.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-sm md:text-base"
+                    >
+                      <span className="cursor-pointer text-[var(--verse-color)]">
+                        <Info size={18} />
+                      </span>
+                    </a>
+
+                    {showTooltip && (
+                      <div className="absolute bottom-6 z-50">
+                        <LicenseERVPopUp />
+                      </div>
+                    )}
+                  </div>
                 )}
             </div>
           )}
