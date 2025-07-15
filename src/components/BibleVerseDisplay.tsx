@@ -418,7 +418,7 @@ const BibleVerseDisplay = () => {
                 </a>
 
                 {showTooltip && (
-                  <div className="absolute bottom-8 z-50">
+                  <div className="absolute bottom-6 z-50">
                     <LicenseERVPopUp />
                   </div>
                 )}

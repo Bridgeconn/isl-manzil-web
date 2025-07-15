@@ -144,7 +144,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
               target="_blank"
               rel="noopener noreferrer"
             >
-              © Bridge Connectivity Solutions Pvt. Ltd. 2025
+              <span className="text-base">©</span> Bridge Connectivity Solutions Pvt. Ltd. 2025
             </a>
           </section>
         </div>
