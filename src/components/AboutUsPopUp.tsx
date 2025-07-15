@@ -15,6 +15,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
   onClose,
 }) => {
   const { fontType, fontSize, currentTheme } = useThemeStore();
+
   return (
     <Dialog open={showAbout} onOpenChange={onClose}>
       <DialogContent className="w-full !max-w-4xl max-h-[90vh] bg-white rounded shadow-xl flex flex-col overflow-hidden z-[9999] p-0 gap-0 [&>button.absolute.right-4.top-4]:hidden themed-bg">
