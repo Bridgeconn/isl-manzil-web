@@ -103,36 +103,35 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   ]);
 
   useEffect(() => {
-  if (!searchTerm.trim()) {
-    setFilteredBooks(availableData.books || []);
+    if (!searchTerm.trim()) {
+      setFilteredBooks(availableData.books || []);
+      setErrorMessage("");
+      return;
+    }
+
+    const getSearchBookName = (query: string) => {
+      const trimmed = query.trim().toLowerCase();
+      const match = trimmed.match(/^([1-3]?\s?[a-z]+)/i);
+      return match ? match[0].replace(/\s+/g, " ").trim() : trimmed;
+    };
+
+    const normalizedSearch = getSearchBookName(searchTerm);
+
+    const filtered = (availableData.books || []).filter((book) => {
+      const label = book.label.toLowerCase();
+      const value = book.value.toLowerCase();
+      const normalizedLabel = label.replace(/\s+/g, " ").trim();
+
+      return (
+        normalizedLabel.startsWith(normalizedSearch) ||
+        normalizedLabel.includes(normalizedSearch) ||
+        value.startsWith(normalizedSearch)
+      );
+    });
+
+    setFilteredBooks(filtered);
     setErrorMessage("");
-    return;
-  }
-
-  const getSearchBookName = (query: string) => {
-    const trimmed = query.trim().toLowerCase();
-    const match = trimmed.match(/^([1-3]?\s?[a-z]+)/i);
-    return match ? match[0].replace(/\s+/g, " ").trim() : trimmed;
-  };
-
-  const normalizedSearch = getSearchBookName(searchTerm);
-
-  const filtered = (availableData.books || []).filter((book) => {
-    const label = book.label.toLowerCase();
-    const value = book.value.toLowerCase();
-    const normalizedLabel = label.replace(/\s+/g, " ").trim();
-
-    return (
-      normalizedLabel.startsWith(normalizedSearch) ||
-      normalizedLabel.includes(normalizedSearch) ||
-      value.startsWith(normalizedSearch)
-    );
-  });
-
-  setFilteredBooks(filtered);
-  setErrorMessage("");
-}, [searchTerm, availableData.books]);
-
+  }, [searchTerm, availableData.books]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -474,7 +473,9 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
               : "bg-white shadow-sm"
           }`}
         >
-          {verse.label}
+          {verse.label.includes("_")
+            ? verse.label.replace(/_/g, "-")
+            : verse.label}
         </div>
       ))}
     </div>
