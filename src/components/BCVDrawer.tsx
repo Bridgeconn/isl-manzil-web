@@ -383,7 +383,9 @@ const BCVDrawer = () => {
                   }`
             }
           >
-            {verse.label}
+            {verse.label.includes("_")
+              ? verse.label.replace(/_/g, "-")
+              : verse.label}
           </div>
         ))}
       </>
@@ -519,7 +521,13 @@ const BCVDrawer = () => {
           {selectedChapter?.label === "0"
             ? "Intro"
             : selectedChapter?.label ?? "Chapter"}{" "}
-          {selectedVerse?.label ? `: ${selectedVerse.label}` : ""}
+          {selectedVerse?.label
+            ? `: ${
+                selectedVerse.label.includes("_")
+                  ? selectedVerse.label.replace(/_/g, "-")
+                  : selectedVerse.label
+              }`
+            : ""}
         </span>
 
         <button
@@ -638,7 +646,7 @@ const BCVDrawer = () => {
                         setErrorMessage("");
                       }}
                     >
-                      <X size={16} strokeWidth={2.5}/>
+                      <X size={16} strokeWidth={2.5} />
                     </span>
                   )}
                   <span
