@@ -244,7 +244,7 @@ const CustomVideoPlayer = () => {
         chapterNumber.toString() === "0" ? "Intro" : chapterNumber.toString(),
       value: Number(chapterNumber),
     };
-    if (matchedBook) setBook(matchedBook);
+    if (matchedBook) setBook(matchedBook, true);
     if (matchedChapter) {
       setChapter(matchedChapter);
     } else if (isValidChapter) {

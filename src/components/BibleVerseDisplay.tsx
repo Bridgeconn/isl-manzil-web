@@ -139,6 +139,29 @@ const BibleVerseDisplay = () => {
     return () => clearTimeout(timeoutId);
   }, [currentPlayingVerse, verseData]);
 
+ useEffect(() => {
+  if (typeof window === "undefined") return;
+  if (!selectedBook || !selectedChapter) return;
+
+  // Extract current URL segments
+  const pathParts = window.location.pathname.split("/").filter(Boolean);
+
+  const hasBookAndChapterInURL = pathParts.length >= 3;
+  if (!hasBookAndChapterInURL) return;
+
+  // Construct new URL
+  const newChapterSegment =
+    selectedChapter.value === 0 ? "introduction" : selectedChapter.value.toString();
+  const newPath = `/bible/${selectedBook.value}/${newChapterSegment}`;
+
+  const currentPath = window.location.pathname;
+  if (currentPath !== newPath) {
+    window.history.replaceState(null, "", newPath);
+  }
+}, [selectedBook, selectedChapter]);
+
+
+
   useEffect(() => {
     if (!hasFetchedRef.current) {
       if (urlBook && urlChapter !== null) {
