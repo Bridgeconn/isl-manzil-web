@@ -1691,6 +1691,17 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  const formatBytes = (bytes: number, decimals = 2) => {
+    if (bytes === 0) return "0 Bytes";
+
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return `${(bytes / Math.pow(k, i)).toFixed(decimals)} ${sizes[i]}`;
+  };
+
   // Handle controls area mouse events
   const handleControlsMouseEnter = () => {
     setShowControls(true);
@@ -2220,7 +2231,7 @@ const CustomVideoPlayer = () => {
                                     No download options available
                                   </div>
                                 ) : (
-                                  <div className="space-y-1 max-h-25 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
+                                  <div className="space-y-1 max-h-23 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
                                     {downloadOptions.map(
                                       (
                                         option: {
@@ -2228,6 +2239,7 @@ const CustomVideoPlayer = () => {
                                           width?: number;
                                           height?: number;
                                           format?: string;
+                                          size: number;
                                         },
                                         index
                                       ) => (
@@ -2236,7 +2248,7 @@ const CustomVideoPlayer = () => {
                                           onClick={() =>
                                             handleDownloadVideo(option)
                                           }
-                                          className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
+                                          className="w-full text-left px-2 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
                                         >
                                           <div className="font-medium flex flex-col">
                                             <span>
@@ -2251,7 +2263,8 @@ const CustomVideoPlayer = () => {
                                             </span>
                                             <span>
                                               {option.format?.toUpperCase() ||
-                                                "MP4"}
+                                                "MP4"}{" "}
+                                              ({formatBytes(option.size)})
                                             </span>
                                           </div>
                                           <Download size={16} />
