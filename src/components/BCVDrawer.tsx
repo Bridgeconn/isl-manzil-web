@@ -347,8 +347,8 @@ const BCVDrawer = () => {
                 : chapter.isDisabled
                 ? "The video for this Chapter is not available"
                 : chapter.value === 0
-                ? "Introduction"
-                : `Chapter ${chapter.value}`
+                ? `Introduction to ${selectedBook.label}`
+                : ` ${selectedBook.label} ${chapter.value}`
             }
           >
             {chapter.label}
@@ -373,6 +373,15 @@ const BCVDrawer = () => {
                  : "bg-white shadow-sm"
              }`}
             onClick={() => handleVerseSelect(verse.value)}
+            title={
+              verse.value === 0
+                ? `Introduction to ${selectedBook.label} ${selectedChapter.label}`
+                : `${selectedBook.label} ${selectedChapter.label}:${
+                    verse.label.includes("_")
+                      ? verse.label.replace(/_/g, "-")
+                      : verse.label
+                  }`
+            }
           >
             {verse.label}
           </div>
