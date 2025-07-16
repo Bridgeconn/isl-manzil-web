@@ -54,10 +54,10 @@ const BCVDrawer = () => {
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    if (!isInitialized && !isLoading) {
+    if (!isInitialized && !isLoading && isBCVDrawerOpen) {
       initializeAvailableData();
     }
-  }, [isInitialized, isLoading, initializeAvailableData]);
+  }, [isInitialized, isLoading, isBCVDrawerOpen, initializeAvailableData]);
 
   useEffect(() => {
     if (selectedBook) {
@@ -495,17 +495,21 @@ const BCVDrawer = () => {
           className="text-sm font-medium text-gray-700 px-2 cursor-pointer"
           onClick={openDialog}
         >
-          {selectedBook?.label ?? "Book"}{" "}
-          {selectedChapter?.label === "0"
-            ? "Intro"
-            : selectedChapter?.label ?? "Chapter"}{" "}
-          {selectedVerse?.label
+          {selectedBook?.label ? (
+            <>
+              {selectedBook.label}{" "}
+              {selectedChapter?.label === "0" ? "Intro" : selectedChapter?.label ?? "Chapter"}{" "}
+              {selectedVerse?.label
             ? `: ${
                 selectedVerse.label.includes("_")
                   ? selectedVerse.label.replace(/_/g, "-")
                   : selectedVerse.label
               }`
             : ""}
+            </>
+          ) : (
+            <>Loading...</>
+          )}
         </span>
 
         <button

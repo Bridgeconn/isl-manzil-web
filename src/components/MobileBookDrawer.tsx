@@ -54,10 +54,10 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
 
   // Initialize data
   useEffect(() => {
-    if (!isInitialized && !isLoading) {
+    if (!isInitialized && !isLoading && isOpen) {
       initializeAvailableData();
     }
-  }, [isInitialized, isLoading, initializeAvailableData]);
+  }, [isInitialized, isLoading, isOpen, initializeAvailableData]);
 
   useEffect(() => {
     if (selectedBook) {
