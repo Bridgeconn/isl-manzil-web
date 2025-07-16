@@ -139,28 +139,28 @@ const BibleVerseDisplay = () => {
     return () => clearTimeout(timeoutId);
   }, [currentPlayingVerse, verseData]);
 
- useEffect(() => {
-  if (typeof window === "undefined") return;
-  if (!selectedBook || !selectedChapter) return;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!selectedBook || !selectedChapter) return;
 
-  // Extract current URL segments
-  const pathParts = window.location.pathname.split("/").filter(Boolean);
+    // Extract current URL segments
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
 
-  const hasBookAndChapterInURL = pathParts.length >= 3;
-  if (!hasBookAndChapterInURL) return;
+    const hasBookAndChapterInURL = pathParts.length >= 3;
+    if (!hasBookAndChapterInURL) return;
 
-  // Construct new URL
-  const newChapterSegment =
-    selectedChapter.value === 0 ? "introduction" : selectedChapter.value.toString();
-  const newPath = `/bible/${selectedBook.value}/${newChapterSegment}`;
+    // Construct new URL
+    const newChapterSegment =
+      selectedChapter.value === 0
+        ? "introduction"
+        : selectedChapter.value.toString();
+    const newPath = `/bible/${selectedBook.value}/${newChapterSegment}`;
 
-  const currentPath = window.location.pathname;
-  if (currentPath !== newPath) {
-    window.history.replaceState(null, "", newPath);
-  }
-}, [selectedBook, selectedChapter]);
-
-
+    const currentPath = window.location.pathname;
+    if (currentPath !== newPath) {
+      window.history.replaceState(null, "", newPath);
+    }
+  }, [selectedBook, selectedChapter]);
 
   useEffect(() => {
     if (!hasFetchedRef.current) {
@@ -423,35 +423,34 @@ const BibleVerseDisplay = () => {
                     No content available
                   </p>
                 )}
-              {(introData ||
-                verseData.length > 0) && !error && !isFetching && (
-                  <div
-                    className="relative flex items-center gap-2 my-6 text-gray-700"
-                style={{ cursor: "default" }}
-                    onMouseEnter={() => setShowTooltip(true)}
-                    onMouseLeave={() => setShowTooltip(false)}
+              {(introData || verseData.length > 0) && !error && !isFetching && (
+                <div
+                  className="relative flex items-center gap-2 my-6 text-gray-700"
+                  style={{ cursor: "default" }}
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                >
+                  <span className="italic text-sm md:text-base text-[var(--verse-color)]">
+                    Easy-to-Read Version
+                  </span>
+                  <a
+                    href="https://www.bibleleague.org"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-sm md:text-base"
                   >
-                    <span className="italic text-sm md:text-base text-[var(--verse-color)]">
-                      Easy-to-Read Version
+                    <span className="cursor-pointer text-[var(--verse-color)]">
+                      <Info size={18} />
                     </span>
-                    <a
-                      href="https://www.bibleleague.org"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-sm md:text-base"
-                    >
-                      <span className="cursor-pointer text-[var(--verse-color)]">
-                        <Info size={18} />
-                      </span>
-                    </a>
+                  </a>
 
-                    {showTooltip && (
-                      <div className="absolute bottom-6 z-50">
-                        <LicenseERVPopUp />
-                      </div>
-                    )}
-                  </div>
-                )}
+                  {showTooltip && (
+                    <div className="absolute bottom-6 z-50">
+                      <LicenseERVPopUp />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </>
