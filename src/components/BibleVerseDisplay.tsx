@@ -399,7 +399,8 @@ const BibleVerseDisplay = () => {
                   </p>
                 )}
               <div
-                className="relative flex items-center gap-2 my-6 text-gray-700 cursor-pointer"
+                className="relative flex items-center gap-2 my-6 text-gray-700"
+                style={{ cursor: "default" }}
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
               >
