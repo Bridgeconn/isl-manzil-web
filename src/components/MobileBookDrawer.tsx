@@ -407,6 +407,10 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
             </h3>
             {renderBookGrid(oldTestamentBooks)}
           </div>
+          <div className="flex flex-col justify-center">
+            <div className="w-px h-full bg-gray-300" />
+          </div>
+
           <div className="flex-1 flex-col">
             <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
               NEW TESTAMENT
@@ -502,7 +506,11 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
             <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
           </div>
 
-          <div className={`flex items-center justify-between gap-3 mb-4 ${deviceType !== "mobile" && "border-b border-gray-200"}`}>
+          <div
+            className={`flex items-center justify-between gap-3 mb-4 ${
+              deviceType !== "mobile" && "border-b border-gray-200"
+            }`}
+          >
             {deviceType === "tablet" ? (
               <div className="max-w-sm lg:max-w-xl w-full flex flex-row justify-start">
                 {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {

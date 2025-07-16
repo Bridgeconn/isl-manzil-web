@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import { useChapterNavigation } from "@/hooks/useChapterNavigation";
 import useBibleStore from "@/store/useBibleStore";
-import {
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Search,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Search } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -397,9 +392,7 @@ const BCVDrawer = () => {
       );
     }
     return (
-      <div
-        className={`grid grid-cols-1 md:grid-cols-2 gap-4 w-full`}
-      >
+      <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 w-full`}>
         {books.map((book) => {
           const isSelected =
             selectedBook?.value.toLowerCase() === book.value.toLowerCase();
@@ -455,12 +448,14 @@ const BCVDrawer = () => {
   };
 
   const renderListView = () => (
-    <div className="flex overflow-y-auto max-h-full h-fit gap-4 pr-1">
+    <div className="flex overflow-y-auto hfull gap-4 pr-1">
       <div className="flex-1">
         <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
         {renderBookGrid(oldTestamentBooks)}
       </div>
-
+      <div className="flex flex-col mx-1">
+        <div className="w-px bg-gray-300 flex-grow"></div>
+      </div>
       <div className="flex-1">
         <h3 className="font-bold text-lg text-center mb-2">NEW TESTAMENT</h3>
         {renderBookGrid(newTestamentBooks)}
@@ -498,14 +493,16 @@ const BCVDrawer = () => {
           {selectedBook?.label ? (
             <>
               {selectedBook.label}{" "}
-              {selectedChapter?.label === "0" ? "Intro" : selectedChapter?.label ?? "Chapter"}{" "}
+              {selectedChapter?.label === "0"
+                ? "Intro"
+                : selectedChapter?.label ?? "Chapter"}{" "}
               {selectedVerse?.label
-            ? `: ${
-                selectedVerse.label.includes("_")
-                  ? selectedVerse.label.replace(/_/g, "-")
-                  : selectedVerse.label
-              }`
-            : ""}
+                ? `: ${
+                    selectedVerse.label.includes("_")
+                      ? selectedVerse.label.replace(/_/g, "-")
+                      : selectedVerse.label
+                  }`
+                : ""}
             </>
           ) : (
             <>Loading...</>
