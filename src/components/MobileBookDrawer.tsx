@@ -3,6 +3,7 @@ import { Search, X } from "lucide-react";
 import useBibleStore from "@/store/useBibleStore";
 import { BookOption, ChapterOption, VerseOption } from "../types/Navigation";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
+import useThemeStore from "@/store/useThemeStore";
 import {
   parseBibleReference,
   findVerseInAvailableVerses,
@@ -39,6 +40,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   } = useBibleStore();
 
   const { deviceType, isMobileLandscape } = useDeviceDetection();
+  const { currentTheme, fontType } = useThemeStore();
 
   const [activeView, setActiveView] = useState<ViewType>("Book");
   const [searchTerm, setSearchTerm] = useState("");
@@ -318,7 +320,12 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   const renderBookGrid = (books: BookOption[]) => {
     if (books.length === 0) {
       return (
-        <div className="w-full flex items-center h-10 text-nowrap">
+        <div
+          className={`w-full flex items-center h-10 text-nowrap ${
+            fontType === "serif" ? "font-serif" : "font-sans"
+          }`}
+          style={{ color: currentTheme?.textColor }}
+        >
           No matching books found
         </div>
       );
@@ -332,42 +339,64 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           book.isDisabled ? (
             <div
               key={book.value}
-              className="h-10 pt-1 mb-1 rounded-full flex items-center px-2 sm:px-4 gap-1 sm:gap-2 cursor-not-allowed transition-all duration-150 bg-white text-gray-500 border border-gray-200 shadow-sm"
+              className="h-10 mb-1 rounded-full flex items-center gap-2 cursor-not-allowed transition-all duration-150 text-gray-500 border border-gray-200 shadow-sm"
               title="The videos for this book are not available"
             >
               {book.image ? (
                 <img
                   src={book.image}
                   alt={book.label}
-                  className="w-9 h-9 object-contain opacity-50"
+                  className="w-9 h-9 object-contain opacity-50 bg-gray-100 rounded-full"
                 />
               ) : (
                 <div className="w-9 h-9 opacity-50" />
               )}
-              <span className="text-sm font-medium leading-tight opacity-50 text-nowrap">
+              <span
+                className={`text-sm font-medium leading-tight opacity-70 text-nowrap ${
+                  fontType === "serif" ? "font-serif" : "font-sans"
+                }`}
+                style={{ color: currentTheme?.textColor }}
+              >
                 {book.label}
               </span>
             </div>
           ) : (
             <div
               key={book.value}
-              className={`h-10 pt-1 mb-1 rounded-full flex items-center px-2 sm:px-4 gap-1 sm:gap-2 cursor-pointer transition-all duration-150 border border-gray-200 ${
+              className={`h-10 mb-1 rounded-full flex items-center gap-4 sm:gap-2 cursor-pointer transition-all duration-150 border border-gray-200 ${
                 selectedBook?.value.toLowerCase() === book.value.toLowerCase()
-                  ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
+                  ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
                   : "hover:bg-gray-50 hover:shadow-inner hover:transform hover:scale-[0.98]"
               }`}
               onClick={() => handleBookClick(book)}
+              style={{
+                backgroundColor:
+                  selectedBook?.value.toLowerCase() === book.value.toLowerCase()
+                    ? currentTheme?.textColor
+                    : "",
+              }}
             >
               {book.image ? (
                 <img
                   src={book.image}
                   alt={book.label}
-                  className="w-9 h-9 object-contain"
+                  className="w-9 h-9 object-contain bg-gray-100 rounded-full"
                 />
               ) : (
                 <div className="w-9 h-9" />
               )}
-              <span className="text-sm font-medium leading-tight">
+              <span
+                className={`text-sm font-medium leading-tight ${
+                  fontType === "serif" ? "font-serif" : "font-sans"
+                }`}
+                style={{
+                  color:
+                    selectedBook?.value.toLowerCase() ===
+                    book.value.toLowerCase()
+                      ? currentTheme?.backgroundColor
+                      : currentTheme?.textColor,
+                }}
+              >
                 {book.label}
               </span>
             </div>
@@ -380,11 +409,25 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   const renderTabletListView = () => (
     <div className="flex overflow-y-auto max-h-full h-fit gap-4 pr-2">
       <div className="flex-1">
-        <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
+        <h3
+          className={`font-bold text-lg text-center mb-2 ${
+            fontType === "serif" ? "font-serif" : "font-sans"
+          }`}
+          style={{ color: currentTheme?.textColor }}
+        >
+          OLD TESTAMENT
+        </h3>
         {renderBookGrid(oldTestamentBooks)}
       </div>
       <div className="flex-1">
-        <h3 className="font-bold text-lg text-center mb-2">NEW TESTAMENT</h3>
+        <h3
+          className={`font-bold text-lg text-center mb-2 ${
+            fontType === "serif" ? "font-serif" : "font-sans"
+          }`}
+          style={{ color: currentTheme?.textColor }}
+        >
+          NEW TESTAMENT
+        </h3>
         {renderBookGrid(newTestamentBooks)}
       </div>
     </div>
@@ -402,13 +445,23 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
       return (
         <div className="w-full flex gap-4 pr-2">
           <div className="flex-1 flex-col">
-            <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
+            <h3
+              className={`font-bold text-sm text-gray-700 mb-2 sm:text-center ${
+                fontType === "serif" ? "font-serif" : "font-sans"
+              }`}
+              style={{ color: currentTheme?.textColor }}
+            >
               OLD TESTAMENT
             </h3>
             {renderBookGrid(oldTestamentBooks)}
           </div>
           <div className="flex-1 flex-col">
-            <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
+            <h3
+              className={`font-bold text-sm text-gray-700 mb-2 sm:text-center ${
+                fontType === "serif" ? "font-serif" : "font-sans"
+              }`}
+              style={{ color: currentTheme?.textColor }}
+            >
               NEW TESTAMENT
             </h3>
             {renderBookGrid(newTestamentBooks)}
@@ -422,14 +475,23 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
         <div className="flex-1 flex-col">
           {hasOT ? (
             <>
-              <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
+              <h3
+                className={`font-bold text-sm text-gray-700 mb-2 sm:text-center ${
+                  fontType === "serif" ? "font-serif" : "font-sans"
+                }`}
+                style={{ color: currentTheme?.textColor }}
+              >
                 OLD TESTAMENT
               </h3>
               {renderBookGrid(oldTestamentBooks)}
             </>
           ) : (
             <>
-              <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
+              <h3
+                className={`font-bold text-sm text-gray-700 mb-2 sm:text-center
+                  ${fontType === "serif" ? "font-serif" : "font-sans"}`}
+                style={{ color: currentTheme?.textColor }}
+              >
                 NEW TESTAMENT
               </h3>
               {renderBookGrid(newTestamentBooks)}
@@ -449,13 +511,23 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           onClick={() => !chapter.isDisabled && handleChapterClick(chapter)}
           className={`h-10 rounded-full text-sm flex items-center justify-center cursor-pointer transition-colors border ${
             chapter.isDisabled
-              ? "bg-white text-gray-500 cursor-not-allowed border-gray-200 shadow-sm"
+              ? "text-gray-500 cursor-not-allowed border-gray-200 shadow-sm opacity-70"
               : "border-gray-200"
           } ${
             selectedChapter?.value === chapter.value && !chapter.isDisabled
               ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
               : "shadow-sm"
-          }`}
+          } ${fontType === "serif" ? "font-serif" : "font-sans"}`}
+          style={{
+            backgroundColor:
+              selectedChapter?.value === chapter.value
+                ? currentTheme?.textColor
+                : "",
+            color:
+              selectedChapter?.value === chapter.value
+                ? currentTheme?.backgroundColor
+                : currentTheme?.textColor,
+          }}
         >
           {chapter.label}
         </div>
@@ -472,8 +544,18 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           className={`h-10 border rounded-full text-sm border-gray-200 flex items-center justify-center cursor-pointer ${
             selectedVerse?.value === verse.value
               ? "bg-gray-100 border border-gray-400 shadow-inner shadow-gray-400 transform scale-[0.98]"
-              : "bg-white shadow-sm"
-          }`}
+              : "shadow-sm"
+          } ${fontType === "serif" ? "font-serif" : "font-sans"}`}
+          style={{
+            backgroundColor:
+              selectedVerse?.value === verse.value
+                ? currentTheme?.textColor
+                : "",
+            color:
+              selectedVerse?.value === verse.value
+                ? currentTheme?.backgroundColor
+                : currentTheme?.textColor,
+          }}
         >
           {verse.label.includes("_")
             ? verse.label.replace(/_/g, "-")
@@ -495,14 +577,18 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
       <div
         className={`fixed inset-0 z-50 bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
           isOpen ? "translate-y-0" : "translate-y-full"
-        }`}
+        } themed-bg`}
       >
         <div className="px-6 py-4 h-full overflow-hidden flex flex-col">
           <div className="flex justify-center mb-4">
             <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
           </div>
 
-          <div className={`flex items-center justify-between gap-3 mb-4 ${deviceType !== "mobile" && "border-b border-gray-200"}`}>
+          <div
+            className={`flex items-center justify-between gap-3 mb-4 ${
+              deviceType !== "mobile" && "border-b border-gray-200"
+            }`}
+          >
             {deviceType === "tablet" ? (
               <div className="max-w-sm lg:max-w-xl w-full flex flex-row justify-start">
                 {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {
@@ -539,6 +625,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
                 onClick={handleSearchButtonClick}
                 disabled={isSearching}
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors"
+                style={{ color: currentTheme?.textColor }}
               >
                 <Search size={20} />
               </button>
@@ -554,13 +641,17 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
-                className="w-full pl-12 pr-10 py-2 border-2 rounded-full focus:border-gray-400 focus:outline-none text-gray-700 placeholder-gray-400"
+                className={`w-full pl-12 pr-10 py-2 border-2 rounded-full focus:border-gray-400 focus:outline-none text-gray-700 placeholder-gray-400 ${
+                  fontType === "serif" ? "font-serif" : "font-sans"
+                }`}
+                style={{ color: currentTheme?.textColor }}
                 disabled={isSearching}
               />
               {searchTerm && (
                 <button
                   onClick={clearSearch}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  style={{ color: currentTheme?.textColor }}
                   disabled={isSearching}
                 >
                   <X size={20} />
@@ -570,6 +661,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
             <button
               onClick={handleClose}
               className="p-2 text-gray-500 rounded-full"
+              style={{ color: currentTheme?.textColor }}
             >
               <X size={24} />
             </button>

@@ -23,12 +23,10 @@ const PlaybackDrawer = forwardRef<HTMLDivElement, PlaybackDrawerProps>(
     return (
       <div
         ref={ref}
-        className="absolute py-0.5 md:py-1 bottom-10 md:bottom-12 right-4 w-35 sm:w-40 md:w-50 p-2 md:p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50 
-                    
-                   "
+        className="absolute py-0.5 md:py-1 bottom-10 md:bottom-12 right-4 w-35 sm:w-40 md:w-50 p-2 md:p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50 themed-bg"
       >
         <div>
-          <div className="flex items-center mt-3 sm:mb-3 gap:1 gap-x-2">
+          <div className="flex items-center mt-3 sm:mb-3 gap:1 gap-x-2 themed-text">
             <ChevronLeft
               strokeWidth={2.5}
               size={16}
@@ -51,8 +49,8 @@ const PlaybackDrawer = forwardRef<HTMLDivElement, PlaybackDrawerProps>(
                   onChangeSpeed(speed);
                   onClose();
                 }}
-                className={`cursor-pointer  text-sm sm:text-base text-300 px-2 sm:px-3 py-0.5 md:py-1 mt-1 rounded hover:bg-gray-700 ${
-                  speed === playbackSpeed ? "bg-gray-700" : ""
+                className={`cursor-pointer text-sm sm:text-base text-300 px-2 sm:px-3 py-0.5 md:py-1 mt-1 rounded hover:bg-gray-600 ${
+                  speed === playbackSpeed ? "bg-gray-600" : "themed-text hover:!text-white"
                 }`}
               >
                 {speed === 1 ? "Normal" : speed}

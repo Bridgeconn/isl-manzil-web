@@ -22,10 +22,10 @@ const QualityDrawer: React.FC<QualityDrawerProps> = ({
     <div
       className="absolute py-0.5 md:py-1 bottom-10 md:bottom-12 right-4 w-30 sm:w-40 md:w-50 p-2 md:p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50 
                     max-h-[150px] sm:max-h-[180px] md:max-h-[280px] xl:max-h-[380px]
-                    overflow-y-auto pr-1 custom-scroll-black"
+                    overflow-y-auto pr-1 custom-scroll-black themed-bg"
     >
       <div>
-        <div className="flex items-center mb-1 sm:mb-2">
+        <div className="flex items-center mb-1 sm:mb-2 themed-text">
           <ChevronLeft
             strokeWidth={2.5}
             size={16}
@@ -50,10 +50,10 @@ const QualityDrawer: React.FC<QualityDrawerProps> = ({
                 onSelect(id);
                 onClose();
               }}
-              className={`cursor-pointer px-2 sm:px-3 py-0.5 md:py-1 rounded hover:bg-gray-700 flex items-center justify-between ${
+              className={`cursor-pointer px-2 sm:px-3 py-0.5 md:py-1 rounded hover:bg-gray-600 flex items-center justify-between ${
                 id === selectedQuality
-                  ? "bg-gray-700 text-white-300"
-                  : "text-white-300"
+                  ? "bg-gray-600 text-white-300"
+                  : "text-white-300 themed-text hover:!text-white"
               }`}
             >
               <span className="flex items-center gap-1 text-sm sm:text-base">

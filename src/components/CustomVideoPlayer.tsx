@@ -1907,7 +1907,7 @@ const CustomVideoPlayer = () => {
           }}
         >
           {(isVideoLoading || !isPlayerReady) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
               <Loader2 className="w-8 h-8 sm:w-12 sm:h-12 text-white animate-spin mb-2 sm:mb-4" />
               <div className="text-white sm:text-lg">Loading video...</div>
             </div>
@@ -1971,7 +1971,7 @@ const CustomVideoPlayer = () => {
                 )}
                 {/* Video Ended Overlay */}
                 {isEnded && !(currentTime < duration) && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <button
                       onClick={replayVideo}
                       className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"
@@ -2207,16 +2207,16 @@ const CustomVideoPlayer = () => {
                           {/* Download Dropdown */}
                           {showDownloadDropdown && (
                             <div
-                              className="absolute bottom-full right-0 bg-black border border-gray-600 rounded-lg shadow-lg min-w-50 max-w-80 z-50"
+                              className="absolute bottom-full right-0 bg-black border border-gray-600 rounded-lg shadow-lg min-w-50 max-w-80 z-50 themed-bg"
                               ref={downloadDropdownRef}
                             >
                               <div className="p-3">
-                                <div className="text-white font-semibold mb-2 border-b border-gray-600 pb-2">
+                                <div className="text-white font-semibold mb-2 border-b border-gray-600 pb-2 themed-text">
                                   Download Options
                                 </div>
 
                                 {downloadOptions.length === 0 ? (
-                                  <div className="text-gray-400 text-sm py-2">
+                                  <div className="text-gray-400 text-sm py-2 themed-text">
                                     No download options available
                                   </div>
                                 ) : (
@@ -2236,7 +2236,7 @@ const CustomVideoPlayer = () => {
                                           onClick={() =>
                                             handleDownloadVideo(option)
                                           }
-                                          className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
+                                          className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between themed-text"
                                         >
                                           <div className="font-medium flex flex-col">
                                             <span>
