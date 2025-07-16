@@ -288,6 +288,7 @@ const BCVDrawer = () => {
     };
 
     setVerse(verse as VerseOption);
+    setCurrentPlayingVerse(verse.label);
     setIsBCVDrawerOpen(false);
   };
 
