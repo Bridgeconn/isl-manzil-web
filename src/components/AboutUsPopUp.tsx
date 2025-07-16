@@ -35,15 +35,18 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           <DialogTitle
             className={`text-xl font-semibold ${
               fontType === "serif" ? "font-serif" : "font-sans"
-            }`}
-            style={{ color: currentTheme?.textColor }}
+            } `}
+            style={{
+              fontSize: `${fontSize}px`,
+              color: currentTheme?.textColor,
+            }}
           >
-            About ISL Bible
+            About Us
           </DialogTitle>
         </DialogHeader>
 
         <div
-          className={`space-y-4 text-sm text-gray-800 overflow-y-auto custom-scroll-ultra-thin grow antialiased tracking-wide p-4 ${
+          className={`space-y-2 text-sm text-gray-800 overflow-y-auto custom-scroll-ultra-thin grow antialiased tracking-wide p-4 ${
             fontType === "serif" ? "font-serif" : "font-sans"
           }`}
           style={{
@@ -52,25 +55,20 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             color: currentTheme?.textColor,
           }}
         >
-          <section>
-            <h3 className="text-lg font-semibold">The ISLV Bible Website</h3>
-          </section>
-          <section>
-            <p>
-              The <strong>Indian Sign Language Video (ISLV) Bible</strong> is a
-              web application presented in Indian Sign Language. Its aim is to
-              provide 64 million Deaf individuals across India access to
-              Scripture in their native “heart language”.
-            </p>
-          </section>
-          <section>
-            <p>
-              The ISLV Bible is a meaningful digital outreach—combining video
-              Scripture in Indian Sign Language through a website and a
-              user-friendly app. It empowers Deaf believers by making God’s Word
-              fully accessible, culturally relevant, and easily shareable.
-            </p>
-          </section>
+          <p style={{ fontSize: "1.4em" }}> The ISLV Bible Website</p>
+          <p>
+            The <strong>Indian Sign Language Video (ISLV) Bible</strong> is a
+            web application presented in Indian Sign Language. Its aim is to
+            provide 64 million Deaf individuals across India access to Scripture
+            in their native “heart language”.
+          </p>
+          <p>
+            The ISLV Bible is a meaningful digital outreach combining video
+            Scripture in Indian Sign Language through a website and a user
+            friendly app. It empowers Deaf believers by making God’s Word fully
+            accessible, culturally relevant, and easily shareable.
+          </p>
+
           <section>
             <p>
               You are free to use this website for personal Bible study or small
@@ -83,9 +81,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           </section>
 
           <section>
-            <h3 className="text-lg font-semibold">Technology</h3>
-          </section>
-          <section>
+            <p style={{ fontSize: "1.4em" }}>Technology</p>
             <p>
               BCS team has developed this platform inspired by similar
               initiatives in other countries. The website is developed using
@@ -97,7 +93,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             </p>
           </section>
           <section>
-            <p>Features Available: </p>
+            <p style={{ fontSize: "1.4em" }}>Features Available: </p>
             <p>
               <strong>Organized Access:</strong> Books and chapters with
               available ISLV content are clearly marked and navigable under Old
@@ -129,22 +125,22 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             </p>
           </section>
 
-          <section>
-            <h3 className="text-lg text-black-300 font-semibold">Contact Us</h3>
-            <a
-              href="mailto:thevachanproject@bridgeconn.com"
-              className="text-blue-500"
-            >
-              islvbible@bridgeconn.com
-            </a>
-          </section>
+          <p style={{ fontSize: "1.4em" }}>Contact Us</p>
+          <a
+            href="mailto:thevachanproject@bridgeconn.com"
+            className="text-blue-500"
+          >
+            islvbible@bridgeconn.com
+          </a>
+
           <section className="py-2 text-center text-sm hover:text-gray-500">
             <a
               href="https://bridgeconn.com/"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <span className="text-base">©</span> Bridge Connectivity Solutions Pvt. Ltd. 2025
+              <span className="text-lg relative top-[2px]">©</span> Bridge
+              Connectivity Solutions Pvt. Ltd. 2025
             </a>
           </section>
         </div>
@@ -153,17 +149,19 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           <button
             onClick={onClose}
             className={`
-            text-sm sm:text-base
-            px-2 py-1 sm:px-4 sm:py-2
-            border rounded
-            cursor-pointer
-            w-24 sm:w-auto
-            mx-auto
-             ${fontType === "serif" ? "font-serif" : "font-sans"}`}
+    text-sm sm:text-lg
+    px-4 py-1.5
+    border rounded-full shadow-md
+    cursor-pointer
+    w-24 sm:w-auto
+    mx-auto
+    bg-white
+    ${fontType === "serif" ? "font-serif" : "font-sans"}
+  `}
             style={{
               color: currentTheme?.textColor,
-              borderColor: currentTheme?.textColor,
-              fontSize: `${fontSize}px`,
+
+              borderWidth: "0.5px", // Very thin
             }}
           >
             Close
