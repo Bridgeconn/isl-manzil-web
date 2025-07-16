@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, X, List, LayoutGrid } from "lucide-react";
+import { Search, X } from "lucide-react";
 import useBibleStore from "@/store/useBibleStore";
 import { BookOption, ChapterOption, VerseOption } from "../types/Navigation";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
@@ -14,7 +14,6 @@ interface MobileBookDrawerProps {
 }
 
 type ViewType = "Book" | "Chapter" | "Verse";
-type DropdownType = "list" | "grid";
 
 const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   isOpen,
@@ -42,7 +41,6 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   const { deviceType, isMobileLandscape } = useDeviceDetection();
 
   const [activeView, setActiveView] = useState<ViewType>("Book");
-  const [viewMode, setViewMode] = useState<DropdownType>("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredBooks, setFilteredBooks] = useState<BookOption[]>([]);
   const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
@@ -56,10 +54,10 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
 
   // Initialize data
   useEffect(() => {
-    if (!isInitialized && !isLoading) {
+    if (!isInitialized && !isLoading && isOpen) {
       initializeAvailableData();
     }
-  }, [isInitialized, isLoading, initializeAvailableData]);
+  }, [isInitialized, isLoading, isOpen, initializeAvailableData]);
 
   useEffect(() => {
     if (selectedBook) {
@@ -103,36 +101,35 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   ]);
 
   useEffect(() => {
-  if (!searchTerm.trim()) {
-    setFilteredBooks(availableData.books || []);
+    if (!searchTerm.trim()) {
+      setFilteredBooks(availableData.books || []);
+      setErrorMessage("");
+      return;
+    }
+
+    const getSearchBookName = (query: string) => {
+      const trimmed = query.trim().toLowerCase();
+      const match = trimmed.match(/^([1-3]?\s?[a-z]+)/i);
+      return match ? match[0].replace(/\s+/g, " ").trim() : trimmed;
+    };
+
+    const normalizedSearch = getSearchBookName(searchTerm);
+
+    const filtered = (availableData.books || []).filter((book) => {
+      const label = book.label.toLowerCase();
+      const value = book.value.toLowerCase();
+      const normalizedLabel = label.replace(/\s+/g, " ").trim();
+
+      return (
+        normalizedLabel.startsWith(normalizedSearch) ||
+        normalizedLabel.includes(normalizedSearch) ||
+        value.startsWith(normalizedSearch)
+      );
+    });
+
+    setFilteredBooks(filtered);
     setErrorMessage("");
-    return;
-  }
-
-  const getSearchBookName = (query: string) => {
-    const trimmed = query.trim().toLowerCase();
-    const match = trimmed.match(/^([1-3]?\s?[a-z]+)/i);
-    return match ? match[0].replace(/\s+/g, " ").trim() : trimmed;
-  };
-
-  const normalizedSearch = getSearchBookName(searchTerm);
-
-  const filtered = (availableData.books || []).filter((book) => {
-    const label = book.label.toLowerCase();
-    const value = book.value.toLowerCase();
-    const normalizedLabel = label.replace(/\s+/g, " ").trim();
-
-    return (
-      normalizedLabel.startsWith(normalizedSearch) ||
-      normalizedLabel.includes(normalizedSearch) ||
-      value.startsWith(normalizedSearch)
-    );
-  });
-
-  setFilteredBooks(filtered);
-  setErrorMessage("");
-}, [searchTerm, availableData.books]);
-
+  }, [searchTerm, availableData.books]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -327,11 +324,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
       );
     }
     const gridCols =
-      deviceType === "tablet"
-        ? viewMode === "list"
-          ? "grid-cols-2"
-          : "grid-cols-4"
-        : "grid-cols-2 sm:grid-cols-4";
+      deviceType === "tablet" ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2";
 
     return (
       <div className={`grid ${gridCols} gap-3`}>
@@ -385,7 +378,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   };
 
   const renderTabletListView = () => (
-    <div className="flex overflow-y-auto max-h-full h-fit gap-4 pr-1">
+    <div className="flex overflow-y-auto max-h-full h-fit gap-4 pr-2">
       <div className="flex-1">
         <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
         {renderBookGrid(oldTestamentBooks)}
@@ -397,45 +390,53 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
     </div>
   );
 
-  const renderTabletGridView = () => (
-    <div className="flex flex-col overflow-y-auto max-h-full h-fit pr-1">
-      <div className="w-full mb-4">
-        <h3 className="font-bold text-lg mb-2">OLD TESTAMENT</h3>
-        {renderBookGrid(oldTestamentBooks)}
-      </div>
-      <div className="w-full">
-        <h3 className="font-bold text-lg mb-2">NEW TESTAMENT</h3>
-        {renderBookGrid(newTestamentBooks)}
-      </div>
-    </div>
-  );
-
   const renderBooks = () => {
     if (deviceType === "tablet") {
-      return viewMode === "list"
-        ? renderTabletListView()
-        : renderTabletGridView();
+      return renderTabletListView();
     }
 
-    return (
-      <div className="flex flex-col gap-4 pr-2">
-        {oldTestamentBooks.length > 0 && (
-          <div>
-            <h3 className="font-bold text-sm text-gray-700 mb-2 pl-1">
+    const hasOT = oldTestamentBooks.length > 0;
+    const hasNT = newTestamentBooks.length > 0;
+
+    if (hasOT && hasNT) {
+      return (
+        <div className="w-full flex gap-4 pr-2">
+          <div className="flex-1 flex-col">
+            <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
               OLD TESTAMENT
             </h3>
             {renderBookGrid(oldTestamentBooks)}
           </div>
-        )}
-
-        {newTestamentBooks.length > 0 && (
-          <div>
-            <h3 className="font-bold text-sm text-gray-700 mb-2 pl-1">
+          <div className="flex-1 flex-col">
+            <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
               NEW TESTAMENT
             </h3>
             {renderBookGrid(newTestamentBooks)}
           </div>
-        )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-full flex gap-4 pr-2">
+        <div className="flex-1 flex-col">
+          {hasOT ? (
+            <>
+              <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
+                OLD TESTAMENT
+              </h3>
+              {renderBookGrid(oldTestamentBooks)}
+            </>
+          ) : (
+            <>
+              <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
+                NEW TESTAMENT
+              </h3>
+              {renderBookGrid(newTestamentBooks)}
+            </>
+          )}
+        </div>
+        <div className="flex-1" />
       </div>
     );
   };
@@ -474,7 +475,9 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
               : "bg-white shadow-sm"
           }`}
         >
-          {verse.label}
+          {verse.label.includes("_")
+            ? verse.label.replace(/_/g, "-")
+            : verse.label}
         </div>
       ))}
     </div>
@@ -499,30 +502,39 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
             <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
-            {deviceType === "tablet" && activeView === "Book" && (
-              <div className="flex items-center border border-gray-200 rounded-sm">
-                <button
-                  className={`p-2 cursor-pointer ${
-                    viewMode === "list" ? "bg-gray-100" : ""
-                  }`}
-                  onClick={() => setViewMode("list")}
-                >
-                  <List size={21} />
-                </button>
-                <div className="w-px h-6 bg-gray-200"></div>
-                <button
-                  className={`p-2 cursor-pointer ${
-                    viewMode === "grid" ? "bg-gray-100" : ""
-                  }`}
-                  onClick={() => setViewMode("grid")}
-                >
-                  <LayoutGrid size={21} />
-                </button>
-              </div>
-            )}
+          <div className={`flex items-center justify-between gap-3 mb-4 ${deviceType !== "mobile" && "border-b border-gray-200"}`}>
+            {deviceType === "tablet" ? (
+              <div className="max-w-sm lg:max-w-xl w-full flex flex-row justify-start">
+                {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {
+                  const isDisabled =
+                    (tab === "Chapter" && !selectedBook) ||
+                    (tab === "Verse" &&
+                      (!selectedBook ||
+                        !selectedChapter ||
+                        verseOptions.length === 0));
 
-            <div className="flex-1 relative">
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => !isDisabled && handleTabClick(tab)}
+                      disabled={isDisabled}
+                      className={`flex flex-1 items-center justify-center py-3 px-4 text-sm font-medium transition-all ${
+                        activeView === tab
+                          ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
+                          : isDisabled
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                      }`}
+                      style={{ borderRadius: "10px 10px 0 0" }}
+                    >
+                      {tab}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            <div className="flex-1 relative mb-1">
               <button
                 onClick={handleSearchButtonClick}
                 disabled={isSearching}
@@ -542,7 +554,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
-                className="w-full pl-12 pr-10 py-3 border-2 rounded-full focus:border-gray-400 focus:outline-none text-gray-700 placeholder-gray-400"
+                className="w-full pl-12 pr-10 py-2 border-2 rounded-full focus:border-gray-400 focus:outline-none text-gray-700 placeholder-gray-400"
                 disabled={isSearching}
               />
               {searchTerm && (
@@ -569,34 +581,35 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
               <p className="themed-text text-themed text-sm">{errorMessage}</p>
             </div>
           )}
+          {deviceType === "mobile" && (
+            <div className="flex mb-6 bg-gray-100 rounded-xl p-1">
+              {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {
+                const isDisabled =
+                  (tab === "Chapter" && !selectedBook) ||
+                  (tab === "Verse" &&
+                    (!selectedBook ||
+                      !selectedChapter ||
+                      verseOptions.length === 0));
 
-          <div className="flex mb-6 bg-gray-100 rounded-xl p-1">
-            {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {
-              const isDisabled =
-                (tab === "Chapter" && !selectedBook) ||
-                (tab === "Verse" &&
-                  (!selectedBook ||
-                    !selectedChapter ||
-                    verseOptions.length === 0));
-
-              return (
-                <button
-                  key={tab}
-                  onClick={() => !isDisabled && handleTabClick(tab)}
-                  disabled={isDisabled}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm lg:text-base font-medium transition-colors duration-200 ${
-                    activeView === tab
-                      ? "text-gray-900 border-b-2 border-gray-900 bg-gray-50"
-                      : isDisabled
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-500"
-                  }`}
-                >
-                  {tab}
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => !isDisabled && handleTabClick(tab)}
+                    disabled={isDisabled}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm lg:text-base font-medium transition-colors duration-200 ${
+                      activeView === tab
+                        ? "text-gray-900 border-b-2 border-gray-900 bg-gray-50"
+                        : isDisabled
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <div ref={booksListRef} className="flex-1 min-h-0 overflow-y-auto">
             {activeView === "Book" &&

@@ -139,6 +139,29 @@ const BibleVerseDisplay = () => {
     return () => clearTimeout(timeoutId);
   }, [currentPlayingVerse, verseData]);
 
+ useEffect(() => {
+  if (typeof window === "undefined") return;
+  if (!selectedBook || !selectedChapter) return;
+
+  // Extract current URL segments
+  const pathParts = window.location.pathname.split("/").filter(Boolean);
+
+  const hasBookAndChapterInURL = pathParts.length >= 3;
+  if (!hasBookAndChapterInURL) return;
+
+  // Construct new URL
+  const newChapterSegment =
+    selectedChapter.value === 0 ? "introduction" : selectedChapter.value.toString();
+  const newPath = `/bible/${selectedBook.value}/${newChapterSegment}`;
+
+  const currentPath = window.location.pathname;
+  if (currentPath !== newPath) {
+    window.history.replaceState(null, "", newPath);
+  }
+}, [selectedBook, selectedChapter]);
+
+
+
   useEffect(() => {
     if (!hasFetchedRef.current) {
       if (urlBook && urlChapter !== null) {
@@ -376,7 +399,9 @@ const BibleVerseDisplay = () => {
                               </span>
                               <span
                                 className={`antialiased tracking-wide rounded transition-colors duration-300 ${
-                                  isPlaying ? "themed-reverse text-themed" : "text-themed themed-text"
+                                  isPlaying
+                                    ? "themed-reverse text-themed"
+                                    : "text-themed themed-text"
                                 }`}
                               >
                                 {verseItem.text}
@@ -398,32 +423,35 @@ const BibleVerseDisplay = () => {
                     No content available
                   </p>
                 )}
-              <div
-                className="relative flex items-center gap-2 my-6 text-gray-700"
+              {(introData ||
+                verseData.length > 0) && !error && !isFetching && (
+                  <div
+                    className="relative flex items-center gap-2 my-6 text-gray-700"
                 style={{ cursor: "default" }}
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-              >
-                <span className="italic text-sm md:text-base text-[var(--verse-color)]">
-                  Easy-to-Read Version
-                </span>
-                <a
-                  href="https://www.bibleleague.org"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-sm md:text-base"
-                >
-                  <span className="cursor-pointer text-[var(--verse-color)]">
-                    <Info size={18} />
-                  </span>
-                </a>
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                  >
+                    <span className="italic text-sm md:text-base text-[var(--verse-color)]">
+                      Easy-to-Read Version
+                    </span>
+                    <a
+                      href="https://www.bibleleague.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-sm md:text-base"
+                    >
+                      <span className="cursor-pointer text-[var(--verse-color)]">
+                        <Info size={18} />
+                      </span>
+                    </a>
 
-                {showTooltip && (
-                  <div className="absolute bottom-8 z-50">
-                    <LicenseERVPopUp />
+                    {showTooltip && (
+                      <div className="absolute bottom-6 z-50">
+                        <LicenseERVPopUp />
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
             </div>
           )}
         </>

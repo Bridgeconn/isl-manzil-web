@@ -85,10 +85,16 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
             )}
           </button>
           <span className="text-sm font-medium text-gray-700 px-2 cursor-pointer">
-            {selectedBook?.label ?? "Book"}{" "}
-            {selectedChapter?.label === "0"
-              ? "Intro"
-              : selectedChapter?.label ?? "Chapter"}
+            {selectedBook?.label ? (
+              <>
+                {selectedBook?.label}{" "}
+                {selectedChapter?.label === "0"
+                  ? "Intro"
+                  : selectedChapter?.label ?? "Chapter"}
+              </>
+            ) : (
+              <>Loading...</>
+            )}
           </span>
           <button
             className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
