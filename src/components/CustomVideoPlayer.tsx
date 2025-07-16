@@ -1691,6 +1691,35 @@ const CustomVideoPlayer = () => {
     }
   };
 
+  const formatBytes = (bytes: number, decimals = 2) => {
+    if (bytes === 0) return "0 Bytes";
+
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return `${(bytes / Math.pow(k, i)).toFixed(decimals)} ${sizes[i]}`;
+  };
+
+  const getQualityLabel = (width?: number, height?: number): string => {
+    if (!width || !height) return "Unknown";
+
+    const resolutionMap: { [key: string]: string } = {
+      "3840x2160": "4K",
+      "2560x1440": "2K",
+      "1920x1080": "1080p",
+      "1280x720": "720p",
+      "854x480": "480p",
+      "640x360": "360p",
+      "426x240": "240p",
+      "320x180": "180p",
+    };
+
+    const key = `${width}x${height}`;
+    return resolutionMap[key] || `${height}p`;
+  };
+
   // Handle controls area mouse events
   const handleControlsMouseEnter = () => {
     setShowControls(true);
@@ -2220,7 +2249,7 @@ const CustomVideoPlayer = () => {
                                     No download options available
                                   </div>
                                 ) : (
-                                  <div className="space-y-1 max-h-25 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
+                                  <div className="space-y-1 max-h-23 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
                                     {downloadOptions.map(
                                       (
                                         option: {
@@ -2228,6 +2257,7 @@ const CustomVideoPlayer = () => {
                                           width?: number;
                                           height?: number;
                                           format?: string;
+                                          size: number;
                                         },
                                         index
                                       ) => (
@@ -2236,23 +2266,18 @@ const CustomVideoPlayer = () => {
                                           onClick={() =>
                                             handleDownloadVideo(option)
                                           }
-                                          className="w-full text-left px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between themed-text"
+                                          className="w-full text-left px-2 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between themed-text"
                                         >
                                           <div className="font-medium flex flex-col">
-                                            <span>
-                                              {option.quality || "Unknown"}
-                                              {option.width &&
-                                                option.height && (
-                                                  <span className="text-gray-400 ml-1">
-                                                    ({option.width}×
-                                                    {option.height})
-                                                  </span>
-                                                )}
-                                            </span>
-                                            <span>
-                                              {option.format?.toUpperCase() ||
-                                                "MP4"}
-                                            </span>
+                                            {getQualityLabel(
+                                              option.width,
+                                              option.height
+                                            )}{" "}
+                                            {option.quality.toUpperCase() || "Unknown"}{" "}·{" "}
+                                            {option.format?.toUpperCase() ||
+                                              "MP4"}{" "}
+                                            
+                                            <span>{formatBytes(option.size)}</span>
                                           </div>
                                           <Download size={16} />
                                         </button>
