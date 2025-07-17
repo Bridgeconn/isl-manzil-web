@@ -4,7 +4,7 @@ import LayoutControlButtons from "./LayoutControlButtons";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
 import AboutUsPopUp from "./AboutUsPopUp";
-import { Info } from 'lucide-react';
+import { MdFeedback, MdInfo } from "react-icons/md";
 
 interface SettingsProps {
   onCloseDrawer?: () => void;
@@ -48,31 +48,6 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
           onMouseDown={handleContainerClick}
           onTouchStart={handleContainerClick}
         >
-          <div
-            className="w-full mb-4 flex gap-2 items-center cursor-pointer text-base font-semibold text-gray-700 hover:text-black"
-            onClick={() => {
-              setShowAbout(true);
-              onCloseDrawer?.();
-            }}
-          >
-            <h4>About us</h4>
-            <Info size={18} />
-          </div>
-          {feedbackUrl && (
-            <h4
-              onClick={(e) => {
-                e.stopPropagation();
-
-                if (feedbackUrl) {
-                  window.open(feedbackUrl, "_blank");
-                }
-              }}
-              className="text-base font-semibold text-gray-700 mb-4 cursor-pointer hover:text-black"
-            >
-              Feedback
-            </h4>
-          )}
-          <div className="mb-4 border-b border-gray-200" />
           <div className="space-y-2 sm:space-y-4">
             <h4 className="text-base font-semibold text-gray-700 mb-3">
               Theme
@@ -197,6 +172,36 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
               )}
             </div>
           )}
+          <div className="mt-4">
+            <div className="pt-4 border-t border-gray-200"></div>
+            <div className="flex flex-row flex-wrap  items-center gap-x-18 gap-y-2">
+              <div
+                className="flex gap-2 items-center cursor-pointer text-base font-semibold text-gray-700 hover:text-black "
+                onClick={() => {
+                  setShowAbout(true);
+                  onCloseDrawer?.();
+                }}
+              >
+                <h4>About us</h4>
+                <MdInfo size={18} />
+              </div>
+
+              {feedbackUrl && (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (feedbackUrl) {
+                      window.open(feedbackUrl, "_blank");
+                    }
+                  }}
+                  className="flex items-center gap-2 text-base font-semibold text-gray-700 cursor-pointer hover:text-black relative "
+                >
+                  <h4>Feedback</h4>
+                  <MdFeedback className="mt-1" size={18} />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </>
