@@ -48,6 +48,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingVerses, setIsLoadingVerses] = useState(false);
 
   const booksListRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +78,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   useEffect(() => {
     const fetchVerses = async () => {
       if (selectedBook && selectedChapter) {
+        setIsLoadingVerses(true);
         try {
           const verses = await getAvailableVersesForBookAndChapter(
             selectedBook.value,
@@ -86,6 +88,8 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
         } catch (error) {
           console.error("Error fetching verses:", error);
           setVerseOptions([]);
+        } finally {
+          setIsLoadingVerses(false);
         }
       } else {
         setVerseOptions([]);
@@ -502,7 +506,11 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
             <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
           </div>
 
-          <div className={`flex items-center justify-between gap-3 mb-4 ${deviceType !== "mobile" && "border-b border-gray-200"}`}>
+          <div
+            className={`flex items-center justify-between gap-3 mb-4 ${
+              deviceType !== "mobile" && "border-b border-gray-200"
+            }`}
+          >
             {deviceType === "tablet" ? (
               <div className="max-w-sm lg:max-w-xl w-full flex flex-row justify-start">
                 {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {
@@ -633,7 +641,11 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
               ))}
 
             {activeView === "Verse" &&
-              (verseOptions.length === 0 ? (
+              (isLoadingVerses ? (
+                <div className="flex items-center justify-center h-full min-h-[200px] text-gray-500">
+                  Loading verses...
+                </div>
+              ) : verseOptions.length === 0 ? (
                 <div className="flex items-center justify-center h-full min-h-[200px] text-gray-500">
                   No verses available
                 </div>
