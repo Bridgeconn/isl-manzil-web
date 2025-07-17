@@ -27,14 +27,14 @@ const themes: ThemeOption[] = [
     id: "theme1",
     name: "Theme 1",
     backgroundColor: "#FFFFFF",
-    textColor: "#000000",
+    textColor: "#000063",
     verseColor: "#777777"
   },
-  {
+   {
     id: "theme2",
     name: "Theme 2",
     backgroundColor: "#FFFFFF",
-    textColor: "#000063",
+    textColor: "#000000",
     verseColor: "#777777"
   },
   {

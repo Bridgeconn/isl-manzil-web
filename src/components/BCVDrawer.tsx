@@ -335,16 +335,17 @@ const BCVDrawer = () => {
                 ${
                   isDisabled
                     ? "hover:cursor-not-allowed border-gray-200 shadow-sm opacity-70"
-                    : "border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
+                    : ""
                 }
                 ${
                   isSelected
                     ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
-                    : "shadow-sm"
+                    : !isDisabled
+                    ? "border-gray-200 shadow-sm hover:shadow-inner hover:transform hover:scale-[0.98] hover-text-black-bg-gray"
+                    : ""
                 }
-                ${hoverClass} ${
-                fontType === "serif" ? "font-serif" : "font-sans"
-              }
+                ${fontType === "serif" ? "font-serif" : "font-sans"}
+                ${hoverClass}
               `}
               onClick={() =>
                 !chapter.isDisabled && handleChapterSelect(chapter.value)
