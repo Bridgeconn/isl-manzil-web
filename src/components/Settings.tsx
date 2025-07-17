@@ -156,36 +156,6 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
             </div>
           </div>
 
-          <div className="mt-4  md:mb-4">
-            <div className="pt-4 border-t border-gray-200"></div>
-            <div className="flex flex-row flex-wrap  items-center gap-x-18 gap-y-2">
-              <div
-                className="flex gap-2 items-center cursor-pointer text-base font-semibold text-gray-700 hover:text-black mb-2 md:mb-0"
-                onClick={() => {
-                  setShowAbout(true);
-                  onCloseDrawer?.();
-                }}
-              >
-                <h4>About us</h4>
-                <MdInfo size={18} />
-              </div>
-
-              {feedbackUrl && (
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (feedbackUrl) {
-                      window.open(feedbackUrl, "_blank");
-                    }
-                  }}
-                  className="flex items-center gap-2 text-base font-semibold text-gray-700 cursor-pointer hover:text-black relative -top-[3px] md:top-0"
-                >
-                  <h4>Feedback</h4>
-                  <MdFeedback className="mt-1" size={18} />
-                </div>
-              )}
-            </div>
-          </div>
           {/* Toggle text position */}
           {!isLowHeightDesktop && !shouldUseMobileBottomBar && (
             <div className="mt-4 flex items-center gap-4">
@@ -205,6 +175,45 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
               )}
             </div>
           )}
+          <div className="mt-4  ">
+            <div className="pt-4 border-t border-gray-200"></div>
+            <div className="flex flex-row flex-wrap  items-center gap-x-18 gap-y-2">
+              <div
+                className="flex gap-2 items-center cursor-pointer text-base font-semibold text-gray-700 hover:text-black "
+                onClick={() => {
+                  setShowAbout(true);
+                  onCloseDrawer?.();
+                }}
+              >
+                <h4>About us</h4>
+                <MdInfo size={18} />
+              </div>
+
+              {feedbackUrl && (
+                // <div
+                //   onClick={(e) => {
+                //     e.stopPropagation();
+                //     if (feedbackUrl) {
+                //       window.open(feedbackUrl, "_blank");
+                //     }
+                //   }}
+                //   className="flex items-center gap-2 text-base font-semibold text-gray-700 cursor-pointer hover:text-black relative -top-[3px] md:top-0"
+                // >
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (feedbackUrl) {
+                      window.open(feedbackUrl, "_blank");
+                    }
+                  }}
+                  className="flex items-center gap-2 text-base font-semibold text-gray-700 cursor-pointer hover:text-black relative "
+                >
+                  <h4>Feedback</h4>
+                  <MdFeedback className="mt-1" size={18} />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </>

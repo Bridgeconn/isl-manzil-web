@@ -33,7 +33,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
         </DialogClose>
         <DialogHeader className="p-4 border-b">
           <DialogTitle
-            className={`text-xl font-semibold ${
+            className={`text-xl  ${
               fontType === "serif" ? "font-serif" : "font-sans"
             } `}
             style={{
@@ -41,7 +41,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
               color: currentTheme?.textColor,
             }}
           >
-            About Us
+            <p style={{ fontSize: "1.4em" }}>About Us</p>
           </DialogTitle>
         </DialogHeader>
 
@@ -55,13 +55,17 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             color: currentTheme?.textColor,
           }}
         >
-          <p style={{ fontSize: "1.4em" }}> The ISLV Bible Website</p>
+          <p style={{ fontSize: "1.4em", marginBottom: 0 }}>
+            {" "}
+            The ISLV Bible Website
+          </p>
           <p>
             The <strong>Indian Sign Language Video (ISLV) Bible</strong> is a
             web application presented in Indian Sign Language. Its aim is to
             provide 64 million Deaf individuals across India access to Scripture
             in their native “heart language”.
           </p>
+
           <p>
             The ISLV Bible is a meaningful digital outreach combining video
             Scripture in Indian Sign Language through a website and a user
@@ -125,7 +129,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             </p>
           </section>
 
-          <p style={{ fontSize: "1.4em" }}>Contact Us</p>
+          <p style={{ fontSize: "1.4em", marginBottom: 0 }}>Contact Us</p>
           <a
             href="mailto:thevachanproject@bridgeconn.com"
             className="text-blue-500"
@@ -145,21 +149,20 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           </section>
         </div>
 
-        <DialogFooter className="p-3 border-t flex ">
+        <DialogFooter className="p-3 border-t flex  ">
           <button
             onClick={onClose}
             className={`
-    text-sm sm:text-lg
-    px-4 py-1.5
-    border rounded-full shadow-md
-    cursor-pointer
-    w-24 sm:w-auto
-    mx-auto
-    bg-white
-    ${fontType === "serif" ? "font-serif" : "font-sans"}
-  `}
+            text-sm sm:text-lg
+            px-6 py-2
+            border rounded-full shadow-md
+            cursor-pointer
+            w-24 sm:w-auto
+            mx-auto
+          ${fontType === "serif" ? "font-serif" : "font-sans"}`}
             style={{
               color: currentTheme?.textColor,
+              backgroundColor: currentTheme?.backgroundColor,
 
               borderWidth: "0.5px", // Very thin
             }}
