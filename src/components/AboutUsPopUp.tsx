@@ -15,6 +15,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
   onClose,
 }) => {
   const { fontType, fontSize, currentTheme } = useThemeStore();
+  const contactEmail = "islvbible@bridgeconn.com";
 
   return (
     <Dialog open={showAbout} onOpenChange={onClose}>
@@ -130,10 +131,12 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
 
           <p style={{ fontSize: "1.4em", marginBottom: 0 }}>Contact Us</p>
           <a
-            href="mailto:thevachanproject@bridgeconn.com"
+            href={`mailto:${contactEmail}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-blue-500"
           >
-            islvbible@bridgeconn.com
+            {contactEmail}
           </a>
 
           <section className="py-2 text-center text-sm hover:text-gray-500">
