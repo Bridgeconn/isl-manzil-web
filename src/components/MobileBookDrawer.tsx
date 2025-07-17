@@ -382,11 +382,15 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   };
 
   const renderTabletListView = () => (
-    <div className="flex overflow-y-auto max-h-full h-fit gap-4 pr-2">
+    <div className="flex overflow-y-auto  gap-4 pr-2">
       <div className="flex-1">
         <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
         {renderBookGrid(oldTestamentBooks)}
       </div>
+      <div className="flex flex-col justify-center mt-9">
+        <div className="w-px h-full bg-gray-300" />
+      </div>
+
       <div className="flex-1">
         <h3 className="font-bold text-lg text-center mb-2">NEW TESTAMENT</h3>
         {renderBookGrid(newTestamentBooks)}
@@ -411,6 +415,10 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
             </h3>
             {renderBookGrid(oldTestamentBooks)}
           </div>
+          <div className="flex flex-col justify-center mt-9">
+            <div className="w-px h-full bg-gray-300" />
+          </div>
+
           <div className="flex-1 flex-col">
             <h3 className="font-bold text-sm text-gray-700 mb-2 sm:text-center">
               NEW TESTAMENT
