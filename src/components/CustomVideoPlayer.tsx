@@ -1691,15 +1691,16 @@ const CustomVideoPlayer = () => {
     }
   };
 
-  const formatBytes = (bytes: number, decimals = 2) => {
+  const formatBytes = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
 
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
 
     const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const size = bytes / Math.pow(k, i);
 
-    return `${(bytes / Math.pow(k, i)).toFixed(decimals)} ${sizes[i]}`;
+    return `${Math.ceil(size)} ${sizes[i]}`;
   };
 
   const getQualityLabel = (width?: number, height?: number): string => {
@@ -1942,7 +1943,7 @@ const CustomVideoPlayer = () => {
             </div>
           )}
           {showComingSoon && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 z-10">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
               <Clock className="w-8 h-8 sm:w-16 sm:h-16 text-blue-400 mb-2 sm:mb-6" />
               <div className="text-white text-xl sm:text-2xl font-bold mb-2">
                 Video Coming Soon
@@ -2273,11 +2274,14 @@ const CustomVideoPlayer = () => {
                                               option.width,
                                               option.height
                                             )}{" "}
-                                            {option.quality.toUpperCase() || "Unknown"}{" "}·{" "}
+                                            {option.quality.toUpperCase() ||
+                                              "Unknown"}{" "}
+                                            ·{" "}
                                             {option.format?.toUpperCase() ||
                                               "MP4"}{" "}
-                                            
-                                            <span>{formatBytes(option.size)}</span>
+                                            <span>
+                                              {formatBytes(option.size)}
+                                            </span>
                                           </div>
                                           <Download size={16} />
                                         </button>
