@@ -4,7 +4,6 @@ import LayoutControlButtons from "./LayoutControlButtons";
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
 import AboutUsPopUp from "./AboutUsPopUp";
-
 import { MdFeedback, MdInfo } from "react-icons/md";
 
 interface SettingsProps {
@@ -49,7 +48,6 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
           onMouseDown={handleContainerClick}
           onTouchStart={handleContainerClick}
         >
-          {/* <div className="mb-4 border-b border-gray-200" /> */}
           <div className="space-y-2 sm:space-y-4">
             <h4 className="text-base font-semibold text-gray-700 mb-3">
               Theme
@@ -155,7 +153,6 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
               <span className="text-lg font-bold text-black-600">A+</span>
             </div>
           </div>
-
           {/* Toggle text position */}
           {!isLowHeightDesktop && !shouldUseMobileBottomBar && (
             <div className="mt-4 flex items-center gap-4">
@@ -175,7 +172,7 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
               )}
             </div>
           )}
-          <div className="mt-4  ">
+          <div className="mt-4">
             <div className="pt-4 border-t border-gray-200"></div>
             <div className="flex flex-row flex-wrap  items-center gap-x-18 gap-y-2">
               <div
@@ -190,15 +187,6 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
               </div>
 
               {feedbackUrl && (
-                // <div
-                //   onClick={(e) => {
-                //     e.stopPropagation();
-                //     if (feedbackUrl) {
-                //       window.open(feedbackUrl, "_blank");
-                //     }
-                //   }}
-                //   className="flex items-center gap-2 text-base font-semibold text-gray-700 cursor-pointer hover:text-black relative -top-[3px] md:top-0"
-                // >
                 <div
                   onClick={(e) => {
                     e.stopPropagation();

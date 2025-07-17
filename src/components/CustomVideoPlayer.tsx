@@ -1936,13 +1936,13 @@ const CustomVideoPlayer = () => {
           }}
         >
           {(isVideoLoading || !isPlayerReady) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black ">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
               <Loader2 className="w-8 h-8 sm:w-12 sm:h-12 text-white animate-spin mb-2 sm:mb-4" />
               <div className="text-white sm:text-lg">Loading video...</div>
             </div>
           )}
           {showComingSoon && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 ">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
               <Clock className="w-8 h-8 sm:w-16 sm:h-16 text-blue-400 mb-2 sm:mb-6" />
               <div className="text-white text-xl sm:text-2xl font-bold mb-2">
                 Video Coming Soon
@@ -2000,7 +2000,7 @@ const CustomVideoPlayer = () => {
                 )}
                 {/* Video Ended Overlay */}
                 {isEnded && !(currentTime < duration) && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center ">
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <button
                       onClick={replayVideo}
                       className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full flex items-center space-x-2 transition-colors"

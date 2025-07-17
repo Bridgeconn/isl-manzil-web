@@ -33,7 +33,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
         </DialogClose>
         <DialogHeader className="p-4 border-b">
           <DialogTitle
-            className={`text-xl  ${
+            className={`text-xl ${
               fontType === "serif" ? "font-serif" : "font-sans"
             } `}
             style={{
@@ -56,7 +56,6 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           }}
         >
           <p style={{ fontSize: "1.4em", marginBottom: 0 }}>
-            {" "}
             The ISLV Bible Website
           </p>
           <p>
@@ -164,7 +163,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
               color: currentTheme?.textColor,
               backgroundColor: currentTheme?.backgroundColor,
 
-              borderWidth: "0.5px", // Very thin
+              borderWidth: "0.5px",
             }}
           >
             Close
