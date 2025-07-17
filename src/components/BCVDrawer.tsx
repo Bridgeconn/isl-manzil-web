@@ -695,6 +695,9 @@ const BCVDrawer = () => {
                         setSearchQuery("");
                         setErrorMessage("");
                       }}
+                      style={{
+                        color: currentTheme?.textColor,
+                      }}
                     >
                       <X size={16} strokeWidth={2.5} />
                     </span>
