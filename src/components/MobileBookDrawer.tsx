@@ -356,7 +356,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
                 <div className="w-9 h-9 opacity-50" />
               )}
               <span
-                className={`text-sm font-medium leading-tight opacity-70 text-nowrap ${
+                className={`text-sm font-medium leading-tight opacity-40 text-nowrap ${
                   fontType === "serif" ? "font-serif" : "font-sans"
                 }`}
                 style={{ color: currentTheme?.textColor }}
@@ -376,7 +376,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
               style={{
                 backgroundColor:
                   selectedBook?.value.toLowerCase() === book.value.toLowerCase()
-                    ? currentTheme?.textColor
+                    ? currentTheme?.selected
                     : "",
               }}
             >
@@ -525,7 +525,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           style={{
             backgroundColor:
               selectedChapter?.value === chapter.value
-                ? currentTheme?.textColor
+                ? currentTheme?.selected
                 : "",
             color:
               selectedChapter?.value === chapter.value
@@ -553,7 +553,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           style={{
             backgroundColor:
               selectedVerse?.value === verse.value
-                ? currentTheme?.textColor
+                ? currentTheme?.selected
                 : "",
             color:
               selectedVerse?.value === verse.value
@@ -647,7 +647,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
                 onBlur={() => setIsSearchFocused(false)}
                 className={`w-full pl-12 pr-10 py-2 border-2 rounded-full focus:border-gray-400 focus:outline-none text-gray-700 placeholder-gray-400 ${
                   fontType === "serif" ? "font-serif" : "font-sans"
-                }`}
+                } ${currentTheme?.id === "theme3" ? "placeholder:text-white" : ""}`}
                 style={{ color: currentTheme?.textColor }}
                 disabled={isSearching}
               />

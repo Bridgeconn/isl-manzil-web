@@ -361,7 +361,7 @@ const BCVDrawer = () => {
                   : `${selectedBook.label} ${chapter.value}`
               }
               style={{
-                backgroundColor: isSelected ? currentTheme?.textColor : "",
+                backgroundColor: isSelected ? currentTheme?.selected : "",
                 color: isSelected
                   ? currentTheme?.backgroundColor
                   : currentTheme?.textColor,
@@ -404,7 +404,7 @@ const BCVDrawer = () => {
                     }`
               }
               style={{
-                backgroundColor: isSelected ? currentTheme?.textColor : "",
+                backgroundColor: isSelected ? currentTheme?.selected : "",
                 color: isSelected
                   ? currentTheme?.backgroundColor
                   : currentTheme?.textColor,
@@ -456,7 +456,7 @@ const BCVDrawer = () => {
                   <div className="w-13 h-13 opacity-50"></div>
                 )}
                 <span
-                  className={`text-base lg:text-lg opacity-70 ${
+                  className={`text-base lg:text-lg opacity-50 ${
                     fontType === "serif" ? "font-serif" : "font-sans"
                   }`}
                   style={{ color: currentTheme?.textColor }}
@@ -477,7 +477,7 @@ const BCVDrawer = () => {
               }`}
               onClick={() => handleBookSelect(book)}
               style={{
-                backgroundColor: isSelected ? currentTheme?.textColor : "",
+                backgroundColor: isSelected ? currentTheme?.selected : "",
               }}
             >
               {book.image ? (
@@ -509,7 +509,7 @@ const BCVDrawer = () => {
   };
 
   const renderListView = () => (
-    <div className="flex overflow-y-auto max-h-full h-fit gap-4 pr-1">
+    <div className="flex max-h-full h-fit gap-4 pr-1">
       <div className="flex-1">
         <h3
           className={`font-bold text-lg text-center mb-2 ${
@@ -546,6 +546,7 @@ const BCVDrawer = () => {
             "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
             "rgba(0, 0, 0, 0.12) 0px -1px 4px 0px",
           transition: "box-shadow 0.3s ease-in-out",
+          backgroundColor: currentTheme?.id === "theme3" ? "white": "",
         }}
       >
         <button
@@ -560,7 +561,8 @@ const BCVDrawer = () => {
           )}
         </button>
         <span
-          className="text-sm font-medium text-gray-700 px-2 cursor-pointer"
+          className="text-base font-medium text-gray-700 px-2 cursor-pointer"
+          style={{ color: currentTheme?.id === "theme3" ? currentTheme?.backgroundColor : currentTheme?.textColor }}
           onClick={openDialog}
         >
           {selectedBook?.label ? (
@@ -593,8 +595,8 @@ const BCVDrawer = () => {
       </div>
 
       <Dialog open={isBCVDrawerOpen} onOpenChange={setIsBCVDrawerOpen}>
-        <DialogContent className="sm:max-w-6xl h-[calc(100vh-100px)] flex flex-col [&>button]:hidden pt-3 themed-bg">
-          <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 border-b border-gray-200">
+        <DialogContent className="sm:max-w-6xl h-[calc(100vh-100px)] flex flex-col [&>button]:hidden p-3 pr-0 themed-bg">
+          <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 border-b border-gray-200 pr-2">
             <div className="max-w-xl w-full flex flex-row justify-start">
               <div className="flex w-full justify-center">
                 <button
@@ -683,7 +685,7 @@ const BCVDrawer = () => {
                     onBlur={() => setIsSearchFocused(false)}
                     className={`flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis ${
                       fontType === "serif" ? "font-serif" : "font-sans"
-                    }`}
+                    } ${currentTheme?.id === "theme3" ? "placeholder:text-white" : ""}`}
                     disabled={isSearching}
                     style={{
                       color: currentTheme?.textColor,
@@ -706,9 +708,9 @@ const BCVDrawer = () => {
                   )}
                   <span
                     title="Search"
-                    className={`text-blue-700 hover:text-blue-900 cursor-pointer ${
+                    className={`text-blue-900 cursor-pointer ${
                       !searchQuery.trim() ? "opacity-70 cursor-not-allowed" : ""
-                    }`}
+                    } ${currentTheme?.id === "theme3" ? "text-white" : ""}`}
                     onClick={() => {
                       if (searchQuery.trim()) {
                         handleSearchSubmit();
@@ -740,7 +742,7 @@ const BCVDrawer = () => {
             </DialogClose>
           </DialogHeader>
 
-          <div className="overflow-y-auto flex-grow custom-scroll-ultra-thin">
+          <div className="overflow-y-auto flex-grow custom-scroll-ultra-thin pr-2">
             {activeView === "book" && renderListView()}
 
             {activeView === "chapter" && (

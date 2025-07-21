@@ -34,7 +34,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         {/* Speed Row */}
         <div
           onClick={onOpenPlaybackDrawer}
-          className="flex justify-between items-center cursor-pointer hover:bg-gray-400 p-2 rounded"
+          className="flex justify-between items-center cursor-pointer hover:bg-gray-400 py-2 px-1 rounded"
         >
           <div className="flex items-center gap-2 themed-text">
             <PlaybackButton />
@@ -55,7 +55,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
         {/* Quality Row */}
         <div
-          className="flex justify-between items-center cursor-pointer hover:bg-gray-400 p-2 rounded"
+          className="flex justify-between items-center cursor-pointer hover:bg-gray-400 py-2 px-1 rounded"
           onClick={onOpenQualityDrawer}
         >
           <div className="flex items-center gap-2">

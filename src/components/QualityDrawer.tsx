@@ -20,9 +20,9 @@ const QualityDrawer: React.FC<QualityDrawerProps> = ({
 
   return (
     <div
-      className="absolute py-0.5 md:py-1 bottom-10 md:bottom-12 right-4 w-30 sm:w-40 md:w-50 p-2 md:p-4 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50 
+      className="absolute py-0.5 md:py-1 bottom-10 md:bottom-12 right-4 w-30 sm:w-40 md:w-50 p-2 pr-0 rounded-lg bg-black bg-opacity-90 text-white shadow-lg z-50 
                     max-h-[150px] sm:max-h-[180px] md:max-h-[280px] xl:max-h-[380px]
-                    overflow-y-auto pr-1 custom-scroll-black themed-bg"
+                    overflow-y-auto custom-scroll-black themed-bg"
     >
       <div>
         <div className="flex items-center mb-1 sm:mb-2 themed-text">
@@ -32,7 +32,7 @@ const QualityDrawer: React.FC<QualityDrawerProps> = ({
             className="sm:w-5 sm:h-5 cursor-pointer"
             onClick={onBackToSettings}
           />
-          <span className="text-sm sm:text-base text-300 font-semibold ml-2 sm:ml-4 py-1 sm:py-2 ">
+          <span className="text-sm sm:text-base text-300 font-semibold ml-1 sm:ml-2 py-1 sm:py-2">
             Quality
           </span>
         </div>
