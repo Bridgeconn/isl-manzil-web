@@ -509,7 +509,7 @@ const BCVDrawer = () => {
   };
 
   const renderListView = () => (
-    <div className="flex max-h-full h-fit gap-4 pr-1">
+    <div className="flex overflow-y-auto  gap-4 pr-1">
       <div className="flex-1">
         <h3
           className={`font-bold text-lg text-center mb-2 ${
@@ -521,7 +521,9 @@ const BCVDrawer = () => {
         </h3>
         {renderBookGrid(oldTestamentBooks)}
       </div>
-
+      <div className="flex flex-col mx-1 mt-9">
+        <div className="w-px bg-gray-300 flex-grow"></div>
+      </div>
       <div className="flex-1">
         <h3
           className={`font-bold text-lg text-center mb-2 ${
