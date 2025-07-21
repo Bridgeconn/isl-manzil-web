@@ -33,6 +33,8 @@ interface AvailableData {
 }
 
 interface BibleStore {
+  playbackSpeed: number;
+  setPlaybackSpeed: (speed: number) => void;
   selectedBook: BookOption | null;
   selectedChapter: ChapterOption | null;
   selectedVerse: VerseOption | null;
@@ -83,6 +85,9 @@ interface BibleStore {
 const typedVersificationData = versificationData as VersificationData;
 
 const useBibleStore = create<BibleStore>((set, get) => ({
+  playbackSpeed: 1,
+  setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
+
   selectedBook: null,
   selectedChapter: null,
   selectedVerse: null,
@@ -330,7 +335,7 @@ const useBibleStore = create<BibleStore>((set, get) => ({
       });
 
       // Auto-select first available book
-      if(shouldAutoSelect){
+      if (shouldAutoSelect) {
         const firstAvailableBook = books.find((book) => !book.isDisabled);
         if (firstAvailableBook && !get().selectedBook) {
           get().setBook(firstAvailableBook, false);
