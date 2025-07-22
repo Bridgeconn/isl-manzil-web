@@ -11,6 +11,7 @@ import BCVDrawer from "@/components/BCVDrawer";
 const HomePage: React.FC = () => {
   const [isResizeHandleHovered, setIsResizeHandleHovered] = useState(false);
   const [isResizeHandleActive, setIsResizeHandleActive] = useState(false);
+  const [showTouchHandle, setShowTouchHandle] = useState(false);
 
   const touchAreaRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +50,7 @@ const HomePage: React.FC = () => {
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     setIsResizeHandleActive(true);
+    setShowTouchHandle(true);
   }, []);
 
   const handleTouchMove = useCallback(
@@ -77,7 +79,49 @@ const HomePage: React.FC = () => {
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     setIsResizeHandleActive(false);
+    setShowTouchHandle(false);
   }, []);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsResizeHandleActive(true);
+
+      const startX = e.clientX;
+      const initialWidth = size.width;
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        moveEvent.preventDefault();
+        const currentX = moveEvent.clientX;
+        const deltaX = startX - currentX;
+        const newWidth = initialWidth + deltaX;
+
+        if (
+          newWidth >= constraints.minWidth &&
+          newWidth <= constraints.maxWidth
+        ) {
+          handleResize({
+            width: newWidth,
+            height: size.height,
+          });
+        }
+      };
+
+      const handleMouseUp = (upEvent: MouseEvent) => {
+        upEvent.preventDefault();
+        setIsResizeHandleActive(false);
+        setIsResizeHandleHovered(false);
+
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [size.width, size.height, constraints, handleResize]
+  );
 
   const getLayoutClasses = () => {
     if (shouldUseMobileBottomBar) {
@@ -241,17 +285,12 @@ const HomePage: React.FC = () => {
 
   const getResizeHandleStyle = () => ({
     left: "0px",
-    width: `${isMobileLandscape || isTabletLandscape ? "4px" : "2px"}`,
+    width: "2px",
     height: "100%",
     backgroundColor:
       isResizeHandleHovered || isResizeHandleActive ? "#3b82f6" : "transparent",
     cursor: "ew-resize",
-    zIndex: 20,
     transition: "background-color 200ms ease-in-out",
-    borderLeft:
-      isResizeHandleHovered || isResizeHandleActive
-        ? "2px solid #3b82f6"
-        : "2px solid transparent",
     touchAction: "none",
   });
 
@@ -262,14 +301,77 @@ const HomePage: React.FC = () => {
     height: "100%",
     backgroundColor: "transparent",
     cursor: "ew-resize",
-    zIndex: 25,
     touchAction: "none",
   });
 
-  const renderRightSideContent = () => {
+  const renderResizeHandle = () => {
+    if (!showText) return null;
+
+    const isVisible = !isTouchDevice
+      ? isResizeHandleHovered || isResizeHandleActive
+      : showTouchHandle || isResizeHandleActive;
 
     return (
-      <div className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2">
+      <div
+        style={{
+          position: "absolute",
+          left: "-2px",
+          top: "0",
+          width: "10px",
+          height: "100%",
+          cursor: "ew-resize",
+          pointerEvents: "auto",
+        }}
+        onMouseEnter={() => !isTouchDevice && setIsResizeHandleHovered(true)}
+        onMouseLeave={() => !isTouchDevice && setIsResizeHandleHovered(false)}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Separator line */}
+        <div
+          style={{
+            position: "absolute",
+            left: "5px",
+            top: "0",
+            width: "2px",
+            height: "100%",
+            backgroundColor:
+              isResizeHandleActive || isResizeHandleHovered
+                ? "#3b82f6"
+                : "#e5e7eb",
+            transition: "background-color 200ms ease-in-out",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            left: "-1px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: "8px",
+            height: "30px",
+            backgroundColor: isVisible ? "#3b82f6" : "#9ca3af",
+            borderRadius: "4px",
+            border: isVisible ? "1px solid #3b82f6" : "1px solid white",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+            transition: "all 200ms ease-in-out",
+            cursor: "ew-resize",
+            pointerEvents: "auto",
+          }}
+        />
+      </div>
+    );
+  };
+
+  const renderRightSideContent = () => {
+    return (
+      <div
+        className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2"
+        style={{ position: "relative" }}
+      >
         {isTouchDevice && showText && (
           <div
             ref={touchAreaRef}
@@ -277,24 +379,12 @@ const HomePage: React.FC = () => {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-          >
-            <div
-              style={{
-                position: "absolute",
-                left: "0px",
-                width: "4px",
-                height: "100%",
-                backgroundColor: isResizeHandleActive
-                  ? "#3b82f6"
-                  : "transparent",
-                transition: "background-color 200ms ease-in-out",
-                borderLeft: isResizeHandleActive
-                  ? "2px solid #3b82f6"
-                  : "2px solid transparent",
-              }}
-            />
-          </div>
+          />
         )}
+
+        {/* Resize handle indicator */}
+        {renderResizeHandle()}
+
         <BibleVerseDisplay />
       </div>
     );
@@ -327,12 +417,10 @@ const HomePage: React.FC = () => {
         </div>
 
         {!isLowHeightDesktop &&
-          (!isHorizontalLayout || effectiveTextPosition === "below") &&
-          (
+          (!isHorizontalLayout || effectiveTextPosition === "below") && (
             <div className={getVerticalTextContainerClasses()}>
               <div className={getVerseContentClasses()}>
-                <BibleVerseDisplay
-                />
+                <BibleVerseDisplay />
               </div>
             </div>
           )}
@@ -356,6 +444,7 @@ const HomePage: React.FC = () => {
                 maxWidth={constraints.maxWidth}
                 onResizeStart={() => {
                   setIsResizeHandleActive(true);
+                  setShowTouchHandle(true);
                   handleResizeStart();
                 }}
                 onResize={(_e, _direction, ref) => {
@@ -373,6 +462,10 @@ const HomePage: React.FC = () => {
                   handleResize(newSize);
                   handleResizeStop();
                   setIsResizeHandleActive(false);
+                  setIsResizeHandleHovered(false);
+                  if (isTouchDevice) {
+                    setShowTouchHandle(false);
+                  }
                 }}
                 enable={{
                   left: true,
