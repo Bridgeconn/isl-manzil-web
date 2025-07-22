@@ -2,6 +2,7 @@
 
 import { forwardRef } from "react";
 import { ChevronLeft } from "lucide-react";
+import useBibleStore from "@/store/useBibleStore";
 
 interface PlaybackDrawerProps {
   isVisible: boolean;
@@ -16,6 +17,7 @@ const PlaybackDrawer = forwardRef<HTMLDivElement, PlaybackDrawerProps>(
     { isVisible, onClose, playbackSpeed, onChangeSpeed, onBackToSettings },
     ref
   ) => {
+    const { setPlaybackSpeed } = useBibleStore();
     if (!isVisible) return null;
 
     const speeds = [0.25, 0.5, 1, 1.25, 1.5, 2];
@@ -46,6 +48,7 @@ const PlaybackDrawer = forwardRef<HTMLDivElement, PlaybackDrawerProps>(
               <li
                 key={speed}
                 onClick={() => {
+                  setPlaybackSpeed(speed);
                   onChangeSpeed(speed);
                   onClose();
                 }}
