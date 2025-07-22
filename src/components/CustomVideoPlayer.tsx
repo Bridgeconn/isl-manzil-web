@@ -98,6 +98,8 @@ const CustomVideoPlayer = () => {
   const {
     playbackSpeed,
     setPlaybackSpeed,
+    selectedQuality,
+    setSelectedQuality,
     availableData,
     setBook,
     setChapter,
@@ -160,7 +162,6 @@ const CustomVideoPlayer = () => {
   const [showQualityDrawer, setShowQualityDrawer] = useState(false);
   const [showPlaybackDrawer, setShowPlaybackDrawer] = useState(false);
 
-  const [selectedQuality, setSelectedQuality] = useState("Auto");
   const [availableQualities, setAvailableQualities] = useState<
     { id: string; label: string }[]
   >([]);
@@ -265,7 +266,6 @@ const CustomVideoPlayer = () => {
       setIsPlayerReady(false);
       loadVideoForCurrentSelection();
       getBibleVerseMarker();
-      setSelectedQuality("Auto");
 
       setShowDownloadDropdown(false);
       setDownloadOptions([]);
@@ -746,6 +746,7 @@ const CustomVideoPlayer = () => {
           const qualityIds = qualities.map((q) => q.id);
           setAvailableQualities(qualities);
           const selected = selectedQuality.toLowerCase();
+
           if (qualityIds.includes(selected)) {
             await player.setQuality(
               selected as import("@vimeo/player").VimeoVideoQuality
@@ -757,6 +758,8 @@ const CustomVideoPlayer = () => {
               "Available:",
               qualityIds
             );
+            await player.setQuality("auto");
+            setSelectedQuality("auto");
           }
 
           //  Use the time stored at click time
