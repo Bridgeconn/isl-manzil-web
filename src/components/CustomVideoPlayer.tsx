@@ -96,6 +96,10 @@ const getViewportWidth = () => {
 
 const CustomVideoPlayer = () => {
   const {
+    playbackSpeed,
+    setPlaybackSpeed,
+    selectedQuality,
+    setSelectedQuality,
     availableData,
     setBook,
     setChapter,
@@ -157,8 +161,7 @@ const CustomVideoPlayer = () => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showQualityDrawer, setShowQualityDrawer] = useState(false);
   const [showPlaybackDrawer, setShowPlaybackDrawer] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [selectedQuality, setSelectedQuality] = useState("Auto");
+
   const [availableQualities, setAvailableQualities] = useState<
     { id: string; label: string }[]
   >([]);
@@ -263,8 +266,7 @@ const CustomVideoPlayer = () => {
       setIsPlayerReady(false);
       loadVideoForCurrentSelection();
       getBibleVerseMarker();
-      setSelectedQuality("Auto");
-      setPlaybackSpeed(1);
+
       setShowDownloadDropdown(false);
       setDownloadOptions([]);
     }
@@ -701,6 +703,13 @@ const CustomVideoPlayer = () => {
             resolve(true);
           });
         });
+
+        const { playbackSpeed } = useBibleStore.getState();
+        try {
+          await vimeoPlayerRef.current!.setPlaybackRate(playbackSpeed);
+        } catch (err) {
+          console.warn("Failed to apply playback speed:", err);
+        }
         // Set up events after player is ready
         setupEventListeners();
 
@@ -737,6 +746,7 @@ const CustomVideoPlayer = () => {
           const qualityIds = qualities.map((q) => q.id);
           setAvailableQualities(qualities);
           const selected = selectedQuality.toLowerCase();
+
           if (qualityIds.includes(selected)) {
             await player.setQuality(
               selected as import("@vimeo/player").VimeoVideoQuality
@@ -748,6 +758,8 @@ const CustomVideoPlayer = () => {
               "Available:",
               qualityIds
             );
+            await player.setQuality("auto");
+            setSelectedQuality("auto");
           }
 
           //  Use the time stored at click time
