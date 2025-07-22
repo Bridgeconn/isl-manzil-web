@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+
 import { BookOption, ChapterOption, VerseOption } from "../types/Navigation";
 import Papa from "papaparse";
 import bookCodesData from "../assets/data/book_codes.json";
