@@ -77,12 +77,12 @@
   margin-bottom: 0.5rem !important;
 }
 
-.prose-themed p{
+.prose-themed p {
   margin-bottom: 0 !important;
   margin-top: 0.25rem !important;
 }
 
-.prose-themed ol{
+.prose-themed ol {
   margin-bottom: 0 !important;
 }
 
@@ -90,3 +90,20 @@
   pointer-events: none;
 }
 
+.custom-hover-black:hover:enabled {
+  color: black !important;
+}
+
+.hover-text-black-bg-gray:hover {
+  background-color: #f9fafb;
+  color: black !important;
+}
+
+.hover-text-black-bg-gray:hover.themed-text,
+.hover-text-black-bg-gray:hover .themed-text {
+  color: black !important;
+}
+
+.hover-text-black-bg-gray:hover span {
+  color: black !important;
+}

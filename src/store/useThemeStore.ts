@@ -7,6 +7,7 @@ export interface ThemeOption {
   backgroundColor: string;
   textColor: string;
   verseColor: string;
+  selected: string
 }
 
 interface ThemeStore {
@@ -27,22 +28,25 @@ const themes: ThemeOption[] = [
     id: "theme1",
     name: "Theme 1",
     backgroundColor: "#FFFFFF",
-    textColor: "#000000",
-    verseColor: "#777777"
+    textColor: "#000063",
+    verseColor: "#777777",
+    selected: "#1e3a8a"
   },
-  {
+   {
     id: "theme2",
     name: "Theme 2",
     backgroundColor: "#FFFFFF",
-    textColor: "#000063",
-    verseColor: "#777777"
+    textColor: "#000000",
+    verseColor: "#777777",
+    selected: "#4b5563"
   },
   {
     id: "theme3",
     name: "Theme 3",
     backgroundColor: "#001F3F",
     textColor: "#E0E0E0",
-    verseColor: "#ADD8E6"
+    verseColor: "#ADD8E6",
+    selected: "#D1D5DB"
   },
 ];
 
