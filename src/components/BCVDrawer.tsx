@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useChapterNavigation } from "@/hooks/useChapterNavigation";
 import useBibleStore from "@/store/useBibleStore";
-import { ChevronLeft, ChevronRight, X, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  X,
+  Search,
+} from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -548,23 +554,26 @@ const BCVDrawer = () => {
             "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
             "rgba(0, 0, 0, 0.12) 0px -1px 4px 0px",
           transition: "box-shadow 0.3s ease-in-out",
-          backgroundColor: currentTheme?.id === "theme3" ? "white": "",
+          backgroundColor: currentTheme?.id === "theme3" ? "white" : "",
+          minHeight: "45px",
         }}
       >
         <button
-          className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
+          className="pr-2 border-r border-gray-200 text-gray-600 hover:text-[var(--indigo-color)]"
           title="Previous Chapter"
+          style={{ borderRight: "1px solid #ccc" }}
+          onClick={() => canGoPrevious && navigateToChapter("previous")}
         >
-          {canGoPrevious && (
-            <ChevronLeft
-              size={20}
-              onClick={() => navigateToChapter("previous")}
-            />
-          )}
+          {canGoPrevious && <ChevronLeft size={20} strokeWidth={2} />}
         </button>
         <span
-          className="text-base font-medium text-gray-700 px-2 cursor-pointer"
-          style={{ color: currentTheme?.id === "theme3" ? currentTheme?.backgroundColor : currentTheme?.textColor }}
+          className="px-4 text-base font-medium text-gray-700 flex items-center gap-2 cursor-pointer"
+          style={{
+            color:
+              currentTheme?.id === "theme3"
+                ? currentTheme?.backgroundColor
+                : currentTheme?.textColor,
+          }}
           onClick={openDialog}
         >
           {selectedBook?.label ? (
@@ -580,6 +589,7 @@ const BCVDrawer = () => {
                       : selectedVerse.label
                   }`
                 : ""}
+              <ChevronDown size={16} strokeWidth={2} className="mt-0.5" />
             </>
           ) : (
             <>Loading...</>
@@ -587,12 +597,12 @@ const BCVDrawer = () => {
         </span>
 
         <button
-          className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
+          className="pl-2 border-l border-gray-200 text-gray-600 hover:text-[var(--indigo-color)]"
           title="Next Chapter"
+          style={{ borderLeft: "1px solid #ccc" }}
+          onClick={() => canGoNext && navigateToChapter("next")}
         >
-          {canGoNext && (
-            <ChevronRight size={20} onClick={() => navigateToChapter("next")} />
-          )}
+          {canGoNext && <ChevronRight size={20} strokeWidth={2} />}
         </button>
       </div>
 
@@ -687,7 +697,11 @@ const BCVDrawer = () => {
                     onBlur={() => setIsSearchFocused(false)}
                     className={`flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis ${
                       fontType === "serif" ? "font-serif" : "font-sans"
-                    } ${currentTheme?.id === "theme3" ? "placeholder:text-white" : ""}`}
+                    } ${
+                      currentTheme?.id === "theme3"
+                        ? "placeholder:text-white"
+                        : ""
+                    }`}
                     disabled={isSearching}
                     style={{
                       color: currentTheme?.textColor,
