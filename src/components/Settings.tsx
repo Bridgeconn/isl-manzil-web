@@ -43,13 +43,16 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
       )}
       {!showAbout && (
         <div
-          className="w-80 bg-white border border-gray-200 shadow-lg p-4 pt-2 relative"
+          className="w-80 bg-white border border-gray-200 shadow-lg p-4 pt-2 relative themed-bg"
           onClick={handleContainerClick}
           onMouseDown={handleContainerClick}
           onTouchStart={handleContainerClick}
         >
           <div className="space-y-2 sm:space-y-4">
-            <h4 className="text-base font-semibold text-gray-700 mb-3">
+            <h4
+              className="text-base font-semibold text-gray-700 mb-3"
+              style={{ color: currentTheme?.textColor }}
+            >
               Theme
             </h4>
 
@@ -91,7 +94,12 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
 
           {/* Font Type Toggle */}
           <div>
-            <h4 className="text-base font-semibold text-gray-700 mb-3">
+            <h4
+              className="text-base font-semibold text-gray-700 mb-3"
+              style={{
+                color: currentTheme?.textColor,
+              }}
+            >
               Font Type
             </h4>
             <div className="flex items-center gap-4 mb-2">
@@ -99,6 +107,7 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
                 className={`${
                   fontType === "serif" ? "font-bold text-black-600" : ""
                 }`}
+                style={{ color: currentTheme?.textColor }}
               >
                 Serif
               </span>
@@ -119,6 +128,7 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
                 className={`${
                   fontType === "sans" ? "font-bold text-black-600" : ""
                 }`}
+                style={{ color: currentTheme?.textColor }}
               >
                 Sans
               </span>
@@ -127,11 +137,12 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
 
           {/* Font Size Slider */}
           <div className="mt-4">
-            <h4 className="text-base font-semibold text-gray-700 mb-3">
+            <h4 className="text-base font-semibold text-gray-700 mb-3"
+            style={{ color: currentTheme?.textColor }}>
               Font Size
             </h4>
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-black-600">A-</span>
+              <span className="text-xs font-bold text-black-600" style={{ color: currentTheme?.textColor }}>A-</span>
               <input
                 type="range"
                 min={12}
@@ -150,13 +161,14 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
                 }}
               />
 
-              <span className="text-lg font-bold text-black-600">A+</span>
+              <span className="text-lg font-bold text-black-600" style={{ color: currentTheme?.textColor }}>A+</span>
             </div>
           </div>
           {/* Toggle text position */}
           {!isLowHeightDesktop && !shouldUseMobileBottomBar && (
             <div className="mt-4 flex items-center gap-4">
-              <h4 className="text-base font-semibold text-gray-700">
+              <h4 className="text-base font-semibold text-gray-700"
+              style={{ color: currentTheme?.textColor }}>
                 Text position
               </h4>
 
@@ -181,6 +193,7 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
                   setShowAbout(true);
                   onCloseDrawer?.();
                 }}
+                style={{ color: currentTheme?.textColor }}
               >
                 <h4>About us</h4>
                 <MdInfo size={18} />
@@ -194,7 +207,8 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
                       window.open(feedbackUrl, "_blank");
                     }
                   }}
-                  className="flex items-center gap-2 text-base font-semibold text-gray-700 cursor-pointer hover:text-black relative "
+                  className="flex items-center gap-2 text-base font-semibold text-gray-700 cursor-pointer hover:text-black relative"
+                  style={{ color: currentTheme?.textColor }}
                 >
                   <h4>Feedback</h4>
                   <MdFeedback className="mt-1" size={18} />

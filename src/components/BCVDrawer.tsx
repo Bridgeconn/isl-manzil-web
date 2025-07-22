@@ -11,6 +11,7 @@ import {
 import { BookOption } from "@/types/Navigation";
 import { ChapterOption } from "@/types/Navigation";
 import { VerseOption } from "@/types/Navigation";
+import useThemeStore from "@/store/useThemeStore";
 
 import {
   parseBibleReference,
@@ -39,6 +40,7 @@ const BCVDrawer = () => {
     getBibleVerseMarker,
     setCurrentPlayingVerse,
   } = useBibleStore();
+  const { fontType, currentTheme } = useThemeStore();
 
   const [activeView, setActiveView] = useState<ViewType>("book");
   const [chapterOptions, setChapterOptions] = useState<ChapterOption[]>([]);
@@ -318,34 +320,57 @@ const BCVDrawer = () => {
 
     return (
       <>
-        {chapterOptions.map((chapter) => (
-          <div
-            key={`chapter-${chapter.value}`}
-            className={`h-12 rounded-full flex items-center justify-center flex-wrap cursor-pointer transition-colors border ${
-              chapter.isDisabled
-                ? "bg-white text-gray-500 hover:cursor-not-allowed border-gray-200 shadow-sm"
-                : "hover:bg-gray-50 border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
-            } ${
-              selectedChapter?.value === chapter.value && !chapter.isDisabled
-                ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
-                : "shadow-sm"
-            }`}
-            onClick={() =>
-              !chapter.isDisabled && handleChapterSelect(chapter.value)
-            }
-            title={
-              chapter.value === 0 && chapter.isDisabled
-                ? "Introduction video is not available"
-                : chapter.isDisabled
-                ? "The video for this Chapter is not available"
-                : chapter.value === 0
-                ? `Introduction to ${selectedBook.label}`
-                : ` ${selectedBook.label} ${chapter.value}`
-            }
-          >
-            {chapter.label}
-          </div>
-        ))}
+        {chapterOptions.map((chapter) => {
+          const isSelected =
+            selectedChapter?.value === chapter.value && !chapter.isDisabled;
+
+          const isDisabled = chapter.isDisabled;
+
+          const hoverClass =
+            !isSelected && !isDisabled ? "hover-text-black-bg-gray" : "";
+
+          return (
+            <div
+              key={`chapter-${chapter.value}`}
+              className={`h-12 rounded-full flex items-center justify-center flex-wrap cursor-pointer transition-colors border
+                ${
+                  isDisabled
+                    ? "hover:cursor-not-allowed border-gray-200 shadow-sm opacity-70"
+                    : ""
+                }
+                ${
+                  isSelected
+                    ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
+                    : !isDisabled
+                    ? "border-gray-200 shadow-sm hover:shadow-inner hover:transform hover:scale-[0.98] hover-text-black-bg-gray"
+                    : ""
+                }
+                ${fontType === "serif" ? "font-serif" : "font-sans"}
+                ${hoverClass}
+              `}
+              onClick={() =>
+                !chapter.isDisabled && handleChapterSelect(chapter.value)
+              }
+              title={
+                chapter.value === 0 && chapter.isDisabled
+                  ? "Introduction video is not available"
+                  : chapter.isDisabled
+                  ? "The video for this Chapter is not available"
+                  : chapter.value === 0
+                  ? `Introduction to ${selectedBook.label}`
+                  : `${selectedBook.label} ${chapter.value}`
+              }
+              style={{
+                backgroundColor: isSelected ? currentTheme?.selected : "",
+                color: isSelected
+                  ? currentTheme?.backgroundColor
+                  : currentTheme?.textColor,
+              }}
+            >
+              {chapter.label}
+            </div>
+          );
+        })}
       </>
     );
   };
@@ -355,31 +380,42 @@ const BCVDrawer = () => {
 
     return (
       <>
-        {verseOptions.map((verse) => (
-          <div
-            key={`verse-${verse.value}`}
-            className={`h-12 border rounded-full border-gray-200 flex items-center flex-wrap justify-center cursor-pointer hover:bg-gray-100 hover:shadow-inner 
-             ${
-               selectedVerse?.value === verse.value
-                 ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
-                 : "bg-white shadow-sm"
-             }`}
-            onClick={() => handleVerseSelect(verse.value)}
-            title={
-              verse.value === 0
-                ? `Introduction to ${selectedBook.label} ${selectedChapter.label}`
-                : `${selectedBook.label} ${selectedChapter.label}:${
-                    verse.label.includes("_")
-                      ? verse.label.replace(/_/g, "-")
-                      : verse.label
-                  }`
-            }
-          >
-            {verse.label.includes("_")
-              ? verse.label.replace(/_/g, "-")
-              : verse.label}
-          </div>
-        ))}
+        {verseOptions.map((verse) => {
+          const isSelected = selectedVerse?.value === verse.value;
+
+          return (
+            <div
+              key={`verse-${verse.value}`}
+              className={`h-12 border rounded-full border-gray-200 flex items-center flex-wrap justify-center cursor-pointer
+                ${
+                  isSelected
+                    ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
+                    : "shadow-sm hover:shadow-inner hover:transform hover:scale-[0.98] hover-text-black-bg-gray"
+                } ${fontType === "serif" ? "font-serif" : "font-sans"}
+              `}
+              onClick={() => handleVerseSelect(verse.value)}
+              title={
+                verse.value === 0
+                  ? `Introduction to ${selectedBook.label} ${selectedChapter.label}`
+                  : `${selectedBook.label} ${selectedChapter.label}:${
+                      verse.label.includes("_")
+                        ? verse.label.replace(/_/g, "-")
+                        : verse.label
+                    }`
+              }
+              style={{
+                backgroundColor: isSelected ? currentTheme?.selected : "",
+                color: isSelected
+                  ? currentTheme?.backgroundColor
+                  : currentTheme?.textColor,
+              }}
+            >
+              {verse.label.includes("_")
+                ? verse.label.replace(/_/g, "-")
+                : verse.label}
+            </div>
+          );
+        })}
       </>
     );
   };
@@ -387,7 +423,12 @@ const BCVDrawer = () => {
   const renderBookGrid = (books: BookOption[]) => {
     if (books.length === 0) {
       return (
-        <div className="w-full flex items-center h-14 text-nowrap ">
+        <div
+          className={`w-full flex items-center h-14 text-nowrap ${
+            fontType === "serif" ? "font-serif" : "font-sans"
+          }`}
+          style={{ color: currentTheme?.textColor }}
+        >
           No matching books found
         </div>
       );
@@ -402,19 +443,24 @@ const BCVDrawer = () => {
             return (
               <div
                 key={book.value}
-                className="h-14 rounded-full flex items-center px-4 gap-2 cursor-not-allowed transition-all duration-150 border border-gray-200 shadow-sm"
+                className="h-14 rounded-full flex items-center gap-4 cursor-not-allowed transition-all duration-150 border border-gray-200 shadow-sm"
                 title="The videos for this book are not available"
               >
                 {book.image ? (
                   <img
                     src={book.image}
                     alt={book.label}
-                    className="w-13 h-13 object-contain opacity-50"
+                    className="w-13 h-13 object-contain opacity-50 bg-gray-100 rounded-full"
                   />
                 ) : (
                   <div className="w-13 h-13 opacity-50"></div>
                 )}
-                <span className="text-base lg:text-lg opacity-50">
+                <span
+                  className={`text-base lg:text-lg opacity-50 ${
+                    fontType === "serif" ? "font-serif" : "font-sans"
+                  }`}
+                  style={{ color: currentTheme?.textColor }}
+                >
                   {book.label}
                 </span>
               </div>
@@ -424,23 +470,37 @@ const BCVDrawer = () => {
           return (
             <div
               key={book.value}
-              className={`h-14  rounded-full flex items-center px-4 gap-2 cursor-pointer transition-all duration-150 border ${
+              className={`h-14 rounded-full flex items-center gap-4 cursor-pointer transition-all duration-150 border ${
                 isSelected
                   ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
-                  : "hover:bg-gray-50 border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98]"
+                  : "border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98] hover-text-black-bg-gray"
               }`}
               onClick={() => handleBookSelect(book)}
+              style={{
+                backgroundColor: isSelected ? currentTheme?.selected : "",
+              }}
             >
               {book.image ? (
                 <img
                   src={book.image}
                   alt={book.label}
-                  className="w-13 h-13 object-contain"
+                  className="w-13 h-13 object-contain bg-gray-100 rounded-full"
                 />
               ) : (
                 <div className="w-13 h-13"></div>
               )}
-              <span className="text-base lg:text-lg">{book.label}</span>
+              <span
+                className={`text-base lg:text-lg ${
+                  fontType === "serif" ? "font-serif" : "font-sans"
+                }`}
+                style={{
+                  color: isSelected
+                    ? currentTheme?.backgroundColor
+                    : currentTheme?.textColor,
+                }}
+              >
+                {book.label}
+              </span>
             </div>
           );
         })}
@@ -451,14 +511,28 @@ const BCVDrawer = () => {
   const renderListView = () => (
     <div className="flex overflow-y-auto  gap-4 pr-1">
       <div className="flex-1">
-        <h3 className="font-bold text-lg text-center mb-2">OLD TESTAMENT</h3>
+        <h3
+          className={`font-bold text-lg text-center mb-2 ${
+            fontType === "serif" ? "font-serif" : "font-sans"
+          }`}
+          style={{ color: currentTheme?.textColor }}
+        >
+          OLD TESTAMENT
+        </h3>
         {renderBookGrid(oldTestamentBooks)}
       </div>
       <div className="flex flex-col mx-1 mt-9">
         <div className="w-px bg-gray-300 flex-grow"></div>
       </div>
       <div className="flex-1">
-        <h3 className="font-bold text-lg text-center mb-2">NEW TESTAMENT</h3>
+        <h3
+          className={`font-bold text-lg text-center mb-2 ${
+            fontType === "serif" ? "font-serif" : "font-sans"
+          }`}
+          style={{ color: currentTheme?.textColor }}
+        >
+          NEW TESTAMENT
+        </h3>
         {renderBookGrid(newTestamentBooks)}
       </div>
     </div>
@@ -474,6 +548,7 @@ const BCVDrawer = () => {
             "rgba(0, 0, 0, 0.14) 0px 2px 4px 0px," +
             "rgba(0, 0, 0, 0.12) 0px -1px 4px 0px",
           transition: "box-shadow 0.3s ease-in-out",
+          backgroundColor: currentTheme?.id === "theme3" ? "white": "",
         }}
       >
         <button
@@ -488,7 +563,8 @@ const BCVDrawer = () => {
           )}
         </button>
         <span
-          className="text-sm font-medium text-gray-700 px-2 cursor-pointer"
+          className="text-base font-medium text-gray-700 px-2 cursor-pointer"
+          style={{ color: currentTheme?.id === "theme3" ? currentTheme?.backgroundColor : currentTheme?.textColor }}
           onClick={openDialog}
         >
           {selectedBook?.label ? (
@@ -521,35 +597,47 @@ const BCVDrawer = () => {
       </div>
 
       <Dialog open={isBCVDrawerOpen} onOpenChange={setIsBCVDrawerOpen}>
-        <DialogContent className="sm:max-w-6xl h-[calc(100vh-100px)] flex flex-col [&>button]:hidden pt-3">
-          <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 border-b border-gray-200">
+        <DialogContent className="sm:max-w-6xl h-[calc(100vh-100px)] flex flex-col [&>button]:hidden p-3 pr-0 themed-bg">
+          <DialogHeader className="flex flex-row sm:items-center justify-between gap-6 border-b border-gray-200 pr-2">
             <div className="max-w-xl w-full flex flex-row justify-start">
               <div className="flex w-full justify-center">
                 <button
                   className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "book"
                       ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                  }`}
-                  style={{ borderRadius: "10px 10px 0 0" }}
+                      : "text-gray-500 hover:bg-gray-100 custom-hover-black"
+                  } ${fontType === "serif" ? "font-serif" : "font-sans"}`}
+                  style={{
+                    borderRadius: "10px 10px 0 0",
+                    color: activeView === "book" ? "" : currentTheme?.textColor,
+                  }}
                   onClick={() => setActiveView("book")}
                 >
                   Book
                 </button>
                 <button
-                  className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
-                    activeView === "chapter"
-                      ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
-                      : !selectedBook
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                  }`}
-                  style={{ borderRadius: "10px 10px 0 0" }}
+                  className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200
+                      ${
+                        activeView === "chapter"
+                          ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
+                          : !selectedBook
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-gray-500 hover:bg-gray-100 custom-hover-black"
+                      } ${fontType === "serif" ? "font-serif" : "font-sans"}
+                  `}
+                  style={{
+                    borderRadius: "10px 10px 0 0",
+                    color:
+                      activeView === "chapter" || !selectedBook
+                        ? undefined
+                        : currentTheme?.textColor,
+                  }}
                   onClick={() => selectedBook && setActiveView("chapter")}
                   disabled={!selectedBook}
                 >
                   Chapter
                 </button>
+
                 <button
                   className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "verse"
@@ -558,9 +646,18 @@ const BCVDrawer = () => {
                         !selectedChapter ||
                         verseOptions.length === 0
                       ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                  }`}
-                  style={{ borderRadius: "10px 10px 0 0" }}
+                      : "text-gray-500 hover:bg-gray-100 custom-hover-black"
+                  } ${fontType === "serif" ? "font-serif" : "font-sans"}`}
+                  style={{
+                    borderRadius: "10px 10px 0 0",
+                    color:
+                      activeView === "verse" ||
+                      !selectedBook ||
+                      !selectedChapter ||
+                      verseOptions.length === 0
+                        ? undefined
+                        : currentTheme?.textColor,
+                  }}
                   onClick={() =>
                     selectedBook && selectedChapter && setActiveView("verse")
                   }
@@ -588,8 +685,13 @@ const BCVDrawer = () => {
                     onChange={handleInputChange}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className="flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis"
+                    className={`flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis ${
+                      fontType === "serif" ? "font-serif" : "font-sans"
+                    } ${currentTheme?.id === "theme3" ? "placeholder:text-white" : ""}`}
                     disabled={isSearching}
+                    style={{
+                      color: currentTheme?.textColor,
+                    }}
                   />
                   {searchQuery && (
                     <span
@@ -599,15 +701,18 @@ const BCVDrawer = () => {
                         setSearchQuery("");
                         setErrorMessage("");
                       }}
+                      style={{
+                        color: currentTheme?.textColor,
+                      }}
                     >
                       <X size={16} strokeWidth={2.5} />
                     </span>
                   )}
                   <span
                     title="Search"
-                    className={`text-blue-700 hover:text-blue-900 cursor-pointer ${
-                      !searchQuery.trim() ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                    className={`text-blue-900 cursor-pointer ${
+                      !searchQuery.trim() ? "opacity-70 cursor-not-allowed" : ""
+                    } ${currentTheme?.id === "theme3" ? "text-white" : ""}`}
                     onClick={() => {
                       if (searchQuery.trim()) {
                         handleSearchSubmit();
@@ -631,12 +736,15 @@ const BCVDrawer = () => {
                 )}
               </div>
             </div>
-            <DialogClose className="h-6 w-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100">
+            <DialogClose
+              className="h-6 w-6 rounded-sm opacity-100 ring-offset-background transition-opacity"
+              style={{ color: currentTheme?.textColor }}
+            >
               <X className="h-5 w-5" />
             </DialogClose>
           </DialogHeader>
 
-          <div className="overflow-y-auto flex-grow">
+          <div className="overflow-y-auto flex-grow custom-scroll-ultra-thin pr-2">
             {activeView === "book" && renderListView()}
 
             {activeView === "chapter" && (

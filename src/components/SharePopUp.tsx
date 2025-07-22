@@ -55,13 +55,13 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
         </div>
       )}
 
-      <div className="absolute  bottom-6 md:bottom-8 right-2 sm:right-4 w-62 sm:w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-2 sm:p-4 z-50">
+      <div className="absolute bottom-6 md:bottom-8 right-2 sm:right-4 w-62 sm:w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-2 sm:p-4 z-50 themed-bg">
         {/* URL Display */}
         <div className="flex justify-center">
           <div className="mb-3 sm:mb-5  text-center text-xs sm:text-sm text-gray-800 break-words  px-3 py-2 bg-white-100 border border-gray-300 whitespace-normal w-full">
             <a
               href={shareUrl}
-              className="text-black cursor-default"
+              className="text-black cursor-default themed-text"
               onClick={(e) => e.preventDefault()}
             >
               {shareUrl}
@@ -72,11 +72,11 @@ const SharePopup: React.FC<SharePopupProps> = ({ shareUrl }) => {
         {/* Copy Button */}
         <button
           onClick={copyToClipboard}
-          className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm border rounded px-2 sm:px-3 py-1.5 sm:py-2 mx-auto text-gray-700 hover:bg-gray-100 mb-4 sm:mb-4 cursor-pointer"
+          className="hover-text-black-bg-gray flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm border rounded px-2 sm:px-3 py-1.5 sm:py-2 mx-auto text-gray-700 mb-4 sm:mb-4 cursor-pointer themed-text"
         >
           <Copy
             strokeWidth={2}
-            className="text-gray-600 w-3 h-3 sm:w-4 sm:h-4 "
+            className="text-gray-600 w-3 h-3 sm:w-4 sm:h-4 themed-text"
           />
           Copy To Clipboard
         </button>
