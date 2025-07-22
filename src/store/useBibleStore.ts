@@ -1,4 +1,5 @@
 import { create } from "zustand";
+
 import { BookOption, ChapterOption, VerseOption } from "../types/Navigation";
 import Papa from "papaparse";
 import bookCodesData from "../assets/data/book_codes.json";
@@ -32,10 +33,13 @@ interface AvailableData {
   books: BookOption[];
   chapters: { [bookCode: string]: ChapterOption[] };
 }
+type VideoQuality = "Auto" | string; // "Auto" or any string Vimeo provides
 
 interface BibleStore {
   playbackSpeed: number;
   setPlaybackSpeed: (speed: number) => void;
+  selectedQuality: VideoQuality;
+  setSelectedQuality: (quality: VideoQuality) => void;
   selectedBook: BookOption | null;
   selectedChapter: ChapterOption | null;
   selectedVerse: VerseOption | null;
@@ -90,6 +94,8 @@ const useBibleStore = create<BibleStore>()(
     (set, get) => ({
       playbackSpeed: 1,
       setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
+      selectedQuality: "Auto",
+      setSelectedQuality: (quality) => set({ selectedQuality: quality }),
 
       selectedBook: null,
       selectedChapter: null,
@@ -718,7 +724,10 @@ const useBibleStore = create<BibleStore>()(
     }),
     {
       name: "speed-quality-storage",
-      partialize: (state) => ({ playbackSpeed: state.playbackSpeed }),
+      partialize: (state) => ({
+        playbackSpeed: state.playbackSpeed,
+        selectedQuality: state.selectedQuality,
+      }),
     }
   )
 );
