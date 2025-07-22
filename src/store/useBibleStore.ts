@@ -5,6 +5,7 @@ import Papa from "papaparse";
 import bookCodesData from "../assets/data/book_codes.json";
 import versificationData from "../assets/data/versification.json";
 import { VersificationData } from "../types/bible";
+import { persist } from "zustand/middleware";
 
 const videoLinksData = new URL(
   "../assets/data/isl_video_urls.csv",
