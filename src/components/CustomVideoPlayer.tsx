@@ -2237,20 +2237,20 @@ const CustomVideoPlayer = () => {
                           {/* Download Dropdown */}
                           {showDownloadDropdown && (
                             <div
-                              className="absolute bottom-full right-0 bg-black border border-gray-600 rounded-lg shadow-lg min-w-50 max-w-80 z-50"
+                              className="absolute bottom-full right-0 bg-black border border-gray-600 rounded-lg shadow-lg min-w-50 max-w-80 z-50 themed-bg"
                               ref={downloadDropdownRef}
                             >
-                              <div className="p-3">
-                                <div className="text-white font-semibold mb-2 border-b border-gray-600 pb-2">
+                              <div className="p-2 pr-0">
+                                <div className="text-white font-semibold mb-2 border-b border-gray-600 pb-2 themed-text">
                                   Download Options
                                 </div>
 
                                 {downloadOptions.length === 0 ? (
-                                  <div className="text-gray-400 text-sm py-2">
+                                  <div className="text-gray-400 text-sm py-2 themed-text">
                                     No download options available
                                   </div>
                                 ) : (
-                                  <div className="space-y-1 max-h-23 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
+                                  <div className="max-h-23 md:max-h-60 overflow-y-auto custom-scroll-ultra-thin">
                                     {downloadOptions.map(
                                       (
                                         option: {
@@ -2267,7 +2267,7 @@ const CustomVideoPlayer = () => {
                                           onClick={() =>
                                             handleDownloadVideo(option)
                                           }
-                                          className="w-full text-left px-2 py-2 text-sm text-white hover:bg-gray-700 rounded transition-colors flex items-center justify-between"
+                                          className="w-full text-left pl-2 sm:pl-3 pr-4 sm:pr-3 py-2 text-sm text-white hover:bg-gray-700 hover:!text-white rounded transition-colors flex items-center justify-between themed-text"
                                         >
                                           <div className="font-medium flex flex-col">
                                             {getQualityLabel(

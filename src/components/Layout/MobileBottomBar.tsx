@@ -5,6 +5,7 @@ import useBibleStore from "@/store/useBibleStore";
 import { useChapterNavigation } from "@/hooks/useChapterNavigation";
 import MobileBookDrawer from "../MobileBookDrawer";
 import MobileMenuDrawer from "../MobileMenuDrawer";
+import useThemeStore from "@/store/useThemeStore";
 
 interface MobileBottomBarProps {
   className?: string;
@@ -13,6 +14,7 @@ interface MobileBottomBarProps {
 const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   className = "",
 }) => {
+  const { currentTheme } = useThemeStore();
   const { selectedBook, selectedChapter } = useBibleStore();
   const { canGoPrevious, canGoNext, navigateToChapter } =
     useChapterNavigation();
@@ -69,6 +71,9 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <div
           className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full p-1 shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-gray-200/60 ring-1 ring-white/50"
           onClick={() => setIsDrawerOpen(true)}
+          style={{
+            backgroundColor: currentTheme?.id === "theme3" ? "white" : "",
+          }}
         >
           <button
             className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
@@ -84,7 +89,15 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
               />
             )}
           </button>
-          <span className="text-sm font-medium text-gray-700 px-2 cursor-pointer">
+          <span
+            className="text-sm font-medium text-gray-700 px-2 cursor-pointer"
+            style={{
+              color:
+                currentTheme?.id === "theme3"
+                  ? currentTheme?.backgroundColor
+                  : currentTheme?.textColor,
+            }}
+          >
             {selectedBook?.label ? (
               <>
                 {selectedBook?.label}{" "}
