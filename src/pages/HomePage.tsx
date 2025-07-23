@@ -315,12 +315,17 @@ const HomePage: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          left: "-2px",
-          top: "0",
+          left: "0px",
+          top: "50%",
+          transform: "translateY(-50%)",
           width: "10px",
-          height: "100%",
+          height: "50px",
           cursor: "ew-resize",
           pointerEvents: "auto",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "0 2px",
         }}
         onMouseEnter={() => !isTouchDevice && setIsResizeHandleHovered(true)}
         onMouseLeave={() => !isTouchDevice && setIsResizeHandleHovered(false)}
@@ -329,37 +334,23 @@ const HomePage: React.FC = () => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Separator line */}
+        {/* Two vertical lines as drag indicator */}
         <div
           style={{
-            position: "absolute",
-            left: "5px",
-            top: "0",
             width: "2px",
             height: "100%",
-            backgroundColor:
-              isResizeHandleActive || isResizeHandleHovered
-                ? "#3b82f6"
-                : "#e5e7eb",
+            backgroundColor: isVisible ? "#3b82f6" : "#cbd5e1",
+            borderRadius: "1px",
             transition: "background-color 200ms ease-in-out",
           }}
         />
-
         <div
           style={{
-            position: "absolute",
-            left: "-1px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: "8px",
-            height: "30px",
-            backgroundColor: isVisible ? "#3b82f6" : "#9ca3af",
-            borderRadius: "4px",
-            border: isVisible ? "1px solid #3b82f6" : "1px solid white",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-            transition: "all 200ms ease-in-out",
-            cursor: "ew-resize",
-            pointerEvents: "auto",
+            width: "2px",
+            height: "100%",
+            backgroundColor: isVisible ? "#3b82f6" : "#cbd5e1",
+            borderRadius: "1px",
+            transition: "background-color 200ms ease-in-out",
           }}
         />
       </div>
