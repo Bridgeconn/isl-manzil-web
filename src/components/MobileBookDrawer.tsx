@@ -55,6 +55,9 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
   const booksListRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  const errorMsg =
+    "Invalid search format\nPlease try the following:\nJohn 3:16 or psa 1";
+
   // Initialize data
   useEffect(() => {
     if (!isInitialized && !isLoading && isOpen) {
@@ -190,7 +193,8 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
       const foundChapter = availableChapters.find((ch) => ch.value === chapter);
 
       if (!foundChapter || foundChapter.isDisabled) {
-        setErrorMessage("Chapter not found");
+        const chapterMsg = `${book!.label} ${chapter} isn't available yet`;
+        setErrorMessage(chapterMsg);
         return;
       }
 
@@ -655,7 +659,9 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
                 onBlur={() => setIsSearchFocused(false)}
                 className={`w-full pl-12 pr-10 py-2 border-2 rounded-full focus:border-gray-400 focus:outline-none text-gray-700 placeholder-gray-400 ${
                   fontType === "serif" ? "font-serif" : "font-sans"
-                } ${currentTheme?.id === "theme3" ? "placeholder:text-white" : ""}`}
+                } ${
+                  currentTheme?.id === "theme3" ? "placeholder:text-white" : ""
+                }`}
                 style={{ color: currentTheme?.textColor }}
                 disabled={isSearching}
               />
@@ -682,9 +688,22 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           {/* Error Message */}
           {errorMessage && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="themed-text text-themed text-sm">{errorMessage}</p>
+              {errorMessage === errorMsg ? (
+                <p className="themed-text text-themed text-sm">
+                  <span className="font-semibold text-nowrap">
+                    Invalid format:{" "}
+                  </span>
+                  <span className="text-nowrap">Please try the following</span> {" "}
+                  <p className="sm:inline-block italic">John 3:16 or psa 1</p>
+                </p>
+              ) : (
+                <p className="themed-text text-themed text-sm">
+                  {errorMessage}
+                </p>
+              )}
             </div>
           )}
+
           {deviceType === "mobile" && (
             <div className="flex mb-6 bg-gray-100 rounded-xl p-1">
               {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {
