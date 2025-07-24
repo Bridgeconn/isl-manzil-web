@@ -5,7 +5,7 @@ import Logo from "../../assets/images/ISLV_Logo.svg";
 const Header = () => {
   const navItems = [
     {
-      name: "ISL Bible",
+      name: "ISLV Bible",
       path: "/",
     },
     // {
