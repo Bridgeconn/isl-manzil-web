@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { matchSorter } from "match-sorter";
 import useBibleStore from "@/store/useBibleStore";
 import BookData from "../assets/data/book_codes.json";
 import { VerseOption } from "@/types/Navigation";
@@ -62,6 +63,9 @@ function SearchboxBCV({
   const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const {
     availableData,
     selectedBook,
@@ -76,18 +80,18 @@ function SearchboxBCV({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isFocused && !(event.key === "Enter")) {
+      const isInputFocused = document.activeElement === inputRef.current;
+
+      if (isInputFocused && event.key !== "Enter") {
         event.stopPropagation();
       }
     };
 
-    if (isFocused) {
-      document.addEventListener("keydown", handleKeyDown, true);
-      return () => {
-        document.removeEventListener("keydown", handleKeyDown, true);
-      };
-    }
-  }, [isFocused]);
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -340,7 +344,7 @@ function SearchboxBCV({
         : isChapterChange || isBookChange
         ? 500
         : 150;
-      setTimeout(async() => {
+      setTimeout(async () => {
         const availableVerses = await getAvailableVersesForBookAndChapter(
           book.value,
           chapter
@@ -365,13 +369,74 @@ function SearchboxBCV({
     return true;
   };
 
+  function shouldShowBookSuggestions(input: string): boolean {
+    const trimmed = input.trim();
+    const parts = trimmed.split(/\s+/);
+
+    // Case 1: Single word like "John", "Gen", "1"
+    if (parts.length === 1) {
+      return /^[1-3]?[a-z]*$/i.test(parts[0]);
+    }
+
+    // Case 2: Two words like "1 John", "2 Tim"
+    if (parts.length === 2) {
+      const [first, second] = parts;
+      console.log(first, second);
+      return isNaN(Number(second));
+    }
+
+    return false;
+  }
+
+  function hasSelectedBook(input: string): boolean {
+    const trimmed = input.trim();
+    const parts = trimmed.split(/\s+/);
+
+    if (parts.length >= 2) {
+      const bookPart = parts.slice(0, -1).join(" ");
+      const found = findBook(bookPart);
+      return !!found;
+    }
+
+    if (parts.length === 1) {
+      const found = findBook(parts[0]);
+      return !!found && input.endsWith(" ");
+    }
+
+    return false;
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
+    if (errorMessage) setErrorMessage("");
 
-    if (errorMessage) {
-      setErrorMessage("");
+    if (!hasSelectedBook(value) && shouldShowBookSuggestions(value)) {
+      const searchTerm = value.trim().match(/^([1-3]?\s?[a-z]*)/i)?.[0] ?? "";
+
+      if (searchTerm.length > 0) {
+        const results = matchSorter(availableData.books, searchTerm, {
+          keys: ["label"],
+        }).slice(0, 5);
+
+        setSuggestions(results.map((r) => r.label));
+        setShowSuggestions(true);
+        return;
+      }
     }
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion + " ");
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      setIsFocused(true);
+      setIsHovered(true);
+    }, 0);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -385,7 +450,10 @@ function SearchboxBCV({
   };
 
   const handleBlur = () => {
-    setIsFocused(false);
+    setTimeout(() => {
+      setIsFocused(false);
+      setShowSuggestions(false);
+    }, 150);
   };
 
   const handleSearch = async () => {
@@ -469,8 +537,23 @@ function SearchboxBCV({
             </button>
           </div>
         </div>
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 text-sm max-h-52 overflow-auto">
+            {suggestions.map((suggestion, index) => (
+              <div
+                key={index}
+                onClick={() => handleSuggestionClick(suggestion)}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                {suggestion}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      {isHovered && <SearchboxTooltip />}
+      {!showSuggestions &&
+        (isHovered || isFocused) &&
+        hasSelectedBook(inputValue) && <SearchboxTooltip />}
 
       {errorMessage && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 border border-red-300 rounded-md shadow-lg z-50 p-2 text-xs">
