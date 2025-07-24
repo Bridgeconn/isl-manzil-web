@@ -191,9 +191,9 @@ const HomePage: React.FC = () => {
         ? "max-h-90 h-full"
         : "max-h-35 h-full";
 
-    return `themed-bg verse-content-container ${maxHeightClass} w-full ${
+    return `themed-bg verse-content-container overflow-hidden ${maxHeightClass} w-full ${
       textPosition === "below" ? "max-w-6xl" : "max-w-7xl"
-    } mx-auto my-2 bg-gray-50 border-2 rounded-md pl-4 py-2 custom-scroll-ultra-thin`;
+    } mx-auto my-2 bg-gray-50 border-2 pl-4 py-2 custom-scroll-ultra-thin`;
   };
 
   const getHorizontalTextContainerClasses = () => {
@@ -369,7 +369,7 @@ const HomePage: React.FC = () => {
   const renderRightSideContent = () => {
     return (
       <div
-        className="themed-bg verse-content-container h-full bg-gray-50 border-2 rounded-md pl-4 py-2"
+        className="themed-bg verse-content-container h-full bg-gray-50 border-2 pl-4 py-2"
         style={{ position: "relative" }}
       >
         {isTouchDevice && showText && (

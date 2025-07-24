@@ -22,15 +22,16 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="absolute bottom-10 md:bottom-12 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-45 md:w-48 p-3 z-50 themed-bg">
-      <div className="flex justify-between items-center mb-4">
+    <div className="absolute bottom-10 md:bottom-12 right-4 bg-black bg-opacity-90 text-white rounded-lg shadow-lg w-45 md:w-48 p-3 pr-0 z-50 themed-bg">
+      <div className="flex justify-between items-center mb-2 pr-2">
         <span className="text-lg font-semibold themed-text">Settings</span>
         <button onClick={onClose} className="text-white themed-text">
           ✕
         </button>
       </div>
+      <div className="h-px bg-gray-600  w-full" />
 
-      <div className="space-y-2">
+      <div className="mt-1 space-y-2 pr-1">
         {/* Speed Row */}
         <div
           onClick={onOpenPlaybackDrawer}
