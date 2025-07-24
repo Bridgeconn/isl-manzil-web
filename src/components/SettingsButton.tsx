@@ -1,8 +1,8 @@
 // In SettingsButton.tsx
 import React from "react";
-// import { Settings } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGear } from "@fortawesome/free-solid-svg-icons";
+import { Settings } from "lucide-react";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { faGear } from "@fortawesome/free-solid-svg-icons";
 
 interface SettingsButtonProps {
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -20,7 +20,7 @@ const SettingsButton = React.forwardRef<HTMLButtonElement, SettingsButtonProps>(
           className="text-white hover:text-blue-400"
           title="Settings"
         >
-          <FontAwesomeIcon icon={faGear} className="text-[24px]" />
+          <Settings strokeWidth={2.5} className="text-[24px] mt-1" />
         </button>
       </div>
     );

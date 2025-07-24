@@ -15,6 +15,7 @@ import {
   Loader,
   Download,
 } from "lucide-react";
+import { IoShareSocial } from "react-icons/io5";
 import SettingsButton from "../components/SettingsButton";
 import SharePopup from "../components/SharePopUp";
 import SettingsDrawer from "../components/SettingsDrawer";
@@ -25,8 +26,7 @@ import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
 import { useVimeoDownload } from "@/hooks/useVimeoDownload";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
+
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import versificationData from "../assets/data/versification.json";
 import { VersificationData } from "../types/bible";
@@ -2345,9 +2345,9 @@ const CustomVideoPlayer = () => {
                             className="text-white hover:text-blue-400"
                             title="Share"
                           >
-                            <FontAwesomeIcon
-                              icon={faShareNodes}
-                              className="w-6 h-8 text-[25px]"
+                            <IoShareSocial
+                              strokeWidth={2.5}
+                              className="w-6 h-6 text-[25px] mt-1"
                             />
                           </button>
                         </div>
