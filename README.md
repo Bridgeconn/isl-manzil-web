@@ -11,7 +11,7 @@ The **ISLV Bible Website** is a web application designed to provide the Bible in
 
 
 ## 🌈 Features of This App
-- ✅ Organized Access to Scriptures: Clearly separated Old and New Testament sections with available ISL content.
+- ✅ Organized Access to ISL Bible videos: Clearly separated Old and New Testament sections with available ISL content.
 
 - 🎨 Theme Switching: Choose from multiple visual themes for better readability.
 
@@ -19,17 +19,17 @@ The **ISLV Bible Website** is a web application designed to provide the Bible in
 
 - ⏩ Playback Speed Control: Watch videos at slower or faster speeds.
 
-- ⬇️ Download Video: Save ISL Bible videos for offline use.
+- ⬇️ Download Video: Download ISL Bible videos for offline use.
 
 - 🎥 Change Video Quality: Stream in different resolutions (e.g., Ultra HD, HD, SD).
 
-- 💬 Feedback Integration: A feedback button linked to a feedback form.
+- 💬 Feedback Option: Accessible button to collect user feedback.
 
-- 🔗 Social Media Integration: Links to social media platforms.
+- 📤 Share Feature: Share ISL Bible videos and Bible text links on social media platforms.
 
-- 🖍️ Highlighted Text: Highlighted text for better comprehension.
+- 🖍️ Video-Synced Text: Highlights verse text in sync with the video.
 
-- 🌐 Responsive Design: Accessible on various devices and screen sizes.
+- 💻📱 Multi-Device Support: Designed to adapt to screens of smartphones, tablets, and iPads.
 
 
 ## 📋 Requirements
@@ -58,20 +58,30 @@ The **ISLV Bible Website** is a web application designed to provide the Bible in
    git clone <https://github.com/Bridgeconn/isl-manzil-web.git>
    cd isl-manzil-web
    ```
+2. **Install pnpm if not already installed**
 
-2. **Install dependencies**
+   If you don't have pnpm installed, you can install it globally using:
+
+   ```bash
+   npm install -g pnpm
+   ```
+
+3. **Install project dependencies**
 
    ```bash
    pnpm install
    ```
-3. **Setup environment variables**
+4. **Setup environment variables**
+
+
+   create a `.env` file in the root directory of the project and add the following:
+
    ```env
    VITE_VIMEO_CLIENT_ID=<YOUR_VIMEO_CLIENT_ID>
    VITE_VIMEO_CLIENT_SECRET=<YOUR_VIMEO_CLIENT_SECRET>
    VITE_VIMEO_ACCESS_TOKEN=<YOUR_VIMEO_ACCESS_TOKEN>
    VITE_FEEDBACK_FORM_URL=<YOUR_FEEDBACK_FORM_URL>
    ```
-   Put all the required environment variables in your `.env` file in the root directory of the project.
 
 ## 🔐 Setting up Vimeo API Credentials
 1. Go to Vimeo Developer Site [https://developer.vimeo.com/](https://developer.vimeo.com/).
