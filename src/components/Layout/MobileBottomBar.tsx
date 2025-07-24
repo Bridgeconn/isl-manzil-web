@@ -6,6 +6,7 @@ import { useChapterNavigation } from "@/hooks/useChapterNavigation";
 import MobileBookDrawer from "../MobileBookDrawer";
 import MobileMenuDrawer from "../MobileMenuDrawer";
 import useThemeStore from "@/store/useThemeStore";
+import BibleBookImg from "../../assets/images/bibleIcon.png";
 
 interface MobileBottomBarProps {
   className?: string;
@@ -76,10 +77,11 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           }}
         >
           <button
-            className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
+            className={`p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105
+            `}
             title="Previous Chapter"
           >
-            {canGoPrevious && (
+            {canGoPrevious ? (
               <ChevronLeft
                 size={20}
                 onClick={(e) => {
@@ -87,7 +89,13 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
                   navigateToChapter("previous");
                 }}
               />
-            )}
+            ) : selectedBook?.label === "Genesis" ? (
+              <img
+                src={BibleBookImg}
+                alt="bible"
+                className="w-8 h-4 object-contain"
+              />
+            ) : null}
           </button>
           <span
             className="text-sm font-medium text-gray-700 px-2 cursor-pointer"
