@@ -74,14 +74,18 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           onClick={() => setIsDrawerOpen(true)}
           style={{
             backgroundColor: currentTheme?.id === "theme3" ? "white" : "",
-            minHeight: "40px"
+            minHeight: "40px",
           }}
         >
           <button
-            className={`px-1 border-r border-gray-200 text-gray-600 hover:text-[var(--indigo-color)]
+            className={`${
+              canGoPrevious ? "border-r border-gray-200 px-1" : ""
+            } text-gray-600 hover:text-[var(--indigo-color)]
             `}
             title="Previous Chapter"
-            style={{ borderRight: "1px solid #ccc" }}
+            style={{
+              borderRight: canGoPrevious ? "1px solid #ccc" : "none",
+            }}
           >
             {canGoPrevious ? (
               <ChevronLeft
@@ -101,12 +105,13 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
             ) : null}
           </button>
           <span
-            className="text-sm font-medium flex items-center justify-center gap-1 text-gray-700 px-2 cursor-pointer"
+            className="text-sm font-medium flex items-center justify-center gap-1 text-gray-700 cursor-pointer"
             style={{
               color:
                 currentTheme?.id === "theme3"
                   ? currentTheme?.backgroundColor
                   : currentTheme?.textColor,
+              padding: canGoPrevious ? "0 8px" : 0,
             }}
           >
             {selectedBook?.label ? (
@@ -115,7 +120,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
                 {selectedChapter?.label === "0"
                   ? "Intro"
                   : selectedChapter?.label ?? "Chapter"}
-              <ChevronDown size={16} strokeWidth={2} className="mt-0.5" />
+                <ChevronDown size={16} strokeWidth={2} className="mt-0.5" />
               </>
             ) : (
               <>Loading...</>

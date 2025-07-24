@@ -592,12 +592,13 @@ const BCVDrawer = () => {
           ) : null}
         </button>
         <span
-          className="px-4 text-base font-medium text-gray-700 flex items-center gap-2 cursor-pointer"
+          className="text-base font-medium text-gray-700 flex items-center gap-2 cursor-pointer"
           style={{
             color:
               currentTheme?.id === "theme3"
                 ? currentTheme?.backgroundColor
                 : currentTheme?.textColor,
+           padding: canGoPrevious ? "0 16px" : "0 8px",
           }}
           onClick={openDialog}
         >
