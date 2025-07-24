@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { Menu, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import Logo from "../../assets/images/ISLV_Logo.svg";
 import useBibleStore from "@/store/useBibleStore";
 import { useChapterNavigation } from "@/hooks/useChapterNavigation";
@@ -74,16 +74,19 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           onClick={() => setIsDrawerOpen(true)}
           style={{
             backgroundColor: currentTheme?.id === "theme3" ? "white" : "",
+            minHeight: "40px"
           }}
         >
           <button
-            className={`p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105
+            className={`px-1 border-r border-gray-200 text-gray-600 hover:text-[var(--indigo-color)]
             `}
             title="Previous Chapter"
+            style={{ borderRight: "1px solid #ccc" }}
           >
             {canGoPrevious ? (
               <ChevronLeft
                 size={20}
+                strokeWidth={2}
                 onClick={(e) => {
                   e.stopPropagation();
                   navigateToChapter("previous");
@@ -98,7 +101,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
             ) : null}
           </button>
           <span
-            className="text-sm font-medium text-gray-700 px-2 cursor-pointer"
+            className="text-sm font-medium flex items-center justify-center gap-1 text-gray-700 px-2 cursor-pointer"
             style={{
               color:
                 currentTheme?.id === "theme3"
@@ -112,18 +115,21 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
                 {selectedChapter?.label === "0"
                   ? "Intro"
                   : selectedChapter?.label ?? "Chapter"}
+              <ChevronDown size={16} strokeWidth={2} className="mt-0.5" />
               </>
             ) : (
               <>Loading...</>
             )}
           </span>
           <button
-            className="p-1 text-gray-600 hover:text-[var(--indigo-color)] transition-all duration-200 hover:scale-105"
+            className="px-1 border-l border-gray-200 text-gray-600 hover:text-[var(--indigo-color)]"
             title="Next Chapter"
+            style={{ borderLeft: "1px solid #ccc" }}
           >
             {canGoNext && (
               <ChevronRight
                 size={20}
+                strokeWidth={2}
                 onClick={(e) => {
                   e.stopPropagation();
                   navigateToChapter("next");

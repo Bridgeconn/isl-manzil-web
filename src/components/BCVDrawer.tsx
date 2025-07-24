@@ -334,7 +334,11 @@ const BCVDrawer = () => {
           const isDisabled = chapter.isDisabled;
 
           const hoverClass =
-            !isSelected && !isDisabled ? "hover-text-black-bg-gray" : "";
+            !isSelected && !isDisabled
+              ? currentTheme?.id === "theme3"
+                ? "hover-text-black-bg-gray"
+                : "hover-bg-gray text-inherit"
+              : "";
 
           return (
             <div
@@ -349,7 +353,7 @@ const BCVDrawer = () => {
                   isSelected
                     ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
                     : !isDisabled
-                    ? "border-gray-200 shadow-sm hover:shadow-inner hover:transform hover:scale-[0.98] hover-text-black-bg-gray"
+                    ? "border-gray-200 shadow-sm hover:shadow-inner hover:transform hover:scale-[0.98]"
                     : ""
                 }
                 ${fontType === "serif" ? "font-serif" : "font-sans"}
@@ -397,7 +401,11 @@ const BCVDrawer = () => {
                 ${
                   isSelected
                     ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
-                    : "shadow-sm hover:shadow-inner hover:transform hover:scale-[0.98] hover-text-black-bg-gray"
+                    : `shadow-sm hover:shadow-inner hover:transform hover:scale-[0.98] ${
+                        currentTheme?.id === "theme3"
+                          ? "hover-text-black-bg-gray"
+                          : "hover-bg-gray"
+                      }`
                 } ${fontType === "serif" ? "font-serif" : "font-sans"}
               `}
               onClick={() => handleVerseSelect(verse.value)}
@@ -480,7 +488,11 @@ const BCVDrawer = () => {
               className={`h-14 rounded-full flex items-center gap-4 cursor-pointer transition-all duration-150 border ${
                 isSelected
                   ? "bg-gray-50 border border-gray-400 shadow-inner shadow-gray-400"
-                  : "border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98] hover-text-black-bg-gray"
+                  : `border-gray-200 hover:shadow-inner hover:transform hover:scale-[0.98] ${
+                      currentTheme?.id === "theme3"
+                        ? "hover-text-black-bg-gray"
+                        : "hover-bg-gray"
+                    }`
               }`}
               onClick={() => handleBookSelect(book)}
               style={{
@@ -628,7 +640,9 @@ const BCVDrawer = () => {
                   className={`flex flex-1 items-center justify-center gap-2 px-6 py-3 font-medium transition-all duration-200 ${
                     activeView === "book"
                       ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
-                      : "text-gray-500 hover:bg-gray-100 custom-hover-black"
+                      : `text-gray-500 hover:bg-gray-100 ${
+                          currentTheme?.id === "theme3" && "custom-hover-black"
+                        }`
                   } ${fontType === "serif" ? "font-serif" : "font-sans"}`}
                   style={{
                     borderRadius: "10px 10px 0 0",
@@ -645,7 +659,10 @@ const BCVDrawer = () => {
                           ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
                           : !selectedBook
                           ? "text-gray-400 cursor-not-allowed"
-                          : "text-gray-500 hover:bg-gray-100 custom-hover-black"
+                          : `text-gray-500 hover:bg-gray-100 ${
+                              currentTheme?.id === "theme3" &&
+                              "custom-hover-black"
+                            }`
                       } ${fontType === "serif" ? "font-serif" : "font-sans"}
                   `}
                   style={{
@@ -669,7 +686,9 @@ const BCVDrawer = () => {
                         !selectedChapter ||
                         verseOptions.length === 0
                       ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-500 hover:bg-gray-100 custom-hover-black"
+                      : `text-gray-500 hover:bg-gray-100 ${
+                          currentTheme?.id === "theme3" && "custom-hover-black"
+                        }`
                   } ${fontType === "serif" ? "font-serif" : "font-sans"}`}
                   style={{
                     borderRadius: "10px 10px 0 0",

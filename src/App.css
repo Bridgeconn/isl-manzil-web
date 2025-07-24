@@ -94,6 +94,10 @@
   color: black !important;
 }
 
+.hover-bg-gray:hover {
+  background-color: #f9fafb;
+}
+
 .hover-text-black-bg-gray:hover {
   background-color: #f9fafb;
   color: black !important;
