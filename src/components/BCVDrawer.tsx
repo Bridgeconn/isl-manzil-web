@@ -23,6 +23,7 @@ import {
   parseBibleReference,
   findVerseInAvailableVerses,
 } from "@/utils/bibleReferenceUtils";
+import BibleBookImg from "../assets/images/bibleIcon.png";
 
 type ViewType = "book" | "chapter" | "verse";
 
@@ -571,20 +572,33 @@ const BCVDrawer = () => {
         }}
       >
         <button
-          className="pr-2 border-r border-gray-200 text-gray-600 hover:text-[var(--indigo-color)]"
+          className={`text-gray-600 hover:text-[var(--indigo-color)] ${
+            canGoPrevious ? "border-r border-gray-200 pr-2" : ""
+          }`}
           title="Previous Chapter"
-          style={{ borderRight: "1px solid #ccc" }}
+          style={{
+            borderRight: canGoPrevious ? "1px solid #ccc" : "none",
+          }}
           onClick={() => canGoPrevious && navigateToChapter("previous")}
         >
-          {canGoPrevious && <ChevronLeft size={20} strokeWidth={2} />}
+          {canGoPrevious ? (
+            <ChevronLeft size={20} strokeWidth={2} />
+          ) : selectedBook?.label === "Genesis" ? (
+            <img
+              src={BibleBookImg}
+              alt="bible"
+              className="w-10 h-6 object-contain"
+            />
+          ) : null}
         </button>
         <span
-          className="px-4 text-base font-medium text-gray-700 flex items-center gap-2 cursor-pointer"
+          className="text-base font-medium text-gray-700 flex items-center gap-2 cursor-pointer"
           style={{
             color:
               currentTheme?.id === "theme3"
                 ? currentTheme?.backgroundColor
                 : currentTheme?.textColor,
+           padding: canGoPrevious ? "0 16px" : "0 8px",
           }}
           onClick={openDialog}
         >

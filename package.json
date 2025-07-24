@@ -23,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.503.0",
+    "match-sorter": "^8.0.3",
     "papaparse": "^5.5.2",
     "re-resizable": "^6.11.2",
     "react": "^19.0.0",

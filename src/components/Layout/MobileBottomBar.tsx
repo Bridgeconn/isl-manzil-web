@@ -6,6 +6,7 @@ import { useChapterNavigation } from "@/hooks/useChapterNavigation";
 import MobileBookDrawer from "../MobileBookDrawer";
 import MobileMenuDrawer from "../MobileMenuDrawer";
 import useThemeStore from "@/store/useThemeStore";
+import BibleBookImg from "../../assets/images/bibleIcon.png";
 
 interface MobileBottomBarProps {
   className?: string;
@@ -73,15 +74,20 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           onClick={() => setIsDrawerOpen(true)}
           style={{
             backgroundColor: currentTheme?.id === "theme3" ? "white" : "",
-            minHeight: "40px"
+            minHeight: "40px",
           }}
         >
           <button
-            className="px-1 border-r border-gray-200 text-gray-600 hover:text-[var(--indigo-color)]"
+            className={`${
+              canGoPrevious ? "border-r border-gray-200 px-1" : ""
+            } text-gray-600 hover:text-[var(--indigo-color)]
+            `}
             title="Previous Chapter"
-            style={{ borderRight: "1px solid #ccc" }}
+            style={{
+              borderRight: canGoPrevious ? "1px solid #ccc" : "none",
+            }}
           >
-            {canGoPrevious && (
+            {canGoPrevious ? (
               <ChevronLeft
                 size={20}
                 strokeWidth={2}
@@ -90,15 +96,22 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
                   navigateToChapter("previous");
                 }}
               />
-            )}
+            ) : selectedBook?.label === "Genesis" ? (
+              <img
+                src={BibleBookImg}
+                alt="bible"
+                className="w-8 h-4 object-contain"
+              />
+            ) : null}
           </button>
           <span
-            className="text-sm font-medium flex items-center justify-center gap-1 text-gray-700 px-2 cursor-pointer"
+            className="text-sm font-medium flex items-center justify-center gap-1 text-gray-700 cursor-pointer"
             style={{
               color:
                 currentTheme?.id === "theme3"
                   ? currentTheme?.backgroundColor
                   : currentTheme?.textColor,
+              padding: canGoPrevious ? "0 8px" : 0,
             }}
           >
             {selectedBook?.label ? (
@@ -107,7 +120,7 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
                 {selectedChapter?.label === "0"
                   ? "Intro"
                   : selectedChapter?.label ?? "Chapter"}
-              <ChevronDown size={16} strokeWidth={2} className="mt-0.5" />
+                <ChevronDown size={16} strokeWidth={2} className="mt-0.5" />
               </>
             ) : (
               <>Loading...</>
