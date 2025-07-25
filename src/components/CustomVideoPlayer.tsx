@@ -2037,7 +2037,7 @@ const CustomVideoPlayer = () => {
                       ${
                         isFullscreen && deviceType === "mobile"
                           ? "p-2 pb-safe-bottom"
-                          : "p-2 md:p-4"
+                          : "p-2 md:p-4 md:pb-2.5"
                       }`}
                     onClick={(e) => e.stopPropagation()}
                     onMouseEnter={handleControlsMouseEnter}
@@ -2452,7 +2452,7 @@ const CustomVideoPlayer = () => {
                             }
                             toggleFullscreen();
                           }}
-                          className="text-white hover:text-blue-400"
+                          className="text-white hover:text-blue-400 mt-0.5"
                           aria-label={
                             isFullscreen
                               ? "Exit fullscreen"
