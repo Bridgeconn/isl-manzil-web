@@ -616,7 +616,7 @@ const BCVDrawer = () => {
                       : selectedVerse.label
                   }`
                 : ""}
-              <ChevronDown size={16} strokeWidth={2} className="mt-0.5" />
+              <ChevronDown size={19} strokeWidth={2} className="mt-0.5" />
             </>
           ) : (
             <>Loading...</>
