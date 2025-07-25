@@ -689,12 +689,14 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           {errorMessage && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               {errorMessage === errorMsg ? (
-                <p className="themed-text text-themed text-sm">
-                  <span className="font-semibold text-nowrap">
-                    Invalid format:{" "}
+                <p
+                  className="themed-text text-themed"
+                  style={{ fontSize: "14px" }}
+                >
+                  <span className="font-semibold">Invalid format:</span>{" "}
+                  <span className="text-nowrap">
+                    Please try the format - John 3:16 or psa 1
                   </span>
-                  <span className="text-nowrap">Please try the following</span> {" "}
-                  <p className="sm:inline-block italic">John 3:16 or psa 1</p>
                 </p>
               ) : (
                 <p className="themed-text text-themed text-sm">
@@ -705,7 +707,7 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
           )}
 
           {deviceType === "mobile" && (
-            <div className="flex mb-6 bg-gray-100 rounded-xl p-1">
+            <div className="w-full flex flex-row justify-start mx-auto mb-6 border-b border-gray-200">
               {(["Book", "Chapter", "Verse"] as ViewType[]).map((tab) => {
                 const isDisabled =
                   (tab === "Chapter" && !selectedBook) ||
@@ -719,13 +721,14 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
                     key={tab}
                     onClick={() => !isDisabled && handleTabClick(tab)}
                     disabled={isDisabled}
-                    className={`flex-1 py-2 px-4 rounded-lg text-sm lg:text-base font-medium transition-colors duration-200 ${
+                    className={`flex flex-1 items-center justify-center py-2 px-3 text-sm font-medium transition-all ${
                       activeView === tab
-                        ? "text-gray-900 border-b-2 border-gray-900 bg-gray-50"
+                        ? "text-gray-900 border-b-3 border-cyan-400 bg-gray-100"
                         : isDisabled
                         ? "text-gray-400 cursor-not-allowed"
                         : "text-gray-500"
                     }`}
+                    style={{ borderRadius: "10px 10px 0 0" }}
                   >
                     {tab}
                   </button>
