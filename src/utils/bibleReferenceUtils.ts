@@ -1,6 +1,9 @@
 import { BookOption, VerseOption } from "@/types/Navigation";
 import BookData from "@/assets/data/book_codes.json";
 
+const errorMsg =
+    "Invalid search format\nPlease try the following:\nJohn 3:16 or psa 1";
+
 export const verseUtils = {
   normalizeVerse: (verse: string | number) => {
     return verse.toString().includes("-")
@@ -86,7 +89,7 @@ export function parseBibleReference(
   error?: string;
 } {
   if (!input || input.trim() === "") {
-    return { error: "Invalid format use the following format John 3:16 or psa 1" };
+    return { error: errorMsg };
   }
 
   let cleanInput = input.trim();
@@ -94,7 +97,7 @@ export function parseBibleReference(
   if (cleanInput.includes(":")) {
     cleanInput = cleanInput.replace(/\s*:\s*/g, ":");
     const colonParts = cleanInput.split(":");
-    if (colonParts.length !== 2) return { error: "Invalid format use the following format John 3:16 or psa 1" };
+    if (colonParts.length !== 2) return { error: errorMsg };
 
     const bookAndChapter = colonParts[0];
     const verseStr = colonParts[1].trim();
@@ -102,7 +105,7 @@ export function parseBibleReference(
     if (isNaN(verseNum)) return { error: "Invalid verse number" };
 
     const parts = bookAndChapter.trim().split(/\s+/);
-    if (parts.length < 2) return { error: "Invalid format use the following format John 3:16 or psa 1" };
+    if (parts.length < 2) return { error: errorMsg };
 
     const chapterStr = parts[parts.length - 1];
     const chapterNum = chapterStr !== "Intro" ? parseInt(chapterStr, 10) : 0;
@@ -121,7 +124,7 @@ export function parseBibleReference(
   }
 
   const parts = cleanInput.split(/\s+/);
-  if (parts.length < 2) return { error: "Invalid format use the following format John 3:16 or psa 1" };
+  if (parts.length < 2) return { error: errorMsg };
 
   let bookStr = parts[0];
   let chapterStr = parts[1];
@@ -146,7 +149,7 @@ export function parseBibleReference(
       chapterStr = parts[2];
       verseStr = parts[3];
     } else {
-      return { error: "Invalid format use the following format John 3:16 or psa 1" };
+      return { error: errorMsg };
     }
   }
 

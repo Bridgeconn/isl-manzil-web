@@ -66,6 +66,9 @@ function SearchboxBCV({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const errorMsg =
+    "Invalid search format\nPlease try the following:\nJohn 3:16 or psa 1";
+
   const {
     availableData,
     selectedBook,
@@ -157,7 +160,7 @@ function SearchboxBCV({
   const parseBCV = (input: string) => {
     if (!input || input.trim() === "") {
       return {
-        error: "Invalid format use the following format John 3:16 or psa 1",
+        error: errorMsg,
       };
     }
 
@@ -169,7 +172,7 @@ function SearchboxBCV({
 
       if (colonParts.length !== 2) {
         return {
-          error: "Invalid format use the following format John 3:16 or psa 1",
+          error: errorMsg,
         };
       }
 
@@ -179,7 +182,7 @@ function SearchboxBCV({
 
       if (isNaN(verseNum)) {
         return {
-          error: "Invalid format use the following format John 3:16 or psa 1",
+          error: errorMsg,
         };
       }
 
@@ -187,7 +190,7 @@ function SearchboxBCV({
 
       if (parts.length < 2) {
         return {
-          error: "Invalid format use the following format John 3:16 or psa 1",
+          error: errorMsg,
         };
       }
 
@@ -196,7 +199,7 @@ function SearchboxBCV({
 
       if (isNaN(chapterNum)) {
         return {
-          error: "Invalid format use the following format John 3:16 or psa 1",
+          error: errorMsg,
         };
       }
 
@@ -221,7 +224,7 @@ function SearchboxBCV({
 
     if (parts.length < 2) {
       return {
-        error: "Invalid format use the following format John 3:16 or psa 1",
+        error: errorMsg,
       };
     }
 
@@ -258,19 +261,19 @@ function SearchboxBCV({
         verseStr = fourthPart;
       } else {
         return {
-          error: "Invalid format use the following format John 3:16 or psa 1",
+          error: errorMsg,
         };
       }
     } else {
       return {
-        error: "Invalid format use the following format John 3:16 or psa 1",
+        error: errorMsg,
       };
     }
 
     const chapterNum = chapterStr !== "Intro" ? parseInt(chapterStr, 10) : 0;
     if (isNaN(chapterNum)) {
       return {
-        error: "Invalid format use the following format John 3:16 or psa 1",
+        error: errorMsg,
       };
     }
 
@@ -304,13 +307,9 @@ function SearchboxBCV({
     const availableChapters = getAvailableChaptersForBook(book.value);
     const foundChapter = availableChapters.find((ch) => ch.value === chapter);
 
-    if (!foundChapter) {
-      setErrorMessage("Chapter not found");
-      return false;
-    }
-
-    if (foundChapter.isDisabled) {
-      setErrorMessage("Chapter not found");
+    if (!foundChapter || foundChapter.isDisabled) {
+      const chapterMsg = `${book.label} ${chapter} isn't available yet`;
+      setErrorMessage(chapterMsg);
       return false;
     }
 
@@ -458,9 +457,7 @@ function SearchboxBCV({
 
   const handleSearch = async () => {
     if (!inputValue.trim()) {
-      setErrorMessage(
-        "Invalid format use the following format John 3:16 or psa 1"
-      );
+      setErrorMessage(errorMsg);
       return;
     }
 
@@ -557,9 +554,18 @@ function SearchboxBCV({
 
       {errorMessage && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 border border-red-300 rounded-md shadow-lg z-50 p-2 text-xs">
-          <div className="themed-text text-themed font-medium">
-            {errorMessage}
-          </div>
+          {errorMessage.split("\n").map((line, idx) => (
+            <div
+              key={idx}
+              className={`themed-text text-themed font-medium ${
+                idx === 0 && line === "Invalid search format"
+                  ? "font-semibold"
+                  : ""
+              }`}
+            >
+              {line}
+            </div>
+          ))}
         </div>
       )}
     </div>

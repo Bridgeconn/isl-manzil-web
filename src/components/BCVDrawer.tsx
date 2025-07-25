@@ -173,7 +173,8 @@ const BCVDrawer = () => {
       const foundChapter = availableChapters.find((ch) => ch.value === chapter);
 
       if (!foundChapter || foundChapter.isDisabled) {
-        setErrorMessage("Chapter not found");
+        const chapterMsg = `${book!.label} ${chapter} isn't available yet`;
+        setErrorMessage(chapterMsg);
         return;
       }
 
@@ -598,7 +599,7 @@ const BCVDrawer = () => {
               currentTheme?.id === "theme3"
                 ? currentTheme?.backgroundColor
                 : currentTheme?.textColor,
-           padding: canGoPrevious ? "0 16px" : "0 8px",
+            padding: canGoPrevious ? "0 16px" : "0 8px",
           }}
           onClick={openDialog}
         >
@@ -773,11 +774,16 @@ const BCVDrawer = () => {
                 {errorMessage && (
                   <div className="absolute top-full mt-2 right-0 z-50 max-w-[280px] w-full">
                     <div className="bg-red-50 border border-red-200 rounded-lg shadow-lg p-3 animate-in fade-in-0 zoom-in-95 duration-200">
-                      <div className="flex items-center">
-                        <p className="themed-text text-themed text-sm font-medium">
-                          {errorMessage}
-                        </p>
-                      </div>
+                      {errorMessage.split("\n").map((line, idx) => (
+                        <div
+                          key={idx}
+                          className={`themed-text text-themed text-sm font-medium ${
+                            idx === 0 && line === "Invalid search format" ? "font-semibold" : ""
+                          }`}
+                        >
+                          {line}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
