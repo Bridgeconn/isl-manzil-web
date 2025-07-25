@@ -85,14 +85,18 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           </section>
 
           <p style={{ fontSize: "1.4em", marginBottom: 0 }}>Contact Us</p>
-          <a
-            href={`mailto:${contactEmail}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500"
-          >
-            {contactEmail}
-          </a>
+
+          <p>
+            For queries or issues, email us at&nbsp;
+            <a
+              href={`mailto:${contactEmail}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500"
+            >
+              {contactEmail}
+            </a>
+          </p>
 
           <section className="py-2 text-center text-sm hover:text-gray-500">
             <a
