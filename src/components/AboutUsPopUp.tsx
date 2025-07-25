@@ -9,12 +9,14 @@ import {
 } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import useThemeStore from "@/store/useThemeStore";
+import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 
 const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
   showAbout,
   onClose,
 }) => {
   const { fontType, fontSize, currentTheme } = useThemeStore();
+  const { shouldUseMobileBottomBar } = useDeviceDetection();
   const contactEmail = "islvbible@bridgeconn.com";
 
   return (
@@ -59,6 +61,18 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           <p style={{ fontSize: "1.4em", marginBottom: 0 }}>
             The ISLV Bible Website
           </p>
+          <iframe
+            loading="lazy"
+            src="https://player.vimeo.com/video/1092533386"
+            width="100%"
+            height="100%"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            title="ISLV Bible Intro"
+            className="h-[200px] sm:h-[400px] md:h-[500px]"
+            style={{ width: "100%" }}
+          ></iframe>
+
           <p>
             The <strong>Indian Sign Language Video (ISLV) Bible</strong> is a
             web application presented in Indian Sign Language. Its aim is to
@@ -84,60 +98,19 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             </p>
           </section>
 
-          <section>
-            <p style={{ fontSize: "1.4em" }}>Technology</p>
-            <p>
-              BCS team has developed this platform inspired by similar
-              initiatives in other countries. The website is developed using
-              modern web technologies including <strong>React</strong> for the
-              frontend and <strong>Vite</strong> for fast development and
-              bundling. State management is handled using{" "}
-              <strong>Zustand</strong>, and video playback is optimized using{" "}
-              <strong>Vimeo</strong> and custom React components.
-            </p>
-          </section>
-          <section>
-            <p style={{ fontSize: "1.4em" }}>Features Available: </p>
-            <p>
-              <strong>Organized Access:</strong> Books and chapters with
-              available ISLV content are clearly marked and navigable under Old
-              and New Testaments.
-            </p>
-            <p>
-              <strong>Theme:</strong> Offers multiple visual themes with
-              different background and text color combinations to suit different
-              reading preferences and environments.
-            </p>
-            <p>
-              <strong>Easy Bible Navigation:</strong> Books and chapters can be
-              easily accessed through intuitive dropdowns and navigation
-              buttons, streamlining movement across Scripture.
-            </p>
-            <p>
-              <strong>Playback Speed Change:</strong> Provides control over
-              video playback speed, enabling slower or faster viewing based on
-              individual comfort.
-            </p>
-            <p>
-              <strong>Download Video:</strong> ISLV Bible videos can be
-              downloaded for offline viewing, ensuring accessibility without the
-              need for an internet connection.
-            </p>
-            <p>
-              <strong>Change Video Quality:</strong> Video resolution options
-              such as standard and high-definition (HD) are available.
-            </p>
-          </section>
-
           <p style={{ fontSize: "1.4em", marginBottom: 0 }}>Contact Us</p>
-          <a
-            href={`mailto:${contactEmail}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500"
-          >
-            {contactEmail}
-          </a>
+
+          <p>
+            For queries or issues, email us at&nbsp;
+            <a
+              href={`mailto:${contactEmail}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500"
+            >
+              {contactEmail}
+            </a>
+          </p>
 
           <section className="py-2 text-center text-sm hover:text-gray-500">
             <a
