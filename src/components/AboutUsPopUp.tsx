@@ -9,14 +9,14 @@ import {
 } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import useThemeStore from "@/store/useThemeStore";
-import { useDeviceDetection } from "@/hooks/useDeviceDetection";
+import CleanVimeoPlayer from "./CleanVimeoPlayer";
 
 const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
   showAbout,
   onClose,
 }) => {
   const { fontType, fontSize, currentTheme } = useThemeStore();
-  const { shouldUseMobileBottomBar } = useDeviceDetection();
+
   const contactEmail = "islvbible@bridgeconn.com";
 
   return (
@@ -61,7 +61,7 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           <p style={{ fontSize: "1.4em", marginBottom: 0 }}>
             The ISLV Bible Website
           </p>
-          <iframe
+          {/* <iframe
             loading="lazy"
             src="https://player.vimeo.com/video/1092533386"
             width="100%"
@@ -71,7 +71,10 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             title="ISLV Bible Intro"
             className="h-[200px] sm:h-[400px] md:h-[500px]"
             style={{ width: "100%" }}
-          ></iframe>
+          ></iframe> */}
+          <div>
+            <CleanVimeoPlayer />
+          </div>
 
           <p>
             The <strong>Indian Sign Language Video (ISLV) Bible</strong> is a
