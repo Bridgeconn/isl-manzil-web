@@ -596,9 +596,6 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
         } themed-bg`}
       >
         <div className="px-6 py-4 h-full overflow-hidden flex flex-col">
-          <div className="flex justify-center mb-4">
-            <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
-          </div>
 
           <div
             className={`flex items-center justify-between gap-3 mb-4 ${
