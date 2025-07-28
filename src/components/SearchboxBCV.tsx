@@ -446,6 +446,26 @@ function SearchboxBCV({
 
   const handleFocus = () => {
     setIsFocused(true);
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+    if (
+      inputValue.trim() &&
+      !hasSelectedBook(inputValue) &&
+      shouldShowBookSuggestions(inputValue)
+    ) {
+      const searchTerm =
+        inputValue.trim().match(/^([1-3]?\s?[a-z]*)/i)?.[0] ?? "";
+
+      if (searchTerm.length > 0) {
+        const results = matchSorter(availableData.books, searchTerm, {
+          keys: ["label"],
+        }).slice(0, 5);
+
+        setSuggestions(results.map((r) => r.label));
+        setShowSuggestions(true);
+      }
+    }
   };
 
   const handleBlur = () => {
@@ -458,11 +478,15 @@ function SearchboxBCV({
   const handleSearch = async () => {
     if (!inputValue.trim()) {
       setErrorMessage(errorMsg);
+      setShowSuggestions(false);
+      setSuggestions([]);
       return;
     }
 
     setIsSearching(true);
     setErrorMessage("");
+    setShowSuggestions(false);
+    setSuggestions([]);
 
     try {
       const parseResult = parseBCV(inputValue);
@@ -548,9 +572,9 @@ function SearchboxBCV({
           </div>
         )}
       </div>
-      {!showSuggestions &&
-        (isHovered || isFocused) &&
-        hasSelectedBook(inputValue) && <SearchboxTooltip />}
+      {!errorMessage && !showSuggestions && (isHovered || isFocused) && (
+        <SearchboxTooltip />
+      )}
 
       {errorMessage && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 border border-red-300 rounded-md shadow-lg z-50 p-2 text-xs">
