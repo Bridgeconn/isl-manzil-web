@@ -8,7 +8,7 @@ const CleanVimeoPlayer = () => {
     if (!playerRef.current) return;
 
     const player = new Player(playerRef.current, {
-      id: 1092533386,
+      id: 1105756880,
       controls: true,
       title: false,
       byline: false,
