@@ -24,6 +24,7 @@ import {
   findVerseInAvailableVerses,
 } from "@/utils/bibleReferenceUtils";
 import BibleBookImg from "../assets/images/bibleIcon.png";
+import HoverControlledGif from "./HoverControlledGif";
 
 type ViewType = "book" | "chapter" | "verse";
 
@@ -463,7 +464,12 @@ const BCVDrawer = () => {
                 title="The videos for this book are not available"
               >
                 {book.image ? (
-                  <img
+                  // <img
+                  //   src={book.image}
+                  //   alt={book.label}
+                  //   className="w-13 h-13 object-contain opacity-50 bg-gray-100 rounded-full"
+                  // />
+                  <HoverControlledGif
                     src={book.image}
                     alt={book.label}
                     className="w-13 h-13 object-contain opacity-50 bg-gray-100 rounded-full"
@@ -501,11 +507,16 @@ const BCVDrawer = () => {
               }}
             >
               {book.image ? (
-                <img
-                  src={book.image}
-                  alt={book.label}
-                  className="w-13 h-13 object-contain bg-gray-100 rounded-full"
-                />
+                // <img
+                //   src={book.image}
+                //   alt={book.label}
+                //   className="w-13 h-13 object-contain bg-gray-100 rounded-full"
+                // />
+                 <HoverControlledGif
+                    src={book.image}
+                    alt={book.label}
+                    className="w-13 h-13 object-contain bg-gray-100 rounded-full"
+                  />
               ) : (
                 <div className="w-13 h-13"></div>
               )}
