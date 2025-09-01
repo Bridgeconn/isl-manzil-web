@@ -8,6 +8,7 @@ import {
   parseBibleReference,
   findVerseInAvailableVerses,
 } from "@/utils/bibleReferenceUtils";
+import HoverControlledGif from "./HoverControlledGif";
 
 interface MobileBookDrawerProps {
   isOpen: boolean;
@@ -351,7 +352,12 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
               title="The videos for this book are not available"
             >
               {book.image ? (
-                <img
+                // <img
+                //   src={book.image}
+                //   alt={book.label}
+                //   className="w-9 h-9 object-contain opacity-50 bg-gray-100 rounded-full"
+                // />
+                <HoverControlledGif
                   src={book.image}
                   alt={book.label}
                   className="w-9 h-9 object-contain opacity-50 bg-gray-100 rounded-full"
@@ -385,7 +391,12 @@ const MobileBookDrawer: React.FC<MobileBookDrawerProps> = ({
               }}
             >
               {book.image ? (
-                <img
+                // <img
+                //   src={book.image}
+                //   alt={book.label}
+                //   className="w-9 h-9 object-contain bg-gray-100 rounded-full"
+                // />
+                <HoverControlledGif
                   src={book.image}
                   alt={book.label}
                   className="w-9 h-9 object-contain bg-gray-100 rounded-full"
