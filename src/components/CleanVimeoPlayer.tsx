@@ -25,25 +25,55 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
   // Handle viewport meta for mobile fullscreen
   useEffect(() => {
     if (cleanVimeoIsFullscreen && deviceType === "mobile") {
-      let viewport = document.querySelector('meta[name="viewport"]') as HTMLMetaElement;
+      let viewport = document.querySelector(
+        'meta[name="viewport"]'
+      ) as HTMLMetaElement;
       if (!viewport) {
         viewport = document.createElement("meta");
         viewport.setAttribute("name", "viewport");
         document.head.appendChild(viewport);
       }
-      viewport.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover");
-      
+      viewport.setAttribute(
+        "content",
+        "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      );
+
       return () => {
-        viewport.setAttribute("content", "width=device-width, initial-scale=1.0, viewport-fit=cover");
+        viewport.setAttribute(
+          "content",
+          "width=device-width, initial-scale=1.0, viewport-fit=cover"
+        );
       };
     }
   }, [cleanVimeoIsFullscreen, deviceType]);
 
   // Listen for fullscreen changes
   useEffect(() => {
-    const handleFullscreenChange = () => setCleanVimeoIsFullscreen(!!document.fullscreenElement);
+    const handleFullscreenChange = () =>
+      setCleanVimeoIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    const handleModalKeyDown = (e: KeyboardEvent) => {
+      e.stopPropagation();
+      switch (e.key) {
+        case " ":
+          togglePlay();
+          e.preventDefault();
+          break;
+        case "f":
+          toggleFullscreen();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleModalKeyDown);
+    return () => window.removeEventListener("keydown", handleModalKeyDown);
   }, []);
 
   // Initialize Vimeo player
@@ -77,9 +107,11 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
       setCleanVimeoIsEnded(true);
       setCleanVimeoIsReplaying(false);
     };
-    const handleTimeUpdate = (data: any) => setCleanVimeoCurrentTime(data.seconds);
+    const handleTimeUpdate = (data: any) =>
+      setCleanVimeoCurrentTime(data.seconds);
 
-    player.ready()
+    player
+      .ready()
       .then(() => {
         player.on("play", handlePlay);
         player.on("pause", handlePause);
@@ -123,7 +155,7 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
       setCleanVimeoIsReplaying(true);
       setCleanVimeoIsEnded(false);
       await cleanVimeoInstanceRef.current.setCurrentTime(0);
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       await cleanVimeoInstanceRef.current.play();
       setCleanVimeoCurrentTime(0);
       setCleanVimeoIsReplaying(false);
@@ -134,16 +166,19 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
     }
   }, []);
 
-  const handleSeek = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!cleanVimeoInstanceRef.current) return;
-    const time = parseFloat(e.target.value);
-    try {
-      await cleanVimeoInstanceRef.current.setCurrentTime(time);
-      setCleanVimeoCurrentTime(time);
-    } catch (err) {
-      console.error("Seek error:", err);
-    }
-  }, []);
+  const handleSeek = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!cleanVimeoInstanceRef.current) return;
+      const time = parseFloat(e.target.value);
+      try {
+        await cleanVimeoInstanceRef.current.setCurrentTime(time);
+        setCleanVimeoCurrentTime(time);
+      } catch (err) {
+        console.error("Seek error:", err);
+      }
+    },
+    []
+  );
 
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current;
@@ -262,7 +297,11 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
                   }}
                   className="flex items-center justify-center w-8 h-8 cursor-pointer hover:bg-white/20 rounded transition-colors flex-shrink-0"
                 >
-                  {cleanVimeoIsPlaying ? <Pause size={18} /> : <Play size={18} />}
+                  {cleanVimeoIsPlaying ? (
+                    <Pause size={18} />
+                  ) : (
+                    <Play size={18} />
+                  )}
                 </button>
 
                 <div className="flex-1 flex items-center mx-1">
@@ -277,9 +316,11 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
                     className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
                     style={{
                       background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                        (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) * 100
+                        (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) *
+                        100
                       }%, rgba(255,255,255,0.3) ${
-                        (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) * 100
+                        (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) *
+                        100
                       }%, rgba(255,255,255,0.3) 100%)`,
                     }}
                   />
@@ -287,7 +328,8 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-xs font-mono whitespace-nowrap">
-                    {formatTime(cleanVimeoCurrentTime)} / {formatTime(cleanVimeoDuration)}
+                    {formatTime(cleanVimeoCurrentTime)} /{" "}
+                    {formatTime(cleanVimeoDuration)}
                   </span>
 
                   <button
@@ -297,7 +339,11 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
                     }}
                     className="flex items-center justify-center w-8 h-8 cursor-pointer hover:bg-white/20 rounded transition-colors mb-0.5"
                   >
-                    {cleanVimeoIsFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+                    {cleanVimeoIsFullscreen ? (
+                      <Minimize size={18} />
+                    ) : (
+                      <Maximize size={18} />
+                    )}
                   </button>
                 </div>
               </div>

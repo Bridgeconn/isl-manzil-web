@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,12 +10,20 @@ import {
 import { X } from "lucide-react";
 import useThemeStore from "@/store/useThemeStore";
 import CleanVimeoPlayer from "./CleanVimeoPlayer";
+import useModalStore from "@/store/useModalStore";
 
 const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
   showAbout,
   onClose,
 }) => {
   const { fontType, fontSize, currentTheme } = useThemeStore();
+
+  const setModalOpen = useModalStore((state) => state.setModalOpen);
+
+  useEffect(() => {
+    setModalOpen(showAbout);
+    return () => setModalOpen(false);
+  }, [showAbout, setModalOpen]);
 
   const contactEmail = "islvbible@bridgeconn.com";
 

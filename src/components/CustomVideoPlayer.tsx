@@ -26,6 +26,7 @@ import Player from "@vimeo/player";
 import useBibleStore, { VerseMarkerType } from "@/store/useBibleStore";
 import useDeviceDetection from "@/hooks/useDeviceDetection";
 import { useVimeoDownload } from "@/hooks/useVimeoDownload";
+import useModalStore from "@/store/useModalStore";
 
 import { useLayoutControl } from "@/hooks/useLayoutControl";
 import versificationData from "../assets/data/versification.json";
@@ -124,6 +125,7 @@ const CustomVideoPlayer = () => {
   const { textPosition } = useLayoutControl();
   const { getDownloadOptions, downloadVideo, error, loading } =
     useVimeoDownload();
+  const isModalOpen = useModalStore((state) => state.isModalOpen);
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -923,6 +925,8 @@ const CustomVideoPlayer = () => {
     const handleKeyDown = async (event: KeyboardEvent) => {
       if (!isPlayerReady || !isVideoAvailable) return;
 
+      if (isModalOpen) return;
+
       // Mark user interaction for seek operations
       if (
         event.key === "ArrowLeft" ||
@@ -1034,6 +1038,7 @@ const CustomVideoPlayer = () => {
     isVideoAvailable,
     setupIntervals,
     clearIntervals,
+    isModalOpen
   ]);
 
   // Setup global mouse events for seek bar dragging
