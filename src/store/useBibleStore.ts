@@ -168,7 +168,8 @@ const useBibleStore = create<BibleStore>()(
             book.value
           );
           if (availableChapters.length > 0) {
-            get().setChapter(availableChapters[0]);
+            const firstNumbered = availableChapters.find((ch) => ch.value > 0);
+            get().setChapter(firstNumbered ?? availableChapters[0]);
           } else {
             get().setChapter(null);
           }

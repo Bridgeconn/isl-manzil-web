@@ -28,8 +28,7 @@ export const useChapterNavigation = () => {
     );
     const currentChapter = selectedChapter.value;
 
-    const isFirstChapter = currentBookIndex === 0 && currentChapter === 0;
-
+    const isFirstChapter = currentBookIndex === 0 && currentChapter === 1;
     const isLastBook = currentBookIndex === bookCodesData.length - 1;
     const bookCode = selectedBook.value.toUpperCase();
     const maxChapters =
@@ -53,15 +52,14 @@ export const useChapterNavigation = () => {
     );
     const currentChapter = selectedChapter.value;
 
-    if (currentChapter > 0) {
-      // Go to previous chapter in same book
+    if (currentChapter > 1) {
       const prevChapterValue = currentChapter - 1;
       const prevChapter: ChapterOption = {
         value: prevChapterValue,
-        label: prevChapterValue === 0 ? "Intro" : `${prevChapterValue}`,
+        label: `${prevChapterValue}`,
       };
       setChapter(prevChapter);
-      
+
       const availableVerses = await getAvailableVersesForBookAndChapter(
         selectedBook.value,
         prevChapterValue
@@ -70,7 +68,6 @@ export const useChapterNavigation = () => {
         setVerse(availableVerses[0]);
       }
     } else if (currentBookIndex > 0) {
-      // Go to last chapter of previous book
       const prevBook = bookCodesData[currentBookIndex - 1];
       const newBook: BookOption = {
         value: prevBook.bookCode,
@@ -82,23 +79,18 @@ export const useChapterNavigation = () => {
       setBook(newBook);
 
       const availableChapters = getAvailableChaptersForBook(prevBook.bookCode);
-      if (availableChapters.length > 0) {
-        const numberedChapters = availableChapters.filter(ch => ch.value > 0);
-        
-        const maxChapterValue = Math.max(...numberedChapters.map(ch => ch.value));
-        const lastChapter = numberedChapters.find(ch => ch.value === maxChapterValue);
-        
-        if (lastChapter) {
-          setChapter(lastChapter);
-          
-          // Set first available verse of that chapter
-          const availableVerses = await getAvailableVersesForBookAndChapter(
-            prevBook.bookCode,
-            lastChapter.value
-          );
-          if (availableVerses.length > 0) {
-            setVerse(availableVerses[0]);
-          }
+      const numberedChapters = availableChapters.filter((ch) => ch.value > 0);
+      if (numberedChapters.length > 0) {
+        const maxChapterValue = Math.max(...numberedChapters.map((ch) => ch.value));
+        const lastChapter = { value: maxChapterValue, label: `${maxChapterValue}` };
+        setChapter(lastChapter);
+
+        const availableVerses = await getAvailableVersesForBookAndChapter(
+          prevBook.bookCode,
+          lastChapter.value
+        );
+        if (availableVerses.length > 0) {
+          setVerse(availableVerses[0]);
         }
       }
     }
@@ -119,15 +111,13 @@ export const useChapterNavigation = () => {
       typedVersificationData.maxVerses[bookCode]?.length || 0;
 
     if (currentChapter < maxChapters) {
-      // Go to next chapter in same book
       const nextChapterValue = currentChapter + 1;
       const nextChapter: ChapterOption = {
         value: nextChapterValue,
         label: `${nextChapterValue}`,
       };
       setChapter(nextChapter);
-      
-      // Set first available verse for the next chapter
+
       const availableVerses = await getAvailableVersesForBookAndChapter(
         selectedBook.value,
         nextChapterValue
@@ -136,7 +126,6 @@ export const useChapterNavigation = () => {
         setVerse(availableVerses[0]);
       }
     } else if (currentBookIndex < bookCodesData.length - 1) {
-      // Go to first chapter of next book
       const nextBook = bookCodesData[currentBookIndex + 1];
       const newBook: BookOption = {
         value: nextBook.bookCode,
@@ -146,22 +135,19 @@ export const useChapterNavigation = () => {
       };
 
       setBook(newBook);
+
       const availableChapters = getAvailableChaptersForBook(nextBook.bookCode);
-      if (availableChapters.length > 0) {
-        const sortedChapters = availableChapters.sort((a, b) => a.value - b.value);
-        const firstAvailableChapter = sortedChapters[0];
-        
-        if (firstAvailableChapter) {
-          setChapter(firstAvailableChapter);
-          
-          // Set first available verse for that chapter
-          const availableVerses = await getAvailableVersesForBookAndChapter(
-            nextBook.bookCode,
-            firstAvailableChapter.value
-          );
-          if (availableVerses.length > 0) {
-            setVerse(availableVerses[0]);
-          }
+      const numberedChapters = availableChapters.filter((ch) => ch.value > 0);
+      if (numberedChapters.length > 0) {
+        const firstAvailableChapter = { value: numberedChapters[0].value, label: `${numberedChapters[0].value}` };
+        setChapter(firstAvailableChapter);
+
+        const availableVerses = await getAvailableVersesForBookAndChapter(
+          nextBook.bookCode,
+          firstAvailableChapter.value
+        );
+        if (availableVerses.length > 0) {
+          setVerse(availableVerses[0]);
         }
       }
     }
