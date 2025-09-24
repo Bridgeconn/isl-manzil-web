@@ -196,30 +196,32 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const isMobileFullscreen = cleanVimeoIsFullscreen && deviceType === "mobile";
+  const isFullscreenMode =
+    cleanVimeoIsFullscreen &&
+    (deviceType === "mobile" || deviceType === "tablet");
 
   return (
     <div className="w-full mx-auto my-auto">
       <div
         ref={containerRef}
         className={`relative w-full max-w-6xl mx-auto overflow-hidden ${
-          isMobileFullscreen
+          isFullscreenMode
             ? "h-screen flex flex-col justify-center bg-black"
             : "aspect-video bg-black"
         }`}
         style={{
-          maxHeight: isMobileFullscreen ? "100vh" : "80vh",
+          maxHeight: isFullscreenMode ? "100vh" : "80vh",
           touchAction: "manipulation",
         }}
       >
         <div
           className={`relative ${
-            isMobileFullscreen
+            isFullscreenMode
               ? "mx-auto bg-black overflow-hidden"
               : "w-full h-full"
           }`}
           style={
-            isMobileFullscreen
+            isFullscreenMode
               ? { aspectRatio: "16/9", maxHeight: "100vh", width: "100%" }
               : undefined
           }
