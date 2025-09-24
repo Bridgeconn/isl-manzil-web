@@ -196,6 +196,18 @@ const CustomVideoPlayer = () => {
 
   // const [shareUrl, setShareUrl] = useState<string>("");
 
+  useEffect(() => {
+    if (!vimeoPlayerRef.current) return;
+
+    if (isModalOpen) {
+      vimeoPlayerRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      vimeoPlayerRef.current.play();
+      setIsPlaying(true);
+    }
+  }, [isModalOpen]);
+
   useLayoutEffect(() => {
     if (tooltipRef.current) {
       const width = tooltipRef.current.offsetWidth;
@@ -1038,7 +1050,7 @@ const CustomVideoPlayer = () => {
     isVideoAvailable,
     setupIntervals,
     clearIntervals,
-    isModalOpen
+    isModalOpen,
   ]);
 
   // Setup global mouse events for seek bar dragging
