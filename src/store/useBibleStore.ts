@@ -188,7 +188,7 @@ const useBibleStore = create<BibleStore>()(
           currentPlayingVerse: null,
           bibleVerseMarker: [],
         });
-        //Update URL based onn book chapter set
+        //Update URL based on book chapter set
         if (chapter && get().selectedBook) {
           const bookCode = get().selectedBook!.value;
           const chapterLabel =
@@ -611,9 +611,8 @@ const useBibleStore = create<BibleStore>()(
         }
 
         // Create unique request ID to track this specific request
-        const requestId = `${selectedBook.value}-${
-          selectedChapter.value
-        }-${Date.now()}`;
+        const requestId = `${selectedBook.value}-${selectedChapter.value
+          }-${Date.now()}`;
 
         set({
           isVideoLoading: true,
