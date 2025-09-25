@@ -168,7 +168,8 @@ const useBibleStore = create<BibleStore>()(
             book.value
           );
           if (availableChapters.length > 0) {
-            get().setChapter(availableChapters[0]);
+            const firstNumbered = availableChapters.find((ch) => ch.value > 0);
+            get().setChapter(firstNumbered ?? availableChapters[0]);
           } else {
             get().setChapter(null);
           }
@@ -187,6 +188,14 @@ const useBibleStore = create<BibleStore>()(
           currentPlayingVerse: null,
           bibleVerseMarker: [],
         });
+        //Update URL based on book chapter set
+        if (chapter && get().selectedBook) {
+          const bookCode = get().selectedBook!.value;
+          const chapterLabel =
+            chapter.value === 0 ? "Introduction" : chapter.value;
+          const newUrl = `/bible/${bookCode}/${chapterLabel}`;
+          window.history.replaceState(null, "", newUrl);
+        }
 
         // Auto-set first verse when chapter changes
         if (shouldSetFirstVerse && chapter && get().selectedBook) {
@@ -349,9 +358,16 @@ const useBibleStore = create<BibleStore>()(
 
           // Auto-select first available book
           if (shouldAutoSelect) {
-            const firstAvailableBook = books.find((book) => !book.isDisabled);
-            if (firstAvailableBook && !get().selectedBook) {
-              get().setBook(firstAvailableBook, false);
+            const persistedBook = get().selectedBook;
+            const persistedChapter = get().selectedChapter;
+            if (persistedBook && persistedChapter) {
+              get().setBook(persistedBook, true);
+              get().setChapter(persistedChapter);
+            } else {
+              const firstAvailableBook = books.find((book) => !book.isDisabled);
+              if (firstAvailableBook && !get().selectedBook) {
+                get().setBook(firstAvailableBook, false);
+              }
             }
           }
         } catch (error) {
@@ -595,9 +611,8 @@ const useBibleStore = create<BibleStore>()(
         }
 
         // Create unique request ID to track this specific request
-        const requestId = `${selectedBook.value}-${
-          selectedChapter.value
-        }-${Date.now()}`;
+        const requestId = `${selectedBook.value}-${selectedChapter.value
+          }-${Date.now()}`;
 
         set({
           isVideoLoading: true,
@@ -727,6 +742,8 @@ const useBibleStore = create<BibleStore>()(
       partialize: (state) => ({
         playbackSpeed: state.playbackSpeed,
         selectedQuality: state.selectedQuality,
+        selectedBook: state.selectedBook,
+        selectedChapter: state.selectedChapter,
       }),
     }
   )
