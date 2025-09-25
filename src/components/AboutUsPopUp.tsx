@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,12 +10,20 @@ import {
 import { X } from "lucide-react";
 import useThemeStore from "@/store/useThemeStore";
 import CleanVimeoPlayer from "./CleanVimeoPlayer";
+import useModalStore from "@/store/useModalStore";
 
 const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
   showAbout,
   onClose,
 }) => {
   const { fontType, fontSize, currentTheme } = useThemeStore();
+
+  const setModalOpen = useModalStore((state) => state.setModalOpen);
+
+  useEffect(() => {
+    setModalOpen(showAbout);
+    return () => setModalOpen(false);
+  }, [showAbout, setModalOpen]);
 
   const contactEmail = "islvbible@bridgeconn.com";
 
@@ -61,19 +69,8 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           <p style={{ fontSize: "1.4em", marginBottom: 0 }}>
             The ISLV Bible Website
           </p>
-          {/* <iframe
-            loading="lazy"
-            src="https://player.vimeo.com/video/1092533386"
-            width="100%"
-            height="100%"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-            title="ISLV Bible Intro"
-            className="h-[200px] sm:h-[400px] md:h-[500px]"
-            style={{ width: "100%" }}
-          ></iframe> */}
           <div>
-            <CleanVimeoPlayer />
+            <CleanVimeoPlayer videoId={1105756880} />
           </div>
 
           <p>
