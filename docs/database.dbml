@@ -1,0 +1,50 @@
+Table users {
+  user_id uuid [pk, note: 'Primary key for each user']
+  username varchar(50) [note: 'Username of the user']
+  email varchar(100) [unique, note: 'User email address']
+  password varchar(255) [note: 'Hashed user password']
+  tokens text [note: 'JSON or string storage for authentication tokens']
+}
+
+
+Table books {
+  book_id uuid [pk, note: 'Primary key for each Bible book']
+  book_code varchar(10) [unique, note: 'Short code e.g., GEN, EXO']
+  book_name varchar(100) [note: 'Full name e.g., Genesis, Exodus']
+  testament varchar(2) [note: 'OT or NT']
+  max_chapter int [not null, note: 'Maximum number of chapters in the book']
+}
+
+Table chapters {
+  chapter_id uuid [pk, note: 'Primary key for each chapter']
+  book_id uuid [ref: > books.book_id, not null, note: 'Foreign key to books']
+  chapter int [not null, note: 'Chapter number within the book']
+  video_id varchar(50) [note: 'Video ID from isl_video_urls.csv']
+  created_by uuid [ref: > users.user_id, note: 'Reference to the user who created this chapter']
+  created_at timestamp [note: 'Record creation time']
+  indexes {
+    (book_id, chapter) [unique]
+  }
+}
+
+Table verses {
+  verse_id uuid [pk, note: 'Primary key for each verse']
+  chapter_id uuid [ref: > chapters.chapter_id, not null, note: 'Foreign key to chapters']
+  verse_number int [not null, note: 'Verse number within the chapter']
+  text text [note: 'Verse content from CSV file']
+  created_by uuid [ref: > users.user_id, note: 'Reference to the user who created this verse']
+  created_at timestamp [note: 'Record creation time']
+  indexes {
+    (chapter_id, verse_number) [unique]
+  }
+}
+
+Table verse_markers {
+  id uuid [pk, note: 'Primary key for verse time markers']
+  verse_id uuid [ref: > verses.verse_id, not null, note: 'Foreign key to verses']
+  time_marker varchar(20) [note: 'Timestamp (e.g., 00:00:33:19)']
+  created_at timestamp [note: 'Record creation time']
+}
+
+
+Ref: "verse_markers"."verse_id" < "verse_markers"."id"

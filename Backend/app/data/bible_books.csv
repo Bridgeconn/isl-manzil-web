@@ -1,0 +1,67 @@
+book_id,book_name,book_code,chapter_count,testament
+1,genesis,gen,50,OT
+2,exodus,exo,40,OT
+3,leviticus,lev,27,OT
+4,numbers,num,36,OT
+5,deuteronomy,deu,34,OT
+6,joshua,jos,24,OT
+7,judges,jdg,21,OT
+8,ruth,rut,4,OT
+9,1 samuel,1sa,31,OT
+10,2 samuel,2sa,24,OT
+11,1 kings,1ki,22,OT
+12,2 kings,2ki,25,OT
+13,1 chronicles,1ch,29,OT
+14,2 chronicles,2ch,36,OT
+15,ezra,ezr,10,OT
+16,nehemiah,neh,13,OT
+17,esther,est,10,OT
+18,job,job,42,OT
+19,psalms,psa,150,OT
+20,proverbs,pro,31,OT
+21,ecclesiastes,ecc,12,OT
+22,song of solomon,sng,8,OT
+23,isaiah,isa,66,OT
+24,jeremiah,jer,52,OT
+25,lamentations,lam,5,OT
+26,ezekiel,ezk,48,OT
+27,daniel,dan,12,OT
+28,hosea,hos,14,OT
+29,joel,jol,3,OT
+30,amos,amo,9,OT
+31,obadiah,oba,1,OT
+32,jonah,jon,4,OT
+33,micah,mic,7,OT
+34,nahum,nam,3,OT
+35,habakkuk,hab,3,OT
+36,zephaniah,zep,3,OT
+37,haggai,hag,2,OT
+38,zechariah,zec,14,OT
+39,malachi,mal,4,OT
+41,matthew,mat,28,NT
+42,mark,mrk,16,NT
+43,luke,luk,24,NT
+44,john,jhn,21,NT
+45,acts,act,28,NT
+46,romans,rom,16,NT
+47,1 corinthians,1co,16,NT
+48,2 corinthians,2co,13,NT
+49,galatians,gal,6,NT
+50,ephesians,eph,6,NT
+51,philippians,php,4,NT
+52,colossians,col,4,NT
+53,1 thessalonians,1th,5,NT
+54,2 thessalonians,2th,3,NT
+55,1 timothy,1ti,6,NT
+56,2 timothy,2ti,4,NT
+57,titus,tit,3,NT
+58,philemon,phm,1,NT
+59,hebrews,heb,13,NT
+60,james,jas,5,NT
+61,1 peter,1pe,5,NT
+62,2 peter,2pe,3,NT
+63,1 john,1jn,5,NT
+64,2 john,2jn,1,NT
+65,3 john,3jn,1,NT
+66,jude,jud,1,NT
+67,revelation,rev,22,NT
