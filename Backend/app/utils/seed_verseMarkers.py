@@ -7,8 +7,10 @@ from app.models.book_model import Book
 from app.models.ISL_Video_model import ISLVideo
 from app.models.ISL_VerseMarker_model import ISLVerseMarker
 
-# Folder containing all verse marker CSVs
-VERSE_MARKERS_DIR = Path("/home/Tejaswini.Rai/Desktop/isl/isl-manzil-web/src/assets/data/verse_markers")
+BASE_DIR = Path(__file__).resolve().parent
+
+# Navigate to verse_markers folder relative to backend root
+VERSE_MARKERS_DIR = BASE_DIR / "../../../frontend/src/assets/data/verse_markers"
 
 def seed_verses():
     """Seed ISL verse markers from verse_marker CSV files."""
@@ -21,7 +23,7 @@ def seed_verses():
         return
 
     if not VERSE_MARKERS_DIR.exists():
-        print(f" Verse markers folder not found: {VERSE_MARKERS_DIR}")
+        print(f" Verse markers folder not found: {VERSE_MARKERS_DIR.resolve()}")
         db.close()
         return
 
@@ -73,13 +75,13 @@ def seed_verses():
                 db.add_all(verses_to_add)
                 db.commit()
                 total_inserted += len(verses_to_add)
-                print(f" Seeded {len(verses_to_add)} verses for {book_name} ch. {chapter_number}")
+                print(f"Seeded {len(verses_to_add)} verses for {book_name} ch. {chapter_number}")
 
-        print(f" Total verses seeded: {total_inserted}")
+        print(f"\n Total verses seeded: {total_inserted}")
 
     except Exception as e:
         db.rollback()
-        print(f" Error seeding verses: {e}")
+        print(f"Error seeding verses: {e}")
 
     finally:
         db.close()

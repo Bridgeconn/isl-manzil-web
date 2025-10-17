@@ -1,40 +1,21 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-from pydantic import BaseModel
 from app.database import get_db
 from app.crud import isl_verse_markers
 from app.crud.isl_verse_markers import get_verse_markers_by_chapter
-
+from app.schemas.isl_verse_marker_schema import BooksDelete, VerseMarkerResponse
 
 router = APIRouter(prefix="/verse_markers", tags=["ISL Verse Markers"])
 
 
-class BooksDelete(BaseModel):
-    books: List[str]
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "books": ["gen", "exo", "lev"]
-            }
-        }
-
-
-@router.post("/upload_zip")
+@router.post("/upload_zip", response_model=VerseMarkerResponse, status_code=201)
 def upload_verse_markers_zip(
     file: UploadFile = File(..., description="ZIP file containing verse marker CSV files"),
     db: Session = Depends(get_db)
 ):
     """
-    Upload a ZIP file with multiple verse marker CSV files.
-    
-    **How it works:**
-    1. You upload a ZIP file (verse_markers.zip)
-    2. ZIP contains CSVs like: Genesis_1.csv, Exodus_2.csv
-    3. Data is extracted and saved to PostgreSQL database
-    4. ZIP file is NOT saved - only data goes to database
-    
+    📦 Upload a ZIP file containing multiple verse marker CSV files.
+
     **Expected CSV format:**
     ```csv
     verse_number,time_marker
@@ -42,62 +23,64 @@ def upload_verse_markers_zip(
     2,00:00:53:28
     3,00:01:07:28
     ```
-    
-    **Filename format:** BookName_Chapter.csv (e.g., Genesis_1.csv)
+
+    **Filename format:** `BookName_Chapter.csv` (e.g., `Genesis_1.csv`)
     """
-    return isl_verse_markers.upload_verse_markers_zip(db, file)
+    result = isl_verse_markers.upload_verse_markers_zip(db, file)
+    return VerseMarkerResponse(
+        status="success",
+        message="Verse markers ZIP processed successfully.",
+        data=result
+    )
 
 
-@router.put("/update_chapter")
+@router.put("/update_chapter", response_model=VerseMarkerResponse)
 def update_chapter_verse_markers(
-    file: UploadFile = File(..., description="CSV file with verse markers"),
+    file: UploadFile = File(..., description="CSV file with verse markers for a chapter"),
     db: Session = Depends(get_db)
 ):
     """
-    Update verse markers for a single chapter.
+    📝 Update verse markers for a single chapter.
     
-    **How it works:**
-    1. Upload CSV file named: BookName_Chapter.csv (e.g., Exodus_1.csv)
-    2. Old verse markers for that chapter are DELETED
-    3. New markers from CSV are inserted into database
-    
-    **Expected CSV format:**
-    ```csv
-    verse_number,time_marker
-    1,00:00:18:23
-    2,00:00:53:28
-    ```
-    
-     This REPLACES all existing markers for the chapter!
+    - Old markers for the chapter are **deleted**
+    - New markers are **inserted**
+    - CSV filename must be in format: `BookName_Chapter.csv`
     """
-    return isl_verse_markers.update_chapter_verse_markers(db, file)
+    result = isl_verse_markers.update_chapter_verse_markers(db, file)
+    return VerseMarkerResponse(
+        status="success",
+        message="Chapter verse markers updated successfully.",
+        data=result
+    )
 
 
-@router.delete("/delete_books")
-def delete_verse_markers_by_books(
-    data: BooksDelete,
-    db: Session = Depends(get_db)
-):
+@router.delete("/delete_books", response_model=VerseMarkerResponse)
+def delete_verse_markers_by_books(data: BooksDelete, db: Session = Depends(get_db)):
     """
-    Delete all verse markers for specified book codes.
-    
-    **How it works:**
-    1. You send book codes: ["gen", "exo"]
-    2. System finds all chapters for these books
-    3. All verse markers are deleted from database
-    
-    **Example request body:**
+    🗑️ Delete all verse markers for specified book codes.
+
+    Example request:
     ```json
     {
-        "books": ["gen", "exo", "lev"]
+        "books": ["GEN", "EXO", "LEV"]
     }
     ```
     """
-    return isl_verse_markers.delete_verse_markers_by_books(db, data.books)
+    result = isl_verse_markers.delete_verse_markers_by_books(db, data.books)
+    return VerseMarkerResponse(
+        status="success",
+        message="Verse markers deleted for specified books.",
+        data=result
+    )
 
 
-@router.get("/chapter/{book_code_chapter}")
+@router.get("/chapter/{book_code_chapter}", response_model=VerseMarkerResponse)
 def get_verse_markers_for_chapter(book_code_chapter: str, db: Session = Depends(get_db)):
+    """
+    📖 Get verse markers for a specific chapter.
+    
+    **Format:** `BOOKCODE_CHAPTER` (e.g., `GEN_1`)
+    """
     parts = book_code_chapter.strip().split("_")
     if len(parts) != 2:
         raise HTTPException(status_code=400, detail="Invalid format. Use BOOKCODE_CHAPTER (e.g., GEN_1)")
@@ -106,4 +89,9 @@ def get_verse_markers_for_chapter(book_code_chapter: str, db: Session = Depends(
     if not chapter_str.isdigit():
         raise HTTPException(status_code=400, detail="Chapter must be numeric.")
 
-    return get_verse_markers_by_chapter(db, book_code.upper(), int(chapter_str))
+    result = get_verse_markers_by_chapter(db, book_code.upper(), int(chapter_str))
+    return VerseMarkerResponse(
+        status="success",
+        message=f"Verse markers for {book_code.upper()} {chapter_str} fetched successfully.",
+        data=result
+    )

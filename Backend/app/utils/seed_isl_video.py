@@ -5,8 +5,8 @@ from app.database import SessionLocal
 from app.models.book_model import Book
 from app.models.ISL_Video_model import ISLVideo  
 
-# Path to your UI CSV file
-CSV_FILE = Path("/home/Tejaswini.Rai/Desktop/isl/isl-manzil-web/src/assets/data/isl_video_urls.csv")
+BASE_DIR = Path(__file__).resolve().parent
+CSV_FILE = BASE_DIR / "../../../frontend/src/assets/data/isl_video_urls.csv"
 
 def seed_isl_videos():
     """Seed isl_video table from the UI CSV file."""
@@ -20,7 +20,7 @@ def seed_isl_videos():
         return
 
     if not CSV_FILE.exists():
-        print(f"CSV file not found: {CSV_FILE}")
+        print(f" CSV file not found: {CSV_FILE.resolve()}")
         db.close()
         return
 
@@ -55,7 +55,7 @@ def seed_isl_videos():
 
     except Exception as e:
         db.rollback()
-        print(f" Error seeding ISL videos: {e}")
+        print(f"Error seeding ISL videos: {e}")
 
     finally:
         db.close()

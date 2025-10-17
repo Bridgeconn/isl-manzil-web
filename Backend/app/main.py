@@ -22,7 +22,7 @@ def startup_event():
     print(" Starting ISL Bible backend...")
 
     # Step 1: Seed books (1–66 from CSV)
-    seed_books_from_csv(db, "app/data/bible_books.csv")
+    seed_books_from_csv(db)
 
     # Step 2: Seed ISL video chapters (from UI CSV)
     seed_isl_videos()
