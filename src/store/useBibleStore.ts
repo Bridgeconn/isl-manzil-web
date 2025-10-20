@@ -1,5 +1,4 @@
 import { create } from "zustand";
-
 import { BookOption, ChapterOption, VerseOption } from "../types/Navigation";
 import Papa from "papaparse";
 import bookCodesData from "../assets/data/book_codes.json";
@@ -29,11 +28,44 @@ export interface VerseMarkerType {
   time: string;
 }
 
-interface AvailableData {
-  books: BookOption[];
-  chapters: { [bookCode: string]: ChapterOption[] };
+type VideoQuality = "Auto" | string;
+
+// Manual localStorage helper
+const BIBLE_SELECTION_KEY = "bible-last-selection";
+
+interface StoredSelection {
+  bookCode: string;
+  bookLabel: string;
+  bookId: number;
+  chapter: number;
+  chapterLabel: string;
 }
-type VideoQuality = "Auto" | string; // "Auto" or any string Vimeo provides
+
+const saveSelectionToLocalStorage = (
+  book: BookOption,
+  chapter: ChapterOption
+) => {
+  const selection: StoredSelection = {
+    bookCode: book.value,
+    bookLabel: book.label,
+    bookId: book.bookId,
+    chapter: chapter.value,
+    chapterLabel: chapter.label,
+  };
+  localStorage.setItem(BIBLE_SELECTION_KEY, JSON.stringify(selection));
+};
+
+const getSelectionFromLocalStorage = (): StoredSelection | null => {
+  try {
+    const stored = localStorage.getItem(BIBLE_SELECTION_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error("Error reading from localStorage:", error);
+  }
+  return null;
+};
 
 interface BibleStore {
   playbackSpeed: number;
@@ -51,9 +83,9 @@ interface BibleStore {
   isInitialized: boolean;
   seekToVerse: (verse: string) => void;
   isVideoLoading: boolean;
-  // Add request tracking
   currentLoadingRequest: string | null;
   isManualVerseSelection: boolean;
+  shouldUpdateUrl: boolean;
 
   setBook: (book: BookOption | null, skipAutoSetChapter?: boolean) => void;
   setChapter: (
@@ -85,6 +117,8 @@ interface BibleStore {
     verseNumber: number
   ) => Promise<VerseMarkerType | null>;
   isVerseInRange: (verseNumber: number, verseRange: string) => boolean;
+  checkUrlForBookChapter: () => { bookCode: string; chapter: number } | null;
+  updateUrlIfNeeded: () => void;
 }
 
 const typedVersificationData = versificationData as VersificationData;
@@ -112,7 +146,41 @@ const useBibleStore = create<BibleStore>()(
       bibleVerseMarker: [],
       currentLoadingRequest: null,
       isManualVerseSelection: false,
+      shouldUpdateUrl: false,
 
+      checkUrlForBookChapter: () => {
+        const path = window.location.pathname;
+        const match = path.match(/\/bible\/([^/]+)\/([^/]+)/i);
+        
+        if (match) {
+          const bookCode = match[1].toUpperCase();
+          const chapterStr = match[2];
+          
+          const chapter = chapterStr.toLowerCase() === "introduction" || 
+                         chapterStr.toLowerCase() === "intro" 
+                         ? 0 
+                         : parseInt(chapterStr);
+          
+          if (!isNaN(chapter)) {
+            return { bookCode, chapter };
+          }
+        }
+        
+        return null;
+      },
+
+      updateUrlIfNeeded: () => {
+        const { shouldUpdateUrl, selectedBook, selectedChapter } = get();
+        
+        if (shouldUpdateUrl && selectedBook && selectedChapter) {
+          const bookCode = selectedBook.value;
+          const chapterLabel = selectedChapter.value === 0 
+            ? "Introduction" 
+            : selectedChapter.value;
+          const newUrl = `/bible/${bookCode}/${chapterLabel}`;
+          window.history.replaceState(null, "", newUrl);
+        }
+      },
       // Helper function to check if a verse number is within a verse range
       isVerseInRange: (verseNumber: number, verseRange: string): boolean => {
         const trimmedRange = verseRange.trim();
@@ -151,7 +219,6 @@ const useBibleStore = create<BibleStore>()(
           return null;
         }
 
-        // Find the marker that contains this verse number
         return (
           bibleVerseMarker.find((marker) =>
             get().isVerseInRange(verseNumber, marker.verse)
@@ -162,7 +229,12 @@ const useBibleStore = create<BibleStore>()(
       setBook: (book: BookOption | null, skipAutoSetChapter = false) => {
         set({ selectedBook: book, currentPlayingVerse: null });
 
-        // Auto-set first available chapter when book changes
+        // Save to localStorage manually if we have both book and chapter
+        if (book && get().selectedChapter) {
+          saveSelectionToLocalStorage(book, get().selectedChapter!);
+        }
+
+        get().updateUrlIfNeeded();
         if (!skipAutoSetChapter && book) {
           const availableChapters = get().getAvailableChaptersForBook(
             book.value
@@ -188,16 +260,13 @@ const useBibleStore = create<BibleStore>()(
           currentPlayingVerse: null,
           bibleVerseMarker: [],
         });
-        //Update URL based on book chapter set
-        if (chapter && get().selectedBook) {
-          const bookCode = get().selectedBook!.value;
-          const chapterLabel =
-            chapter.value === 0 ? "Introduction" : chapter.value;
-          const newUrl = `/bible/${bookCode}/${chapterLabel}`;
-          window.history.replaceState(null, "", newUrl);
-        }
 
-        // Auto-set first verse when chapter changes
+        // Save to localStorage manually if we have both book and chapter
+        if (chapter && get().selectedBook) {
+          saveSelectionToLocalStorage(get().selectedBook!, chapter);
+        }
+        
+        get().updateUrlIfNeeded();
         if (shouldSetFirstVerse && chapter && get().selectedBook) {
           const availableVerses =
             await get().getAvailableVersesForBookAndChapter(
@@ -223,7 +292,7 @@ const useBibleStore = create<BibleStore>()(
         }, 3000);
       },
       setCurrentVideoId: (videoId: number | null) =>
-        set({ currentVideoId: videoId }),
+        set({ currentVideoId: videoId }),  
       setCurrentPlayingVerse: (verse: string | null) =>
         set({ currentPlayingVerse: verse }),
 
@@ -356,20 +425,70 @@ const useBibleStore = create<BibleStore>()(
             isInitialized: true,
           });
 
-          // Auto-select first available book
-          if (shouldAutoSelect) {
-            const persistedBook = get().selectedBook;
-            const persistedChapter = get().selectedChapter;
-            if (persistedBook && persistedChapter) {
-              get().setBook(persistedBook, true);
-              get().setChapter(persistedChapter);
-            } else {
-              const firstAvailableBook = books.find((book) => !book.isDisabled);
-              if (firstAvailableBook && !get().selectedBook) {
-                get().setBook(firstAvailableBook, false);
+          if (!shouldAutoSelect) return;
+
+          //Check URL first
+          const urlData = get().checkUrlForBookChapter();
+          
+          if (urlData) {
+            // URL exists - enable URL updates for future navigation
+            set({ shouldUpdateUrl: true });
+            
+            const urlBook = books.find(
+              (b) => b.value.toUpperCase() === urlData.bookCode
+            );
+            
+            if (urlBook && !urlBook.isDisabled) {
+              get().setBook(urlBook, true);
+              
+              const availableChapters = get().getAvailableChaptersForBook(
+                urlBook.value
+              );
+              const urlChapter = availableChapters.find(
+                (ch) => ch.value === urlData.chapter
+              );
+              
+              if (urlChapter && !urlChapter.isDisabled) {
+                get().setChapter(urlChapter);
+              }
+            }
+            return;
+          }
+
+          //Check localStorage
+          const storedSelection = getSelectionFromLocalStorage();
+          
+          if (storedSelection) {
+            // localStorage exists - do NOT enable URL updates
+            set({ shouldUpdateUrl: false });
+            
+            const storedBook = books.find(
+              (b) => b.value === storedSelection.bookCode && !b.isDisabled
+            );
+            
+            if (storedBook) {
+              get().setBook(storedBook, true);
+              
+              const availableChapters = get().getAvailableChaptersForBook(
+                storedBook.value
+              );
+              const storedChapter = availableChapters.find(
+                (ch) => ch.value === storedSelection.chapter && !ch.isDisabled
+              );
+              
+              if (storedChapter) {
+                get().setChapter(storedChapter);
+                return;
               }
             }
           }
+
+          set({ shouldUpdateUrl: false });
+          const firstAvailableBook = books.find((book) => !book.isDisabled);
+          if (firstAvailableBook) {
+            get().setBook(firstAvailableBook, false);
+          }
+
         } catch (error) {
           console.error("Error initializing available data:", error);
           set({ isLoading: false });
@@ -742,8 +861,6 @@ const useBibleStore = create<BibleStore>()(
       partialize: (state) => ({
         playbackSpeed: state.playbackSpeed,
         selectedQuality: state.selectedQuality,
-        selectedBook: state.selectedBook,
-        selectedChapter: state.selectedChapter,
       }),
     }
   )
