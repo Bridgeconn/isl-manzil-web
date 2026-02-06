@@ -94,7 +94,7 @@ The **ISLV Bible Website** is a web application designed to provide the Bible in
 
 ## 🚀 Running the App
 
-1. **Start the development server**
+1. **Start the development server (Desktop / Local)**
 
    ```bash
    pnpm run dev
@@ -102,7 +102,26 @@ The **ISLV Bible Website** is a web application designed to provide the Bible in
 
    Open [http://localhost:5173](http://localhost:5173) in your browser to view the app.
 
-2. **Build for production** (optional)
+2. **Mobile Testing using Local Network (LAN)** (optional)
+   To test the app on a mobile device using the local development server:
+   ```bash
+   pnpm run dev --host 0.0.0.0
+   ```
+   This will expose the dev server on your local network and Vite will display a Network URL, for example:
+   `http://192.168.1.5:5173`
+
+**Steps to follow:**
+
+- Ensure both desktop and mobile devices are connected to the same LAN / Wi-Fi network.
+
+- Copy the Network URL shown in the terminal.
+
+- Open that URL in the mobile browser.
+
+- This allows real-device testing for responsiveness, touch interactions, and mobile-specific behavior.
+   
+
+3. **Build for production** (optional)
 
    ```bash
    pnpm run build
