@@ -110,15 +110,15 @@ The **ISLV Bible Website** is a web application designed to provide the Bible in
    This will expose the dev server on your local network and Vite will display a Network URL, for example:
    `http://192.168.1.5:5173`
 
-**Steps to follow:**
+   **Steps to follow:**
 
-- Ensure both desktop and mobile devices are connected to the same LAN / Wi-Fi network.
+   - Ensure both desktop and mobile devices are connected to the same LAN / Wi-Fi network.
 
-- Copy the Network URL shown in the terminal.
+   - Copy the Network URL shown in the terminal.
 
-- Open that URL in the mobile browser.
+   - Open that URL in the mobile browser.
 
-- This allows real-device testing for responsiveness, touch interactions, and mobile-specific behavior.
+   - This allows real-device testing for responsiveness, touch interactions, and mobile-specific behavior.
    
 
 3. **Build for production** (optional)
