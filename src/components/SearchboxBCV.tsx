@@ -490,7 +490,11 @@ function SearchboxBCV({
 
     try {
       const parseResult = parseBCV(inputValue);
-      await validateAndNavigate(parseResult);
+      const success = await validateAndNavigate(parseResult);
+      if (success) {
+        setIsFocused(false);
+        setIsHovered(false);
+      }
     } catch (error) {
       console.error("Search error:", error);
       setErrorMessage("An error occurred while searching");
