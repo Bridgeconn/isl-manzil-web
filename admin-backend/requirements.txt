@@ -1,0 +1,4 @@
+fastapi[all]==0.115.12
+SQLAlchemy==2.0.41
+psycopg2==2.9.10
+pylint==4.0.3
