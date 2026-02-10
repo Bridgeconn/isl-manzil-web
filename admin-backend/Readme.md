@@ -84,11 +84,11 @@ gedit .bashrc
 Edit the following contents appropriately and paste them into the `.bashrc` file:
 
 ```bash
-export ISL_POSTGRES_HOST="localhost"
-export ISL_POSTGRES_PORT="5432"
-export ISL_POSTGRES_USER="<db_user>"
-export ISL_POSTGRES_PASSWORD="<db_password>"
-export ISL_POSTGRES_DATABASE="<db_name>"
+export ISL_ADMIN_POSTGRES_HOST="localhost"
+export ISL_ADMIN_POSTGRES_PORT="5432"
+export ISL_ADMIN_POSTGRES_USER="<db_user>"
+export ISL_ADMIN_POSTGRES_PASSWORD="<db_password>"
+export ISL_ADMIN_POSTGRES_DATABASE="<db_name>"
 ```
 
 
