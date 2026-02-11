@@ -63,12 +63,9 @@ export interface SelectOption {
 
 export const CONTENT_TYPES: SelectOption[] = [
   { label: "Bible", value: "bible" },
-  { label: "Commentary", value: "commentary" },
+  { label: "ISL Bible", value: "isl_bible" },
   { label: "Dictionary", value: "dictionary" },
   { label: "Video", value: "video" },
-  { label: "Infographics", value: "infographics" },
-  { label: "OBS", value: "obs" },
-  { label: "ISL Bible", value: "isl_bible" },
 ];
 
 export type EditResourceInput = {
@@ -178,24 +175,6 @@ export type FinalDeleteConfirmDialogProps = {
   cancelButtonText?: string;
 };
 
-export interface AudioBibleProps {
-  isOpen: boolean;
-  onClose: () => void;
-  resourceId?: number | null;
-  resourceTitle?: string;
-  openFileInsteadOfDialog?: boolean;
-}
-
-export type AudioBibleResponse = {
-  resourceId: number;
-  name: string;
-  url: string;
-  books: Record<string, number>;
-  format: string;
-};
-
-export type AudioBibleListResponse = AudioBibleResponse[];
-
 export interface UploadStatus {
   [fileName: string]: {
     status: "uploading" | "success" | "error";
@@ -214,22 +193,6 @@ export interface PendingUpload {
   isValid: boolean;
 }
 
-export interface InfographicIn {
-  resource_id: number;
-  book_id: number;
-  title: string;
-  file_name: string;
-}
-
-export interface InfographicOut {
-  id: number;
-  resource_id: number;
-  book_id: number;
-  title: string;
-  file_name: string;
-  image_url?: string | null;
-}
-
 export interface Pagination {
   current_page: number;
   total_pages: number;
@@ -237,17 +200,6 @@ export interface Pagination {
   items_per_page: number;
   has_next: boolean;
   has_previous: boolean;
-}
-
-export interface ListInfographicResponse {
-  status: string;
-  data: InfographicOut[];
-  pagination: Pagination;
-}
-
-export interface BatchInfographicCreateIn {
-  resource_id: number;
-  infographics: InfographicIn[];
 }
 
 export interface VideoIn {
@@ -442,57 +394,6 @@ export interface ISLBiblePutPayload {
   videos: ISLBibleVideoPut[];
 }
 
-
-export interface CommentaryGetItem {
-  commentary_id: number;
-  bookCode: string;
-  chapter: number;
-  verse: string;
-  text: string;
-}
-
-export interface CommentaryPostItem {
-  book_id: number;
-  chapter: number;
-  verse: string;
-  text: string;
-}
-
-export interface CommentaryPutItem extends CommentaryPostItem {
-  commentary_id: number;
-}
-
-export interface CommentaryList {
-  resourceId: number;
-  content: CommentaryGetItem[];
-}
-
-export interface CommentaryPostPayload {
-  resource_id: number;
-  commentary: CommentaryPostItem[];
-}
-
-export interface CommentaryPutPayload {
-  resource_id: number;
-  commentary: CommentaryPutItem[];
-}
-
-export interface OBSStory {
-  id?: number
-  story_no: number
-  title: string
-  text: string
-  url?: string
-}
-
-export interface OBSViewResponse {
-  resource_id: number
-  stories: OBSStory[]
-}
-
-export type OBSMode = "md" | "isl_csv"
-
-
 export interface AuditLogQuery {
   page: number;
   page_size: number;
@@ -525,37 +426,3 @@ export interface TextBibleContent {
   total_books :  number;
   books : BibleBooks[]
 }
-
-export interface ReadingPlanRow {
-  month: string;
-  date: string;
-  reading: string;
-}
-
-export type ApiReadingPlan = {
-  id: number;
-  month: number;
-  day: number;
-  readings: {
-    ref: string;
-    text: string;
-  }[];
-};
-
-export interface VerseOfTheDayRow {
-  year: string;
-  month: string;
-  date: string;
-  verse: string;
-}
-
-export type ApiVerseOfTheDay = {
-  id: string;
-  year: number;
-  month: number;
-  date: number;
-  book_code: string;
-  chapter: number;
-  verse: number;
-};
-

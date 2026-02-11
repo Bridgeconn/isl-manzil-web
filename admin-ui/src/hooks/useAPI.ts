@@ -17,16 +17,9 @@ import {
   editLicense,
   deleteLicense,
   getBibleBooks,
-  getAudioBible,
   uploadBibleBook,
   updateBibleBook,
   deleteBibleBooks,
-  deleteAudioBible,
-  updateAudioBible,
-  uploadAudioBible,
-  fetchInfographics,
-  uploadInfographics,
-  updateInfographic,
   getDictionaries,
   uploadDictionaries,
   updateDictionaries,
@@ -35,35 +28,15 @@ import {
   updateVideos,
   deleteVideos,
   deleteDictionaries,
-  deleteInfographics,
   getISLBible,
   uploadISLBible,
   updateISLBible,
   deleteISLBibles,
-  getCommentaries,
-  uploadCommentaries,
-  updateCommentaries,
-  deleteCommentaries,
   getLogFile,
-  fetchAuditLogs,
   fetchErrorLogs,
   downloadBibleContent,
-  fetchOBS,
-  uploadOBS,
-  updateOBSStory,
-  deleteOBSStories,
-  fetchReadingPlans,
-  uploadReadingPlans,
-  deleteReadingPlans,
-  fetchVerseOfTheDay,
-  uploadVerseOfTheDay,
-  deleteVerseOfTheDay,
 } from "../utils/api";
 import type {
-  AuditLogQuery,
-  BatchInfographicCreateIn,
-  CommentaryPostPayload,
-  CommentaryPutPayload,
   DictionaryUploadInput,
   ErrorLogQuery,
   ISLBibleList,
@@ -320,13 +293,6 @@ export const useGetBibleBooks = (resourceId?: number) =>
     enabled: !!resourceId,
   });
 
-export const useGetAudioBible = (resourceId?: number) =>
-  useQuery({
-    queryKey: ["audio-bible", resourceId],
-    queryFn: () => getAudioBible({ resource_id: resourceId as number }),
-    enabled: !!resourceId,
-  });
-
 export const useUploadBibleBook = () => {
   const queryClient = useQueryClient();
 
@@ -343,29 +309,6 @@ export const useUploadBibleBook = () => {
     },
   });
 };
-
-export const useUploadAudioBible = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: {
-      resource_id: number;
-      name: string;
-      base_url: string;
-      books: Record<string, number>;
-      format: string;
-    }) => uploadAudioBible(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["audio-bible", variables.resource_id],
-      });
-    },
-    onError: (error) => {
-      console.error("Error uploading Audio Bible:", error);
-    },
-  });
-};
-
 export const useUpdateBibleBook = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -381,28 +324,6 @@ export const useUpdateBibleBook = () => {
     },
     onError: (error) => {
       console.error("Error updating Bible:", error);
-    },
-  });
-};
-
-export const useUpdateAudioBible = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: {
-      resource_id: number;
-      name: string;
-      base_url: string;
-      books: Record<string, number>;
-      format: string;
-    }) => updateAudioBible(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["audio-bible", variables.resource_id],
-      });
-    },
-    onError: (error) => {
-      console.error("Error updating Audio Bible:", error);
     },
   });
 };
@@ -423,88 +344,6 @@ export const useDeleteBibleBooks = () => {
     },
     onError: (error) => {
       console.error("Error deleting bible books:", error);
-    },
-  });
-};
-
-export const useDeleteAudioBible = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: { resource_id: number }) => deleteAudioBible(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["audio-bible", variables.resource_id],
-      });
-    },
-    onError: (error) => {
-      console.error("Error deleting audio bible:", error);
-    },
-  });
-};
-
-export const useListInfographics = (resource_id?: number) =>
-  useQuery({
-    queryKey: ["infographics", resource_id],
-    queryFn: () => fetchInfographics(resource_id as number),
-    enabled: !!resource_id,
-  });
-
-export const useUploadInfographics = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: BatchInfographicCreateIn) =>
-      uploadInfographics(payload),
-
-    onSuccess: (_, variables) => {
-      const resourceId = variables.resource_id;
-      if (resourceId) {
-        queryClient.invalidateQueries({
-          queryKey: ["infographics", resourceId],
-        });
-      }
-    },
-
-    onError: (error) => {
-      console.error("Error uploading infographics:", error);
-    },
-  });
-};
-
-export const useUpdateInfographics = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: BatchInfographicCreateIn) =>
-      updateInfographic(payload),
-
-    onSuccess: (_, variables) => {
-      const resourceId = variables.resource_id;
-      if (resourceId) {
-        queryClient.invalidateQueries({
-          queryKey: ["infographics", resourceId],
-        });
-      }
-    },
-
-    onError: (err) => {
-      console.error("Error updating infographic:", err);
-    },
-  });
-};
-
-export const useDeleteInfographics = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: { resource_id: number; ids: number[] }) =>
-      deleteInfographics(payload.ids),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["infographics", variables.resource_id],
-      });
-    },
-    onError: (error) => {
-      console.error("Error deleting infographics:", error);
     },
   });
 };
@@ -699,73 +538,6 @@ export const useDeleteISLBibles = () => {
   });
 };
 
-// commentaries
-
-export const useListCommentaries = (resource_id?: number) =>
-  useQuery({
-    queryKey: ["commentaries", resource_id],
-    queryFn: () => getCommentaries(resource_id as number),
-    enabled: !!resource_id,
-  });
-
-export const useUploadCommentaries = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: CommentaryPostPayload) => uploadCommentaries(payload),
-
-    onSuccess: (_, variables) => {
-      const resourceId = variables.resource_id;
-      if (resourceId) {
-        queryClient.invalidateQueries({
-          queryKey: ["commentaries", resourceId],
-        });
-      }
-    },
-
-    onError: (error) => {
-      console.error("Error uploading commentaries:", error);
-    },
-  });
-};
-
-export const useUpdateCommentaries = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: CommentaryPutPayload) => updateCommentaries(payload),
-
-    onSuccess: (_, variables) => {
-      const resourceId = variables.resource_id;
-      if (resourceId) {
-        queryClient.invalidateQueries({
-          queryKey: ["commentaries", resourceId],
-        });
-      }
-    },
-
-    onError: (err) => {
-      console.error("Error updating commentaries:", err);
-    },
-  });
-};
-
-export const useDeleteCommentaries = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: { ids: number[] }) => deleteCommentaries(payload.ids),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["commentaries"],
-      });
-    },
-    onError: (error) => {
-      console.error("Error deleting Commentaries:", error);
-    },
-  });
-};
-
 export const useLogFile = (logFileNumber: number) => {
   return useQuery({
     queryKey: ["log-file", logFileNumber],
@@ -775,13 +547,6 @@ export const useLogFile = (logFileNumber: number) => {
   });
 };
 
-export const useAuditLogs = (params: AuditLogQuery) => {
-  return useQuery({
-    queryKey: ["audit-logs", params],
-    queryFn: () => fetchAuditLogs(params),
-    refetchOnWindowFocus: false,
-  });
-};
 
 export const useErrorLogs = (params: ErrorLogQuery) => {
   return useQuery({
@@ -795,114 +560,5 @@ export const useDownloadBibleContent = (resource_id?: number) => {
     queryKey: ["bible-content", resource_id],
     queryFn: () => downloadBibleContent(resource_id as number),
     enabled: false,
-  });
-};
-
-// obs
-export const useGetOBS = (resourceId: number) =>
-  useQuery({
-    queryKey: ["obs", resourceId],
-    queryFn: () => fetchOBS(resourceId),
-    enabled: !!resourceId,
-  });
-
-export const useUploadOBS = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: uploadOBS,
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["obs", variables.resource_id],
-      });
-    },
-  });
-};
-
-export const useUpdateOBSStory = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: updateOBSStory,
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["obs", variables.resource_id],
-      });
-    },
-  });
-};
-
-export const useDeleteOBSStories = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: deleteOBSStories,
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["obs", variables.resource_id],
-      });
-    },
-  });
-};
-
-export const useReadingPlans = () =>
-  useQuery({
-    queryKey: ["reading-plans"],
-    queryFn: () => fetchReadingPlans(),
-  });
-
-export const useUploadReadingPlans = () => {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: uploadReadingPlans,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["reading-plans"] });
-    },
-    onError: (error) => {
-      console.error("Error uploading reading plans:", error);
-    },
-  });
-};
-
-export const useDeleteReadingPlans = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: deleteReadingPlans,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reading-plans"] });
-    },
-    onError: (error) => {
-      console.error("Error deleting reading plans:", error);
-    },
-  });
-};
-
-export const useVerseOfTheDay = () =>
-  useQuery({
-    queryKey: ["verse-of-the-day"],
-    queryFn: fetchVerseOfTheDay,
-  });
-
-export const useUploadVerseOfTheDay = () => {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: uploadVerseOfTheDay,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["verse-of-the-day"] });
-    },
-  });
-};
-
-export const useDeleteVerseOfTheDay = () => {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: deleteVerseOfTheDay,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["verse-of-the-day"] });
-    },
   });
 };

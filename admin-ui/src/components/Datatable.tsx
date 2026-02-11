@@ -247,17 +247,17 @@ export function DataTable<TData>({
               )}
             </div>
           )}
-          {addButton && canEdit && (
-            <Button
-              onClick={onAdd}
-              variant="outline"
-              className="flex items-center gap-2 cursor-pointer"
-              disabled={!canEdit}
-            >
-              <Plus className="h-4 w-4" />
-              {AddLabel ?? getAddButtonText(heading)}
-            </Button>
-          )}
+          {addButton && isAdmin && (
+  <Button
+    onClick={onAdd}
+    variant="outline"
+    className="flex items-center gap-2 cursor-pointer"
+  >
+    <Plus className="h-4 w-4" />
+    {AddLabel ?? getAddButtonText(heading)}
+  </Button>
+)}
+
         </div>
         {onClose && (
           <Button

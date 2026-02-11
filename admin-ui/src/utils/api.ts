@@ -6,19 +6,14 @@ import {
   type VersionCreate,
   type VersionUpdate,
   type BibleBooksListResponse,
-  type AudioBibleListResponse,
-  type BatchInfographicCreateIn,
   type DictionaryUploadInput,
   type VideoBulkUpdate,
   type VideoBulkCreate,
   type ISLBibleList,
   type ISLBiblePostPayload,
   type ISLBiblePutPayload,
-  type CommentaryPostPayload,
   type AuditLogQuery,
   type ErrorLogQuery,
-  type OBSViewResponse,
-  type OBSStory,
 } from "./types";
 
 function normalizeMetadata(
@@ -216,28 +211,6 @@ export const getBibleBooks = async (resourceId: number) => {
   return res.data;
 };
 
-export const getAudioBible = async ({
-  resource_id,
-  limit = 50,
-  offset = 0,
-}: {
-  resource_id: number;
-  limit?: number;
-  offset?: number;
-}) => {
-  try {
-    if (!resource_id) throw new Error("resource id is required");
-    const params = { resource_id, limit, offset };
-    const res = await API.get<AudioBibleListResponse>("/audio-bible", {
-      params,
-    });
-    return res.data;
-  } catch (err: any) {
-    console.log(err);
-    if (err) throw err;
-  }
-};
-
 export const uploadBibleBook = async (data: {
   resource_id: number;
   usfm_file: File;
@@ -283,29 +256,6 @@ export const updateBibleBook = async (data: {
   return res.data;
 };
 
-export const updateAudioBible = async (data: {
-  resource_id: number;
-  name: string;
-  base_url: string;
-  books: Record<string, number>;
-  format: string;
-}) => {
-  const res = await API.put(
-    `/audio-bible/${data.resource_id}`,
-    {
-      name: data.name,
-      base_url: data.base_url,
-      books: data.books,
-      format: data.format,
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-  );
-  return res.data;
-};
 
 export const deleteBibleBooks = async (data: {
   resource_id: number;
@@ -314,36 +264,6 @@ export const deleteBibleBooks = async (data: {
   const { resource_id, bookIds } = data;
   const res = await API.delete(`/bible/${resource_id}/books`, {
     data: { bookIds },
-  });
-  return res.data;
-};
-
-export const deleteAudioBible = async (data: { resource_id: number }) => {
-  const { resource_id } = data;
-  const res = await API.delete(`/audio-bible/${resource_id}`);
-  return res.data;
-};
-
-export const fetchInfographics = async (resource_id: number) => {
-  const params = { resource_id, page: 1, limit: 100 };
-  const res = await API.get("/infographics", { params });
-  return res.data;
-};
-
-export const uploadInfographics = async (payload: BatchInfographicCreateIn) => {
-  const res = await API.post("/infographics", payload);
-  return res.data;
-};
-
-export const updateInfographic = async (payload: any) => {
-  const res = await API.put(`/infographics`, payload);
-  return res.data;
-};
-
-export const deleteInfographics = async (infographic_id: number[]) => {
-  console.log("Deleting infographics:", infographic_id);
-  const res = await API.delete(`/infographics`, {
-    data: { ids: infographic_id },
   });
   return res.data;
 };
@@ -437,28 +357,6 @@ export const deleteISLBibles = async (
   return res.data;
 };
 
-export const getCommentaries = async (resource_id: number) => {
-  const res = await API.get(`/commentary/${resource_id}`);
-  return res.data;
-};
-
-export const uploadCommentaries = async (payload: CommentaryPostPayload) => {
-  const res = await API.post("/commentary", payload);
-  return res.data;
-};
-
-export const updateCommentaries = async (payload: CommentaryPostPayload) => {
-  const res = await API.put("/commentary", payload);
-  return res.data;
-};
-
-export const deleteCommentaries = async (commentary_id: number[]) => {
-  const res = await API.delete(`commentary/bulk-delete`, {
-    data: { commentary_ids: commentary_id },
-  });
-  return res.data;
-};
-
 export const getLogFile = async (logFileNo: number): Promise<string> => {
   if (logFileNo < 0 || logFileNo > 10) {
     throw new Error("log_file_no must be between 0 and 10");
@@ -491,81 +389,3 @@ export const downloadBibleContent = async (resource_id : number) =>{
   return res.data
 }
 
-export const fetchOBS = async (resourceId: number) => {
-  const { data } = await API.get<OBSViewResponse>(`/obs/${resourceId}`);
-  return data;
-};
-
-export const uploadOBS = async (payload: {
-  resource_id: number;
-  obs: OBSStory[];
-}) => {
-  const { data } = await API.post("/obs", payload);
-  return data;
-};
-
-export const updateOBSStory = async ({
-  resource_id,
-  story_id,
-  body,
-}: {
-  resource_id: number;
-  story_id: number;
-  body: {
-    story_no: number;
-    title: string;
-    url?: string;
-    text: string;
-  };
-}) => {
-  const { data } = await API.put(`/obs/${resource_id}/story/${story_id}`, body);
-  return data;
-};
-
-export const deleteOBSStories = async ({
-  resource_id,
-  story_nos,
-}: {
-  resource_id: number;
-  story_nos: number[];
-}) => {
-  const { data } = await API.delete(`/obs/${resource_id}`, {
-    data: { story_nos },
-  });
-  return data;
-};
-
-
-export const fetchReadingPlans = async () => {
-  const res = await API.get(`/reading-plans`);
-  return res.data;
-};
-
-export const uploadReadingPlans = async (file: File) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await API.post("/reading-plans/upload", formData);
-  return res.data;
-};
-
-export const deleteReadingPlans = async () => {
-  const res = await API.delete(`/reading-plans`);
-  return res.data;
-}
-
-export const fetchVerseOfTheDay = async () => {
-  const res = await API.get("/verse_of_the_day");
-  return res.data.data.verses;
-};
-
-export const uploadVerseOfTheDay = async (file: File) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await API.post("/verse_of_the_day", formData);
-  return res.data;
-};
-
-export const deleteVerseOfTheDay = async () => {
-  const res = await API.delete("/verse_of_the_day");
-  return res.data;
-};
