@@ -28,11 +28,8 @@ class StandardErrorResponse(BaseModel):
 class ContentTypeEnum(str, Enum):
     """Enumeration of content types."""
     BIBLE = "bible"
-    COMMENTARY = "commentary"
     DICTIONARY = "dictionary"
     VIDEO="video"
-    INFOGRAPHICS = "infographics"
-    OBS = "obs"
     ISL_BIBLE = "isl_bible"
 
 # --- Language Schemas ---

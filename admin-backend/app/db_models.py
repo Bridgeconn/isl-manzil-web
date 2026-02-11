@@ -54,7 +54,7 @@ class License(Base):
     details = Column(String)
 
 class BookLookup(Base):
-    '''Corresponds to table bible_books_look_up in vachan DB(postgres)'''
+    '''Corresponds to table bible_books_look_up in isl DB(postgres)'''
     __tablename__ = 'book_lookup'
 
     book_id = Column(Integer, primary_key=True)
@@ -102,29 +102,9 @@ class CleanBible(Base):
     verse = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
 
-class Video(Base):
-    """Corresponds to table video in vachan DB(postgres)"""
-    __tablename__ = "video"
-    video_id = Column(Integer, primary_key=True, autoincrement=True)
-    resource_id = Column(Integer, ForeignKey("resource.resource_id"))
-    book = Column(String, nullable=False)
-    chapter = Column(Integer, nullable=True)
-    url = Column(String, nullable=False)
-    title = Column(String , nullable=False)
-    description = Column(Text)
-
-class Commentary(Base):
-    """Corresponds to table commentary in vachan DB(postgres)"""
-    __tablename__ = "commentary"
-    commentary_id = Column(Integer, primary_key=True, autoincrement=True)
-    resource_id = Column(Integer, ForeignKey("resource.resource_id"))
-    book_id = Column(Integer,ForeignKey("book_lookup.book_id"))
-    chapter = Column(Integer ,nullable=False)
-    verse = Column(String)
-    text = Column(Text,nullable=False)
 
 class Dictionary(Base):
-    """Corresponds to table dictionary in vachan DB(postgres)"""
+    """Corresponds to table dictionary in isl DB(postgres)"""
     __tablename__ = "dictionary"
 
     word_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -138,44 +118,6 @@ class Dictionary(Base):
     ref = Column(String, nullable=False)
     examples = Column(String, nullable=False)
 
-class AudioBible(Base):
-    """Corresponds to table audio_bible in vachan DB(postgres)"""
-    __tablename__ = "audio_bible"
-    audio_bible_id = Column(Integer, primary_key=True, autoincrement=True)
-    resource_id = Column(Integer, ForeignKey("resource.resource_id"), nullable=False, unique=True)
-    name = Column(Text, nullable=False)
-    base_url = Column(Text, nullable=False)
-    books = Column(JSONB, nullable=False)
-    format = Column(Text, nullable=False)
-    files_missing=Column(JSONB, nullable=True) 
-    test_date = Column(DateTime(timezone=True), nullable=True, default=utcnow)
-
-class Obs(Base):
-    """Corresponds to table obs in vachan DB(postgres)"""
-    __tablename__ = "obs"
-    obs_id = Column(Integer, primary_key=True, autoincrement=True)
-    resource_id = Column(Integer, ForeignKey("resource.resource_id"), nullable=False)
-    story_no = Column(Integer, nullable=False)
-    title = Column(Text, nullable=False)
-    url = Column(Text, nullable=True)
-    text = Column(Text, nullable=False)
 
 
-class Infographic(Base):
-    """Corresponds to table infographic in vachan DB(postgres)"""
-    __tablename__ = "infographic"
 
-
-    id =  Column(Integer, primary_key=True, autoincrement=True)
-    resource_id = Column(
-        Integer,
-        ForeignKey("resource.resource_id", ondelete="RESTRICT"),
-        nullable=False
-    )
-    book_id = Column(
-        Integer,
-        ForeignKey("book_lookup.book_id", ondelete="RESTRICT"),
-        nullable=False
-    )
-    title = Column(String(255), nullable=False)
-    file_name = Column(String(255), nullable=False)

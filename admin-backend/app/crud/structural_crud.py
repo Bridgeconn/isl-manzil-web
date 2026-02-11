@@ -580,12 +580,7 @@ def delete_resources_bulk(db: Session, resource_ids: List[int]):
     related_models = [
         db_models.Bible,
         db_models.CleanBible,
-        db_models.Video,
-        db_models.Commentary,
-        db_models.Dictionary,
-        db_models.AudioBible,
-        db_models.Obs,
-        db_models.Infographic,
+        db_models.Dictionary
     ]
 
     for rid in resource_ids:
