@@ -54,7 +54,7 @@ class License(Base):
     details = Column(String)
 
 class BookLookup(Base):
-    '''Corresponds to table bible_books_look_up in vachan DB(postgres)'''
+    '''Corresponds to table bible_books_look_up in isl DB(postgres)'''
     __tablename__ = 'book_lookup'
 
     book_id = Column(Integer, primary_key=True)
@@ -80,3 +80,44 @@ class Resource(Base):
     updated_by  = Column(Integer, ForeignKey("user.id"), nullable=True)
     updated_at  = Column(DateTime(timezone=True), nullable=True, onupdate=utcnow)
    
+class Bible(Base):
+    """Main bible table storing book content"""
+    __tablename__ = "bible"
+
+    bible_book_id = Column(Integer, primary_key=True, autoincrement=True)
+    resource_id = Column(Integer, ForeignKey("resource.resource_id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("book_lookup.book_id"), nullable=False)
+    usfm = Column(Text, nullable=False)  # USFM format
+    json = Column(JSONB, nullable=False)  # USJ format from usfm-grammar
+    chapters = Column(Integer, nullable=False)
+
+class CleanBible(Base):
+    """Clean verse-by-verse bible content"""
+    __tablename__ = "clean_bible"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    resource_id = Column(Integer, ForeignKey("resource.resource_id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("book_lookup.book_id"), nullable=False)
+    chapter = Column(Integer, nullable=False)
+    verse = Column(Integer, nullable=False)
+    text = Column(Text, nullable=False)
+
+
+class Dictionary(Base):
+    """Corresponds to table dictionary in isl DB(postgres)"""
+    __tablename__ = "dictionary"
+
+    word_id = Column(Integer, primary_key=True, autoincrement=True)
+    resource_id = Column(Integer, ForeignKey("resource.resource_id"), nullable=False)
+    keyword = Column(String, nullable=False)
+    word_forms = Column(String, nullable=False)
+    strongs = Column(String, nullable=False)
+    definition = Column(String, nullable=False)
+    translation_help = Column(String, nullable=False)
+    see_also = Column(String, nullable=False)
+    ref = Column(String, nullable=False)
+    examples = Column(String, nullable=False)
+
+
+
+
