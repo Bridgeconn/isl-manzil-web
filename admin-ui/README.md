@@ -1,73 +1,287 @@
-# React + TypeScript + Vite
+# Complete Setup Guide: React + Vite + TypeScript Stack
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This document provides a detailed, step-by-step guide to set up a modern React application with Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, and TanStack Table from scratch.
 
-Currently, two official plugins are available:
+## Resources used
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A modern React application with:
 
-## React Compiler
+- **Vite** for fast development and building
+- **TypeScript** for type safety
+- **Tailwind CSS** for styling
+- **shadcn/ui** for beautiful UI components
+- **TanStack Query** for server state management
+- **TanStack Table** for table management utilities
+- **Supertoken** for authentication and session management
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 📋 Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Ensure you have these installed:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Node.js** (v18 or higher)
+- **PNPM** (recommended package manager)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Install PNPM if you haven't:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install -g pnpm
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🚀 Step-by-Step Setup
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
+### Step 1: Create Vite React TypeScript Project
+
+```bash
+# Create a new Vite project with React TypeScript template
+pnpm create vite@latest .
+
+# Navigate to project directory
+cd ui
+
+# Install base dependencies
+pnpm install
+```
+
+**What this creates:**
+
+- Basic React + TypeScript setup
+- Vite configuration
+- ESLint configuration
+- Basic folder structure
+
+**Files created:**
+
+- `package.json`
+- `vite.config.ts`
+- `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`
+- `src/App.tsx`, `src/main.tsx`
+- `index.html`
+
+---
+
+### Step 2: Install and Configure Tailwind CSS
+
+```bash
+# Install Tailwind CSS and its dependencies
+pnpm add tailwindcss @tailwindcss/vite
+```
+
+Replace everything in src/index.css with the following:
+`src/index.css `
+
+```bash
+@import "tailwindcss";
+```
+
+**Configure Tailwind CSS:**
+
+Edit `tsconfig.json` file
+
+```javascript
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+Edit `tsconfig.app.json` file
+
+```Javascript
+{
+  "compilerOptions": {
+    // ...
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+    // ...
+  }
+}
+```
+
+**Update vite.config.ts**
+
+Install this
+
+```bash
+pnpm add -D @types/node
+```
+
+Add this to `vite.config.ts`
+
+```Javascript
+import path from "path"
+import tailwindcss from "@tailwindcss/vite"
+import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite"
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
   },
-])
+})
 ```
+
+### Step3 : Set Up shadcn/ui
+
+**Run the CLI**
+
+---
+
+```bash
+# Initialize shadcn/ui
+pnpm dlx shadcn@latest init
+```
+
+**Configuration prompts:**
+
+- ✅ TypeScript: Yes
+- ✅ Style: Default
+- ✅ Base color: Slate (or your preference)
+- ✅ CSS variables: Yes
+
+**What this does:**
+
+- Creates `components.json` configuration file
+- Updates `tailwind.config.js` with shadcn theme
+- Creates `src/lib/utils.ts` utility file
+- Sets up the `src/components/ui/` directory structure
+
+**Add some basic components:**
+
+```bash
+# Install commonly used components
+pnpm dlx shadcn@latest add button
+pnpm dlx shadcn@latest add card
+pnpm dlx shadcn@latest add input
+```
+
+---
+
+### Step 4: Install TanStack Query
+
+```bash
+# Install TanStack Query
+pnpm install @tanstack/react-query
+
+```
+
+Wrapping the App in Tanstack query client
+
+```Javascript
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </React.StrictMode>
+);
+```
+
+**Optional: Add React Query DevTools**
+
+```bash
+pnpm install @tanstack/react-query-devtools
+```
+
+---
+
+### Step 5: Install TanStack Table
+
+```bash
+# Install TanStack Table
+pnpm install @tanstack/react-table
+
+```
+
+### Step 6: Install SuperTokens
+
+```bash
+pnpm add supertokens-auth-react supertokens-web-js
+```
+
+For detailed instructions & code setup, visit the official setup guide:
+
+👉 [SuperTokens Frontend Setup Guide](https://supertokens.com/docs/quickstart/frontend-setup)
+
+---
+
+### Step 6: Create Project Structure
+
+```bash
+# Create necessary directories
+mkdir -p src/components/ui
+mkdir -p src/pages
+mkdir -p src/store
+mkdir -p src/hooks
+mkdir -p src/services
+mkdir -p src/types
+mkdir -p src/utils
+```
+
+**Final project structure:**
+
+```
+src/
+├── components/
+│   └── ui/              # shadcn/ui components
+├── pages/               # Page components
+├── hooks/               # Custom React hooks
+├── services/            # API services
+├── types/               # TypeScript type definitions
+├── utils/               # Utility functions
+├── lib/                 # shadcn/ui utilities
+├── App.tsx              # Main App component
+├── main.tsx            # Application entry point
+└── index.css           # Global styles
+```
+
+---
+
+### Step 7: Test Everything
+
+```bash
+# Start development server
+pnpm run dev
+```
+
+### Visit `http://localhost:5173`
+
+---
+
+## 🚀 Next Steps
+
+Your stack is now ready! You can:
+
+1. **Add routing** with React Router
+2. **Set up API services** for real data fetching
+3. **Install more shadcn/ui components** as needed
+4. **Configure ESLint and Prettier** for code quality
+5. **Set up testing** with Vitest and Testing Library
+
+---
+
+This completes your modern React development stack setup! 🎉
