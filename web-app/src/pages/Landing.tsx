@@ -16,7 +16,7 @@ const Landing = () => {
           <CleanVimeoPlayer videoId={1105756880} />
         </div>
       </div>
-      <div className="bg-gray-500/30 rounded-[28px] p-4">
+      <div className="bg-gray-500/30 rounded-[28px] p-8 pb-1">
 
         <div className="flex flex-col gap-2 w-[360px] mx-auto">
 
