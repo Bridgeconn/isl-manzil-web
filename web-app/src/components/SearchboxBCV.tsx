@@ -40,7 +40,7 @@ const verseUtils = {
 
   isVerseInRange: (
     targetVerse: string | number,
-    verseLabel: string | number
+    verseLabel: string | number,
   ) => {
     const range = verseUtils.parseVerseRange(verseLabel);
     if (!range) return false;
@@ -120,29 +120,30 @@ function SearchboxBCV({
     const mappedBookName = BookData.find(
       (book) =>
         book.book.toLowerCase() === lowerSearchTerm ||
-        book.bookCode.toLowerCase() === lowerSearchTerm
+        book.bookCode.toLowerCase() === lowerSearchTerm,
     );
 
     if (mappedBookName) {
       return availableData.books.find(
-        (book) => book.label.toLowerCase() === mappedBookName.book.toLowerCase()
+        (book) =>
+          book.label.toLowerCase() === mappedBookName.book.toLowerCase(),
       );
     }
 
     return availableData.books.find(
       (book) =>
         book.label.toLowerCase() === lowerSearchTerm ||
-        book.value.toLowerCase() === lowerSearchTerm
+        book.value.toLowerCase() === lowerSearchTerm,
     );
   };
 
   const findVerseInAvailableVerses = (
     availableVerses: VerseOption[],
-    targetVerse: string
+    targetVerse: string,
   ) => {
     return availableVerses.find((v) => {
       const normalizedVerseValue = verseUtils.normalizeVerse(
-        v.value.toString()
+        v.value.toString(),
       );
       const normalizedVerseLabel = verseUtils.normalizeVerse(v.label);
       targetVerse = verseUtils.normalizeVerse(targetVerse);
@@ -316,7 +317,7 @@ function SearchboxBCV({
     if (verse !== null) {
       const availableVerses = await getAvailableVersesForBookAndChapter(
         book.value,
-        chapter
+        chapter,
       );
       const foundVerse = findVerseInAvailableVerses(availableVerses, verse);
       if (!foundVerse) {
@@ -341,12 +342,12 @@ function SearchboxBCV({
       const delay = isBookChange
         ? 800
         : isChapterChange || isBookChange
-        ? 500
-        : 150;
+          ? 500
+          : 150;
       setTimeout(async () => {
         const availableVerses = await getAvailableVersesForBookAndChapter(
           book.value,
-          chapter
+          chapter,
         );
         const foundVerse = findVerseInAvailableVerses(availableVerses, verse);
 
@@ -514,7 +515,7 @@ function SearchboxBCV({
   return (
     <div className={`relative ${className}`}>
       <div
-        className="max-w-[250px] w-full bg-white overflow-hidden rounded-full"
+        className="max-w-[300px] w-full h-10 bg-white overflow-hidden  rounded-full"
         style={{
           boxShadow:
             "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
@@ -541,7 +542,7 @@ function SearchboxBCV({
             disabled={isSearching}
           />
 
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center   ">
             {inputValue && (
               <button
                 onClick={handleClear}
