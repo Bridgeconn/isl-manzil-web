@@ -216,11 +216,6 @@ pnpm install @tanstack/react-query-devtools
 pnpm install @tanstack/react-table
 
 ```
-```bash
-# Install axios
-pnpm add axios
-```
-
 ### Step 6: Install SuperTokens
 
 ```bash
