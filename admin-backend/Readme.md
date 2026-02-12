@@ -135,3 +135,82 @@ To run the app on another port, use the `--port` option. To enable debug mode, u
 ```bash
 uvicorn main:app --port=7000 --debug
 ```
+
+## For Running the App using docker
+
+## Services Overview
+
+### Main Application Stack
+
+1. **isl-admin-db** - PostgreSQL database for the main application
+
+   - Image: `postgres:15.2`
+   - Internal port: `5432`
+   - Database: Configured via environment variables
+
+2. **isl_admin_app** - Main FastAPI backend application
+   - Built from: `../../admin-backend` directory
+   - Port: `8000:8000`
+   - Depends on: `isl-admin-db`
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed on your system:
+
+- [Docker](https://docs.docker.com/get-docker/) (version 20.10 or higher)
+- [Docker Compose](https://docs.docker.com/compose/install/) (version 2.0 or higher)
+- A terminal/command prompt
+- A text editor (for creating the .env file)
+
+## Quick Setup
+
+### Step 1: Create Environment File
+
+1. Navigate to the directory containing your `docker-compose.yml` file
+2. Create a new file named `.env` in the same directory
+3. Add the following configuration to the `.env` file:
+
+```env
+
+#----ISL Admin DB Config----
+ISL_ADMIN_POSTGRES_PORT=5432
+ISL_ADMIN_POSTGRES_USER=user
+ISL_ADMIN_POSTGRES_PASSWORD=secret
+ISL_ADMIN_POSTGRES_DATABASE=db
+
+LOG_LEVEL=<LOG_LEVEL>
+
+```
+
+## Network & Volumes
+
+- **Network**: `va-network` - Internal network for service communication
+- **Volumes**:
+  - `isl-admin-db-vol` - Persistent storage for main database
+  - `isl-logs-vol` - Application logs storage
+
+### Step 2: Build and Start the Application
+
+Open your terminal/command prompt and run this from the docker/docker_backend folder:
+
+```bash
+docker compose up --build
+```
+
+
+This command will:
+
+- Build all the necessary Docker images
+- Start all services (databases and the main application)
+- Show logs from all running containers
+
+**Note:** The first build may take several minutes as Docker downloads and builds all the required images.
+
+### Step 3: Verify Services are Running
+
+Once all services are up and running, verify they're working correctly:
+
+1. **Check Main Application**: Go to `http://localhost:8000`
+   - You should see the FastAPI application running
+   - Go to `http://localhost:8000/docs` to see the API documentation (Swagger UI)
+
