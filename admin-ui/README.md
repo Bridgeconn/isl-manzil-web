@@ -260,6 +260,14 @@ src/
 
 ---
 
+# Environment Configuration
+# Vite automatically loads variables prefixed with VITE_ and makes them accessible via import.meta.env
+# create .env file inside the admin-ui root
+```
+VITE_FASTAPI_BASE_URL=http://localhost:8000
+
+```
+
 ### Step 7: Test Everything
 
 ```bash
