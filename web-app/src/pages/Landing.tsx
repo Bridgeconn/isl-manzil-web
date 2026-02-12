@@ -15,7 +15,7 @@ const Landing = () => {
 
           {/* Tile 1 */}
           <div
-            onClick={() => navigate("/HomePage")}   // 👈 route here
+            onClick={() => navigate("/HomePage")}
             className="text-center cursor-pointer"
           >
             <div className="w-full aspect-[16/9] overflow-hidden rounded-2xl">
