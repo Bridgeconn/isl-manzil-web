@@ -16,6 +16,8 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -31,16 +33,25 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
       ) {
         setIsSettingsOpen(false);
       }
+      if (
+        isMenuOpen &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        menuButtonRef.current &&
+        !menuButtonRef.current.contains(target)
+      ) {
+        setIsMenuOpen(false);
+      }
     };
 
-    if (isSettingsOpen) {
+    if (isSettingsOpen || isMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSettingsOpen]);
+  }, [isSettingsOpen, isMenuOpen]);
 
   useEffect(() => {
     if (isSettingsOpen) {
@@ -58,7 +69,7 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
     <nav className="relative w-full bg-[#000063] min-h-14 flex  items-center">
       {/* <div className="relative w-full mx-auto flex flex-1 gap-8 justify-between"> */}
       <div className="w-full  flex items-center relative">
-        <div className="ml-4 cursor-pointer text-white">
+        <div className="ml-4 cursor-pointer text-white" ref={menuButtonRef}>
           <MenuIcon
             strokeWidth={2.5}
             size={28}
@@ -109,7 +120,13 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
             <Settings />
           </div>
         )}
-        {isMenuOpen && <Menu />}
+      </div>
+      <div className="absolute w-full mt-10 left-0 z-50">
+        {isMenuOpen && (
+          <div ref={menuRef}>
+            <Menu />
+          </div>
+        )}
       </div>
 
       {/* </div> */}

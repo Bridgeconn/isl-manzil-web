@@ -4,7 +4,7 @@ import useBibleStore from "@/store/useBibleStore";
 import BookData from "../assets/data/book_codes.json";
 import { VerseOption } from "@/types/Navigation";
 import { Search, X } from "lucide-react";
-import SearchboxTooltip from "./SearchboxToolTip";
+// import SearchboxTooltip from "./SearchboxToolTip";
 
 interface SearchboxBCVProps {
   placeholder?: string;
@@ -53,14 +53,14 @@ const verseUtils = {
 };
 
 function SearchboxBCV({
-  placeholder = "Search Bible Reference",
+  placeholder = "Search ",
   className = "",
 }: SearchboxBCVProps) {
   const [inputValue, setInputValue] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  // const [isFocused, setIsFocused] = useState(false);
+  // const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -434,8 +434,8 @@ function SearchboxBCV({
     setShowSuggestions(false);
     setTimeout(() => {
       inputRef.current?.focus();
-      setIsFocused(true);
-      setIsHovered(true);
+      // setIsFocused(true);
+      // setIsHovered(true);
     }, 0);
   };
 
@@ -446,7 +446,7 @@ function SearchboxBCV({
   };
 
   const handleFocus = () => {
-    setIsFocused(true);
+    // setIsFocused(true);
     if (errorMessage) {
       setErrorMessage("");
     }
@@ -471,7 +471,7 @@ function SearchboxBCV({
 
   const handleBlur = () => {
     setTimeout(() => {
-      setIsFocused(false);
+      // setIsFocused(false);
       setShowSuggestions(false);
     }, 150);
   };
@@ -493,8 +493,8 @@ function SearchboxBCV({
       const parseResult = parseBCV(inputValue);
       const success = await validateAndNavigate(parseResult);
       if (success) {
-        setIsFocused(false);
-        setIsHovered(false);
+        // setIsFocused(false);
+        // setIsHovered(false);
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -526,8 +526,8 @@ function SearchboxBCV({
       >
         <div
           className="flex items-center p-2 px-4 gap-1 relative"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          // onMouseEnter={() => setIsHovered(true)}
+          // onMouseLeave={() => setIsHovered(false)}
         >
           <input
             ref={inputRef}
@@ -577,9 +577,9 @@ function SearchboxBCV({
           </div>
         )}
       </div>
-      {!errorMessage && !showSuggestions && (isHovered || isFocused) && (
+      {/* {!errorMessage && !showSuggestions && (isHovered || isFocused) && (
         <SearchboxTooltip />
-      )}
+      )} */}
 
       {errorMessage && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 border border-red-300 rounded-md shadow-lg z-50 p-2 text-xs">
