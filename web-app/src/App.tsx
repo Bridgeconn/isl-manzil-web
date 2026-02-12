@@ -31,7 +31,7 @@ function App() {
       <Route path="/dictionary" element={<Dictionary />} />
       <Route path="/projects" element={<BibleProjects />} />
       {/* EXISTING behavior */}
-      <Route path="/*" element={<HomePage />} />
+      <Route path="/HomePage" element={<HomePage />} />
     </Routes>
   </Layout>
 );
