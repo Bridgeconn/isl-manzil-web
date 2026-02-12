@@ -7,6 +7,7 @@ import { MenuIcon } from "lucide-react";
 import Menu from "./Menu";
 
 import Logo from "../assets/images/ISLV_Logo.svg";
+import { Link } from "react-router-dom";
 
 interface NavbarProps {
   items: NavbarItem[];
@@ -78,32 +79,32 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
         </div>
 
         {/* Left Logo */}
-        <div className="ml-4 z-10 h-12 w-12 bg-white rounded-full p-1 overflow-hidden">
-          <img
-            src={Logo}
-            className=" w-auto h-auto "
-            aria-placeholder="logo"
-            alt="logo"
-          />
-        </div>
+        <Link to="/" className="ml-4 flex items-center gap-4">
+          <div className=" z-10 h-12 w-12 bg-white rounded-full p-1 overflow-hidden">
+            <img
+              src={Logo}
+              className=" w-auto h-auto "
+              aria-placeholder="logo"
+              alt="logo"
+            />
+          </div>
 
-        <div className="flex items-center ml-4 text-white">
           {items.map((item) => (
             <div
               key={item.name}
-              className="py-1 sm:py-2 cursor-pointer font-bold whitespace-nowrap"
+              className="py-1 sm:py-2 cursor-pointer font-bold whitespace-nowrap text-white"
             >
               {item.name}
             </div>
           ))}
-        </div>
+        </Link>
       </div>
       {/* <div className="flex items-center justify-between gap-8 flex-1"> */}
       <div className="absolute  left-1/2 transform -translate-x-1/2">
         <SearchboxBCV />
       </div>
       <div
-        className="mr-10 h-12 w-12 bg-white rounded-full flex-shrink-0"
+        className=" h-12 w-12 bg-white rounded-full flex-shrink-0"
         ref={settingsRef}
       >
         <img
