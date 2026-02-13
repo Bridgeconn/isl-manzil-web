@@ -1,16 +1,39 @@
 """Main FastAPI application for the ISL-Admin server."""
-from fastapi import FastAPI,Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 
 from fastapi.middleware.cors import CORSMiddleware
+from supertokens_python import init, InputAppInfo
+from supertokens_python.supertokens import SupertokensConfig
+from supertokens_python.recipe import emailpassword, session
+from supertokens_python.framework.fastapi import get_middleware
+
 from database import init_db
 from load_data import load_initial_data
 from router.structural import router as structural_router
 from custom_exceptions import BaseCustomException
 from schema import StandardErrorResponse
 
+
+# Initialize SuperTokens
+init(
+    app_info=InputAppInfo(
+        app_name="Admin UI",
+        api_domain="http://localhost:8000",
+        website_domain="http://localhost:5173",
+        api_base_path="/auth",
+    ),
+    framework="fastapi",
+    recipe_list=[
+        emailpassword.init(),
+        session.init(),
+    ],
+    supertokens_config=SupertokensConfig(
+        connection_uri="http://127.0.0.1:3567"
+    )
+)
 
 init_db()
 
@@ -23,10 +46,15 @@ app = FastAPI(
     ),
 )
 
+# Add SuperTokens middleware FIRST (before CORS)
+app.add_middleware(get_middleware())
 
+# CORS middleware AFTER SuperTokens
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

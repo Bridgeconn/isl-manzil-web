@@ -1,4 +1,5 @@
 """Structural Endpoints."""
+# pylint: disable=unused-argument
 from typing import Optional, Union, List
 from fastapi import (
     APIRouter,
@@ -8,7 +9,9 @@ from fastapi import (
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import schema
+import db_models
 from crud import structural_crud
+from auth_dependencies import get_current_user
 from dependencies import get_db, logger
 from custom_exceptions import (
     NotAvailableException,
@@ -27,6 +30,7 @@ router = APIRouter()
 async def get_versions(
     version_id: Optional[int] = Query(None),
     abbreviation: Optional[str] = Query(None),
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db),
 ):
     """Get all versions or a single version by ID."""
@@ -43,6 +47,7 @@ async def get_versions(
 @router.post("/versions", response_model=schema.VersionResponse,tags=["Version"])
 async def create_version(
     version: schema.VersionCreate,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Create a new version."""
@@ -55,6 +60,7 @@ async def create_version(
 async def update_version(
     version_id: int,
     version: schema.VersionUpdate,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Update an existing version by ID."""
@@ -69,6 +75,7 @@ async def update_version(
 )
 async def delete_versions_bulk(
     request: schema.VersionBulkDelete,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Delete versions by ID."""
@@ -125,6 +132,7 @@ async def delete_versions_bulk(
 )
 async def get_languages(
     params: schema.LanguageQueryParams = Depends(),
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Get languages with pagination and optional filtering."""
@@ -166,6 +174,7 @@ async def get_languages(
 )
 async def create_language(
     lang: schema.LanguageCreate,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Create a new language."""
@@ -187,6 +196,7 @@ async def create_language(
 async def update_language(
     language_id: int,
     lang: schema.LanguageUpdate,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Update an existing language."""
@@ -213,6 +223,7 @@ async def update_language(
 )
 async def delete_languages_bulk(
     request: schema.LanguageBulkDelete,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Delete multiple languages."""
@@ -257,6 +268,7 @@ async def delete_languages_bulk(
 async def get_licenses(
     license_id: Optional[int] = Query(None, description="Filter by license ID"),
     name: Optional[str] = Query(None, description="Filter by license name (partial match)"),
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Get licenses with optional filtering."""
@@ -277,6 +289,7 @@ async def get_licenses(
 )
 async def create_license(
     license_: schema.LicenseCreate,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Create a new license."""
@@ -293,6 +306,7 @@ async def create_license(
 async def update_license(
     license_id: int,
     license_: schema.LicenseUpdate,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Update an existing license."""
@@ -314,6 +328,7 @@ async def update_license(
 )
 async def delete_licenses_bulk(
     request: schema.LicenseBulkDelete,
+    current_user: db_models.User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
 ):
     """Delete multiple licenses."""
@@ -358,6 +373,7 @@ async def delete_licenses_bulk(
 )
 async def list_resources_route(
     params: schema.ResourceQueryParams = Depends(),
+    current_user: db_models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get resources with pagination and optional filtering."""
@@ -376,6 +392,7 @@ async def list_resources_route(
 @router.post("/resources", response_model=schema.ResourceResponse, tags=["Resource"])
 async def create_resource_route(
     payload: schema.ResourceCreate,
+    current_user: db_models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """ API endpoint to create a new resource."""
@@ -387,6 +404,7 @@ async def create_resource_route(
 @router.put("/resources", response_model=schema.ResourceResponse, tags=["Resource"])
 async def update_resource_route(
     payload: schema.ResourceUpdate,
+    current_user: db_models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """ API endpoint to update a resource."""
@@ -400,6 +418,7 @@ async def update_resource_route(
 )
 async def delete_resources_bulk(
     request: schema.ResourceBulkDelete,
+    current_user: db_models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Delete multiple resources."""
