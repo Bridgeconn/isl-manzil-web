@@ -4,7 +4,7 @@ import useBibleStore from "@/store/useBibleStore";
 import BookData from "../assets/data/book_codes.json";
 import { VerseOption } from "@/types/Navigation";
 import { Search, X } from "lucide-react";
-import SearchboxTooltip from "./SearchboxToolTip";
+// import SearchboxTooltip from "./SearchboxToolTip";
 
 interface SearchboxBCVProps {
   placeholder?: string;
@@ -40,7 +40,7 @@ const verseUtils = {
 
   isVerseInRange: (
     targetVerse: string | number,
-    verseLabel: string | number
+    verseLabel: string | number,
   ) => {
     const range = verseUtils.parseVerseRange(verseLabel);
     if (!range) return false;
@@ -53,14 +53,14 @@ const verseUtils = {
 };
 
 function SearchboxBCV({
-  placeholder = "Search Bible Reference",
+  placeholder = "Search ",
   className = "",
 }: SearchboxBCVProps) {
   const [inputValue, setInputValue] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  // const [isFocused, setIsFocused] = useState(false);
+  // const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -120,29 +120,30 @@ function SearchboxBCV({
     const mappedBookName = BookData.find(
       (book) =>
         book.book.toLowerCase() === lowerSearchTerm ||
-        book.bookCode.toLowerCase() === lowerSearchTerm
+        book.bookCode.toLowerCase() === lowerSearchTerm,
     );
 
     if (mappedBookName) {
       return availableData.books.find(
-        (book) => book.label.toLowerCase() === mappedBookName.book.toLowerCase()
+        (book) =>
+          book.label.toLowerCase() === mappedBookName.book.toLowerCase(),
       );
     }
 
     return availableData.books.find(
       (book) =>
         book.label.toLowerCase() === lowerSearchTerm ||
-        book.value.toLowerCase() === lowerSearchTerm
+        book.value.toLowerCase() === lowerSearchTerm,
     );
   };
 
   const findVerseInAvailableVerses = (
     availableVerses: VerseOption[],
-    targetVerse: string
+    targetVerse: string,
   ) => {
     return availableVerses.find((v) => {
       const normalizedVerseValue = verseUtils.normalizeVerse(
-        v.value.toString()
+        v.value.toString(),
       );
       const normalizedVerseLabel = verseUtils.normalizeVerse(v.label);
       targetVerse = verseUtils.normalizeVerse(targetVerse);
@@ -316,7 +317,7 @@ function SearchboxBCV({
     if (verse !== null) {
       const availableVerses = await getAvailableVersesForBookAndChapter(
         book.value,
-        chapter
+        chapter,
       );
       const foundVerse = findVerseInAvailableVerses(availableVerses, verse);
       if (!foundVerse) {
@@ -341,12 +342,12 @@ function SearchboxBCV({
       const delay = isBookChange
         ? 800
         : isChapterChange || isBookChange
-        ? 500
-        : 150;
+          ? 500
+          : 150;
       setTimeout(async () => {
         const availableVerses = await getAvailableVersesForBookAndChapter(
           book.value,
-          chapter
+          chapter,
         );
         const foundVerse = findVerseInAvailableVerses(availableVerses, verse);
 
@@ -433,8 +434,8 @@ function SearchboxBCV({
     setShowSuggestions(false);
     setTimeout(() => {
       inputRef.current?.focus();
-      setIsFocused(true);
-      setIsHovered(true);
+      // setIsFocused(true);
+      // setIsHovered(true);
     }, 0);
   };
 
@@ -445,7 +446,7 @@ function SearchboxBCV({
   };
 
   const handleFocus = () => {
-    setIsFocused(true);
+    // setIsFocused(true);
     if (errorMessage) {
       setErrorMessage("");
     }
@@ -470,7 +471,7 @@ function SearchboxBCV({
 
   const handleBlur = () => {
     setTimeout(() => {
-      setIsFocused(false);
+      // setIsFocused(false);
       setShowSuggestions(false);
     }, 150);
   };
@@ -492,8 +493,8 @@ function SearchboxBCV({
       const parseResult = parseBCV(inputValue);
       const success = await validateAndNavigate(parseResult);
       if (success) {
-        setIsFocused(false);
-        setIsHovered(false);
+        // setIsFocused(false);
+        // setIsHovered(false);
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -514,7 +515,7 @@ function SearchboxBCV({
   return (
     <div className={`relative ${className}`}>
       <div
-        className="max-w-[250px] w-full bg-white overflow-hidden rounded-full"
+        className="max-w-[300px] w-full h-10 bg-white overflow-hidden  rounded-full"
         style={{
           boxShadow:
             "rgba(0, 0, 0, 0.2) 0px 4px 6px -1px," +
@@ -525,8 +526,8 @@ function SearchboxBCV({
       >
         <div
           className="flex items-center p-2 px-4 gap-1 relative"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          // onMouseEnter={() => setIsHovered(true)}
+          // onMouseLeave={() => setIsHovered(false)}
         >
           <input
             ref={inputRef}
@@ -541,7 +542,7 @@ function SearchboxBCV({
             disabled={isSearching}
           />
 
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center   ">
             {inputValue && (
               <button
                 onClick={handleClear}
@@ -576,9 +577,9 @@ function SearchboxBCV({
           </div>
         )}
       </div>
-      {!errorMessage && !showSuggestions && (isHovered || isFocused) && (
+      {/* {!errorMessage && !showSuggestions && (isHovered || isFocused) && (
         <SearchboxTooltip />
-      )}
+      )} */}
 
       {errorMessage && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-red-50 border border-red-300 rounded-md shadow-lg z-50 p-2 text-xs">
