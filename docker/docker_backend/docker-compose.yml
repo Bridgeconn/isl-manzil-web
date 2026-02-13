@@ -1,6 +1,50 @@
 version: "3.9"
 services:
 
+  # === SuperTokens Core Service ===
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
+    depends_on:
+      - supertokens-db
+    environment:
+      - POSTGRESQL_CONNECTION_URI=postgresql://postgres:${SUPERTOKENS_DB_PASSWORD}@supertokens-db:5432/supertokens
+    ports:
+      - "3567:3567"
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3567/hello"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - isl-network
+    container_name: supertokens_core
+
+  # === SuperTokens Database ===
+  supertokens-db:
+    image: postgres:15.2
+    healthcheck:
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${SUPERTOKENS_DB_PASSWORD}
+      - POSTGRES_DB=supertokens
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    expose:
+      - 5432
+    networks:
+      - isl-network
+    volumes:
+      - supertokens-db-vol:/var/lib/postgresql/data
+    container_name: supertokens_db
+
   # === ISL ADMIN DB ===
   isl-admin-db:
     image: postgres:15.2
@@ -46,7 +90,10 @@ services:
       - ISL_ADMIN_POSTGRES_USER=${ISL_ADMIN_POSTGRES_USER}
       - ISL_ADMIN_POSTGRES_PASSWORD=${ISL_ADMIN_POSTGRES_PASSWORD}
       - ISL_ADMIN_POSTGRES_DATABASE=${ISL_ADMIN_POSTGRES_DATABASE}
- 
+      
+      # === SuperTokens ===
+      - SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
+
       - DOCKER_RUN=True
 
     command: uvicorn main:app --host 0.0.0.0 --port 8000
@@ -55,6 +102,7 @@ services:
     restart: always
     depends_on:
       - isl-admin-db
+      - supertokens
     # expose:
     #   - 8000
     ports:
@@ -69,3 +117,4 @@ networks:
 volumes:
   isl-admin-db-vol:
   isl-logs-vol:
+  supertokens-db-vol:
