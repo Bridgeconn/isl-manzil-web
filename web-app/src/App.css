@@ -111,3 +111,12 @@
 .hover-text-black-bg-gray:hover span {
   color: black !important;
 }
+/* Hide scrollbar */
+.layout-main {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.layout-main::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
