@@ -204,7 +204,7 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
     <div className="w-full mx-auto my-auto">
       <div
         ref={containerRef}
-        className={`relative w-full max-w-6xl mx-auto overflow-hidden ${
+        className={`relative w-full max-w-6xl mx-auto overflow-hidden rounded-3xl ${
           isFullscreenMode
             ? "h-screen flex flex-col justify-center bg-black"
             : "aspect-video bg-black"
