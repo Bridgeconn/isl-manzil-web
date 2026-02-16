@@ -1,4 +1,4 @@
-import { useNavigate , useLocation} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Menu({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
@@ -14,43 +14,41 @@ export default function Menu({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="absolute w-40 left-0 bg-white border border-gray-200">
-  
       {/* Bible */}
       <div
         onClick={() => !isBible && go("/HomePage")}
         className={`px-2 py-2 transition ${
           isBible
-  ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
+            ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
             : "cursor-pointer hover:bg-gray-200"
         }`}
       >
         Bible
       </div>
-  
+
       {/* Dictionary */}
       <div
         onClick={() => !isDictionary && go("/dictionary")}
         className={`px-2 py-2 transition ${
           isDictionary
-  ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
+            ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
             : "cursor-pointer hover:bg-gray-200"
         }`}
       >
         Dictionary
       </div>
-  
+
       {/* Projects */}
       <div
         onClick={() => !isProjects && go("/projects")}
         className={`px-2 py-2 transition ${
           isProjects
-          ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
+            ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
             : "cursor-pointer hover:bg-gray-200"
         }`}
       >
         The Bible Project
       </div>
-  
     </div>
   );
-}  
+}

@@ -52,9 +52,7 @@ const verseUtils = {
   },
 };
 
-function SearchboxBCV({
-  className = "",
-}: SearchboxBCVProps) {
+function SearchboxBCV({ className = "" }: SearchboxBCVProps) {
   const [inputValue, setInputValue] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -74,7 +72,7 @@ function SearchboxBCV({
     } else if (location.pathname === "/dictionary") {
       return "Search Dictionary";
     } else if (location.pathname === "/projects") {
-      return "Search The Bible Projects";
+      return "Search The Bible Project";
     }
     return "Search Bible Reference";
   };
@@ -590,7 +588,7 @@ function SearchboxBCV({
           </div>
         )}
       </div>
-{isHomepage &&
+      {isHomepage &&
         !errorMessage &&
         !showSuggestions &&
         (isHovered || isFocused) && <SearchboxTooltip />}
