@@ -20,7 +20,7 @@ export default function Menu({ onClose }: { onClose: () => void }) {
         onClick={() => !isBible && go("/HomePage")}
         className={`px-2 py-2 transition ${
           isBible
-            ? "text-gray-400 cursor-not-allowed bg-gray-50"
+  ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
             : "cursor-pointer hover:bg-gray-200"
         }`}
       >
@@ -32,7 +32,7 @@ export default function Menu({ onClose }: { onClose: () => void }) {
         onClick={() => !isDictionary && go("/dictionary")}
         className={`px-2 py-2 transition ${
           isDictionary
-            ? "text-gray-400 cursor-not-allowed bg-gray-50"
+  ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
             : "cursor-pointer hover:bg-gray-200"
         }`}
       >
@@ -44,7 +44,7 @@ export default function Menu({ onClose }: { onClose: () => void }) {
         onClick={() => !isProjects && go("/projects")}
         className={`px-2 py-2 transition ${
           isProjects
-            ? "text-gray-400 cursor-not-allowed bg-gray-50"
+          ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
             : "cursor-pointer hover:bg-gray-200"
         }`}
       >
