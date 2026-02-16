@@ -428,14 +428,14 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
           `}</style>
 
           <div
-
             ref={cleanVimeoPlayerRef}
-
-            className="w-full h-full cursor-pointer"
-
-            onClick={togglePlay}
-
+            className="w-full h-full pointer-events-none"
           />
+          <div
+            className="absolute inset-0 cursor-pointer z-10"
+            onClick={togglePlay}
+          />
+
 
           {(cleanVimeoIsEnded || cleanVimeoIsReplaying) && (
             <div className="absolute inset-0 bg-black flex items-center justify-center z-30">
