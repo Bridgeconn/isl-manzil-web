@@ -61,3 +61,16 @@ SuperTokens Database
 Backend will be available at:
 
 http://localhost:8000
+
+## env file should contain
+```
+SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
+SUPERTOKENS_API_KEY=Akjnv3iunvsoi8=-sackjij3ncisds
+SUPERTOKENS_DB_PASSWORD=supertokens_dev_password_123
+ISL_ADMIN_POSTGRES_USER=postgres
+ISL_ADMIN_POSTGRES_PASSWORD=password
+ISL_ADMIN_POSTGRES_DATABASE=isl_admin
+ISL_ADMIN_POSTGRES_PORT=5432
+LOG_LEVEL=INFO
+ENV=development
+```

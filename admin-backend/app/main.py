@@ -1,13 +1,23 @@
 """Main FastAPI application for the ISL-Admin server."""
+
+import os
+from dotenv import load_dotenv
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 
 from fastapi.middleware.cors import CORSMiddleware
+
 from supertokens_python import init, InputAppInfo
 from supertokens_python.supertokens import SupertokensConfig
-from supertokens_python.recipe import emailpassword, session
+from supertokens_python.recipe import (
+    emailpassword,
+    session,
+    userroles,
+    dashboard,
+)
 from supertokens_python.framework.fastapi import get_middleware
 
 from database import init_db
@@ -17,61 +27,76 @@ from custom_exceptions import BaseCustomException
 from schema import StandardErrorResponse
 
 
-# Initialize SuperTokens
+load_dotenv()
+
+SUPERTOKENS_CONNECTION_URI = os.getenv("SUPERTOKENS_CONNECTION_URI")
+SUPERTOKENS_API_KEY = os.getenv("SUPERTOKENS_API_KEY")
+
+
 init(
     app_info=InputAppInfo(
-        app_name="Admin UI",
-        api_domain="http://localhost:8000",
-        website_domain="http://localhost:5173",
+        app_name="ISL Admin",
+        api_domain=os.getenv("API_DOMAIN", "http://localhost:8000"),
+        website_domain=os.getenv("WEBSITE_DOMAIN", "http://localhost:5173"),
         api_base_path="/auth",
+        website_base_path="/auth",
     ),
+
     framework="fastapi",
-    recipe_list=[
-        emailpassword.init(),
-        session.init(),
-    ],
+
     supertokens_config=SupertokensConfig(
-        connection_uri="http://127.0.0.1:3567"
-    )
+        connection_uri=SUPERTOKENS_CONNECTION_URI,
+        api_key=SUPERTOKENS_API_KEY,
+    ),
+
+    recipe_list=[
+
+        session.init(
+            cookie_secure=os.getenv("ENV") == "production",
+            cookie_same_site="lax",
+            expose_access_token_to_frontend_in_cookie_based_auth=True,
+        ),
+
+        emailpassword.init(),
+
+        userroles.init(),      
+        dashboard.init(),      
+    ],
+
+    mode="asgi",
 )
 
+
 init_db()
+
 
 app = FastAPI(
     title="isl-admin",
     version="1.0.0",
     description=(
-        "The ISL-Admin server application that provides REST APIs to access "
-        "the features provided by the module."
+        "The ISL-Admin server application that provides REST APIs "
+        "to access module features."
     ),
 )
 
-# Add SuperTokens middleware FIRST (before CORS)
+
 app.add_middleware(get_middleware())
 
-# CORS middleware AFTER SuperTokens
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        # "https://admin.yourdomain.com"   # add in production
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 @app.exception_handler(BaseCustomException)
 async def custom_exception_handler(request: Request, exc: BaseCustomException):
-    """
-    Handle all custom exceptions (NotAvailableException, BadRequestException, etc.)
-    and log them to the error_log table.
-    """
-    # await log_error_to_db(
-    #     request,
-    #     exc,
-    #     status_code=exc.status_code,
-    #     message=str(exc.detail),
-    # )
 
     error_response = StandardErrorResponse(
         error=exc.name,
@@ -86,39 +111,21 @@ async def custom_exception_handler(request: Request, exc: BaseCustomException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """
-    Log FastAPI/Pydantic validation errors as 422 and
-    return the usual {"detail": [...]} structure.
-    """
-    raw_errors = exc.errors()  # list[dict]
 
-    # Make sure everything is JSON-serializable
+    raw_errors = exc.errors()
     safe_errors = jsonable_encoder(raw_errors)
-
-    # Build a clean message for logging: join all "msg" strings
-    msg_list = [err.get("msg", "") for err in raw_errors]
-    clean_message = " | ".join(m for m in msg_list if m)
-
-    # Try logging — but NEVER let logging break the response
-    # try:
-    #     await log_error_to_db(
-    #         request,
-    #         exc,
-    #         status_code=422,
-    #         message=clean_message or str(raw_errors),
-    #     )
-    # except Exception as logging_err:  # pylint: disable=broad-exception-caught
-    #     print("ErrorLog: unexpected error while logging validation error:", logging_err)
 
     return JSONResponse(
         status_code=422,
         content={"detail": safe_errors},
     )
 
+
 @app.get("/")
 async def root():
-    """Simple health-check endpoint to verify the app is running."""
     return {"message": "ISL-Admin app is running successfully"}
+
 
 load_initial_data()
 app.include_router(structural_router)
+
