@@ -65,6 +65,16 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
       document.body.classList.remove("settings-open");
     };
   }, [isSettingsOpen]);
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.classList.add("menu-open");
+    } else {
+      document.body.classList.remove("menu-open");
+    }
+    return () => {
+      document.body.classList.remove("menu-open");
+    };
+  }, [isMenuOpen]);
 
   return (
     <nav className="relative w-full bg-[#000063] min-h-14 flex  items-center">
@@ -99,10 +109,10 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
         </Link>
       </div>
       {!isLandingPage && (
-  <div className="absolute  left-1/2 transform -translate-x-1/2">
-    <SearchboxBCV />
-  </div>
-)}
+        <div className="absolute  left-1/2 transform -translate-x-1/2">
+          <SearchboxBCV />
+        </div>
+      )}
       <div
         className=" h-12 w-12 bg-white rounded-full flex-shrink-0"
         ref={settingsRef}
