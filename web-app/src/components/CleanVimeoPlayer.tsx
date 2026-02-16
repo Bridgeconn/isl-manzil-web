@@ -432,7 +432,7 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
             className="w-full h-full pointer-events-none"
           />
           <div
-            className="absolute inset-0 cursor-pointer z-10"
+            className="absolute inset-0 z-10"
             onClick={togglePlay}
           />
 
