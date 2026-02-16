@@ -180,12 +180,13 @@ ISL_ADMIN_POSTGRES_DATABASE=db
 
 LOG_LEVEL=<LOG_LEVEL>
 
-SUPERTOKENS_CONNECTION_URI=http://localhost:3567
+SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
 SUPERTOKENS_API_KEY=Akjnv3iunvsoi8=-sackjij3ncisds
 API_DOMAIN=http://localhost:8000
 WEBSITE_DOMAIN=http://localhost:5173
-ENV=development
 VALID_API_KEYS=your api key
+SMTP_HOST=localhost
+SMTP_PORT=1025
 
 ```
 

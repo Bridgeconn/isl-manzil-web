@@ -9,16 +9,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 
 from fastapi.middleware.cors import CORSMiddleware
-
-from supertokens_python import init, InputAppInfo
-from supertokens_python.supertokens import SupertokensConfig
-from supertokens_python.recipe import (
-    emailpassword,
-    session,
-    userroles,
-    dashboard,
-)
+from supertokens_python import get_all_cors_headers
 from supertokens_python.framework.fastapi import get_middleware
+import supertokens_config  # noqa: F401
 
 from database import init_db
 from load_data import load_initial_data
@@ -26,50 +19,12 @@ from router.structural import router as structural_router
 from custom_exceptions import BaseCustomException
 from schema import StandardErrorResponse
 
-
 load_dotenv()
 
-SUPERTOKENS_CONNECTION_URI = os.getenv("SUPERTOKENS_CONNECTION_URI")
-SUPERTOKENS_API_KEY = os.getenv("SUPERTOKENS_API_KEY")
-
-
-init(
-    app_info=InputAppInfo(
-        app_name="ISL Admin",
-        api_domain=os.getenv("API_DOMAIN", "http://localhost:8000"),
-        website_domain=os.getenv("WEBSITE_DOMAIN", "http://localhost:5173"),
-        api_base_path="/auth",
-        website_base_path="/auth",
-    ),
-
-    framework="fastapi",
-
-    supertokens_config=SupertokensConfig(
-        connection_uri=SUPERTOKENS_CONNECTION_URI,
-        api_key=SUPERTOKENS_API_KEY,
-    ),
-
-    recipe_list=[
-
-        session.init(
-            cookie_secure=os.getenv("ENV") == "production",
-            cookie_same_site="lax",
-            expose_access_token_to_frontend_in_cookie_based_auth=True,
-        ),
-
-        emailpassword.init(),
-
-        userroles.init(),      
-        dashboard.init(),      
-    ],
-
-    mode="asgi",
-)
-
-
+# Initialize database
 init_db()
 
-
+# Create FastAPI app
 app = FastAPI(
     title="isl-admin",
     version="1.0.0",
@@ -79,25 +34,31 @@ app = FastAPI(
     ),
 )
 
-
+# Add SuperTokens middleware
 app.add_middleware(get_middleware())
 
+# Configure CORS
+allowed_origins = [
+    os.getenv("WEBSITE_DOMAIN", "http://localhost:5173"),
+    # Keep localhost for local dev
+    "http://localhost:5173",
+    "http://localhost:5174",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        # "https://admin.yourdomain.com"   # add in production
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "PUT", "POST", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type"] + get_all_cors_headers(),
 )
 
 
 @app.exception_handler(BaseCustomException)
-async def custom_exception_handler(request: Request, exc: BaseCustomException):
-
+async def custom_exception_handler(
+    request: Request, exc: BaseCustomException
+):
+    """Handle custom application exceptions."""
     error_response = StandardErrorResponse(
         error=exc.name,
         details=exc.detail,
@@ -110,8 +71,10 @@ async def custom_exception_handler(request: Request, exc: BaseCustomException):
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
+    """Handle FastAPI/Pydantic validation errors."""
     raw_errors = exc.errors()
     safe_errors = jsonable_encoder(raw_errors)
 
@@ -123,6 +86,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.get("/")
 async def root():
+    """Health check endpoint."""
     return {"message": "ISL-Admin app is running successfully"}
 
 
