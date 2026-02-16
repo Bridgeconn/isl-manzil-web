@@ -7,20 +7,37 @@ import HoverControlledGif from "./HoverControlledGif";
 interface ButtonHideProps {
   isVisible: boolean;
   toggle: () => void;
+  alwaysShowImage?: boolean;
+  size?: string;
 }
 
-const ButtonHide: React.FC<ButtonHideProps> = ({ isVisible, toggle }) => {
-  const buttonImage = isVisible ? HideImage : ShowImage;
+const ButtonHide: React.FC<ButtonHideProps> = ({
+  isVisible,
+  toggle,
+  alwaysShowImage = false,
+  size,
+}) => {
+  const buttonImage = alwaysShowImage
+    ? ShowImage
+    : isVisible
+      ? HideImage
+      : ShowImage;
   return (
     <div>
       <button
         onClick={toggle}
-        title={`${isVisible ? "Hide Text" : "Show Text"}`}
+        title={`${
+          alwaysShowImage
+            ? "Show AboutUs"
+            : isVisible
+              ? "Hide Text"
+              : "Show Text"
+        }`}
       >
         <HoverControlledGif
           src={buttonImage}
           alt="show/hide"
-          className="w-20 h-14 object-contain cursor-pointer"
+          className={`${size ?? "w-20"}   object-contain cursor-pointer`}
           duration={3000}
           loopCount={Infinity}
         />

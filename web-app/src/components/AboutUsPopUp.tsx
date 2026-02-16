@@ -7,15 +7,18 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { X } from "lucide-react";
+
 import useThemeStore from "@/store/useThemeStore";
 import CleanVimeoPlayer from "./CleanVimeoPlayer";
 import useModalStore from "@/store/useModalStore";
+import HoverControlledGif from "./HoverControlledGif";
 
-const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
-  showAbout,
-  onClose,
-}) => {
+const AboutUsPopUp: React.FC<{
+  showAbout: boolean;
+  onClose: () => void;
+  hideVideoSection?: boolean;
+  closeImage?: string;
+}> = ({ showAbout, onClose, hideVideoSection = false, closeImage }) => {
   const { fontType, fontSize, currentTheme } = useThemeStore();
 
   const setModalOpen = useModalStore((state) => state.setModalOpen);
@@ -34,13 +37,23 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
           className="absolute right-5 top-5 rounded-md cursor-pointer focus:outline-none"
           asChild
         >
-          <X
+          {/* <X
             style={{
               color: currentTheme?.textColor,
               width: "20px",
               height: "20px",
             }}
-          />
+          /> */}
+
+          {closeImage && (
+            <HoverControlledGif
+              src={closeImage}
+              alt="close"
+              className="w-14 h-14 -mt-4 cursor-pointer"
+              duration={3000}
+              loopCount={Infinity}
+            />
+          )}
         </DialogClose>
         <DialogHeader className="p-4 border-b">
           <DialogTitle
@@ -66,13 +79,16 @@ const AboutUsPopUp: React.FC<{ showAbout: boolean; onClose: () => void }> = ({
             color: currentTheme?.textColor,
           }}
         >
-          <p style={{ fontSize: "1.4em", marginBottom: 0 }}>
-            The ISLV Bible Website
-          </p>
-          <div>
-            <CleanVimeoPlayer videoId={1105756880} />
-          </div>
-
+          {!hideVideoSection && (
+            <div>
+              <p style={{ fontSize: "1.4em", marginBottom: 0 }}>
+                The ISLV Bible Website
+              </p>
+              <div>
+                <CleanVimeoPlayer videoId={1105756880} />
+              </div>
+            </div>
+          )}
           <p>
             The <strong>Indian Sign Language Video (ISLV) Bible</strong> is a
             web application presented in Indian Sign Language. Its aim is to
