@@ -8,35 +8,49 @@ export default function Menu({ onClose }: { onClose: () => void }) {
     navigate(path);
     onClose();
   };
-   const showBible = location.pathname !== "/HomePage";
-   const showDictionary = location.pathname !== "/dictionary";
-   const showProjects = location.pathname !== "/projects";
- 
+  const isBible = location.pathname === "/HomePage";
+  const isDictionary = location.pathname === "/dictionary";
+  const isProjects = location.pathname === "/projects";
+
   return (
-    <div className="absolute w-40 left-0 bg-white border border-gray-200    ">
-      {showBible && (
-      <div className="px-2 py-2 cursor-pointer hover:bg-gray-200 transition">
-        <p onClick={() => go("/HomePage")} className="cursor-pointer ">
-          Bible
-        </p>
+    <div className="absolute w-40 left-0 bg-white border border-gray-200">
+  
+      {/* Bible */}
+      <div
+        onClick={() => !isBible && go("/HomePage")}
+        className={`px-2 py-2 transition ${
+          isBible
+            ? "text-gray-400 cursor-not-allowed bg-gray-50"
+            : "cursor-pointer hover:bg-gray-200"
+        }`}
+      >
+        Bible
       </div>
-      )}
-      {showDictionary && (
-      <p
-        onClick={() => go("/dictionary")}
-        className="px-2 py-2 cursor-pointer hover:bg-gray-200 transition "
+  
+      {/* Dictionary */}
+      <div
+        onClick={() => !isDictionary && go("/dictionary")}
+        className={`px-2 py-2 transition ${
+          isDictionary
+            ? "text-gray-400 cursor-not-allowed bg-gray-50"
+            : "cursor-pointer hover:bg-gray-200"
+        }`}
       >
         Dictionary
-      </p>
-      )}
-      {showProjects && (
-      <p
-        onClick={() => go("/projects")}
-        className="px-2 py-2 cursor-pointer hover:bg-gray-200 transition "
+      </div>
+  
+      {/* Projects */}
+      <div
+        onClick={() => !isProjects && go("/projects")}
+        className={`px-2 py-2 transition ${
+          isProjects
+            ? "text-gray-400 cursor-not-allowed bg-gray-50"
+            : "cursor-pointer hover:bg-gray-200"
+        }`}
       >
         The Bible Project
-      </p>
-      )}
+      </div>
+  
     </div>
   );
-}
+}  
