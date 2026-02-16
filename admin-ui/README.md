@@ -292,17 +292,3 @@ Your stack is now ready! You can:
 ---
 
 This completes your modern React development stack setup! 🎉
-
-### Run Admin UI using Docker
-
-1. Build the Docker image:
-
-  ``` docker build -t isl-admin-ui .```
-
-2. Run the container:
-
-``` docker run -p 5173:80 isl-admin-ui ```
-
-3. Open the application in your browser:
-
-http://localhost:5173
