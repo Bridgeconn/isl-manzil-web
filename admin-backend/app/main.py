@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
 from load_data import load_initial_data
 from router.structural import router as structural_router
+from router.content_bible import router as content_bible_router
 from custom_exceptions import BaseCustomException
 from schema import StandardErrorResponse
 
@@ -94,3 +95,4 @@ async def root():
 
 load_initial_data()
 app.include_router(structural_router)
+app.include_router(content_bible_router)
