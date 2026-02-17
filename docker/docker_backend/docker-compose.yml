@@ -96,6 +96,7 @@ services:
 
       # === Auth (SuperTokens) ===
       - SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
+      - SUPERTOKENS_API_KEY=${SUPERTOKENS_API_KEY}
 
       # === SuperTokens App Info (CRITICAL - was missing) ===
       - SUPERTOKENS_API_DOMAIN=${SUPERTOKENS_API_DOMAIN}
