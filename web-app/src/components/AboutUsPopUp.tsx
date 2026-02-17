@@ -45,15 +45,17 @@ const AboutUsPopUp: React.FC<{
             }}
           /> */}
 
-          {closeImage && (
-            <HoverControlledGif
-              src={closeImage}
-              alt="close"
-              className="w-14 h-14 -mt-4 cursor-pointer"
-              duration={3000}
-              loopCount={Infinity}
-            />
-          )}
+          <button title="Hide AboutUs Text" onClick={onClose}>
+            {closeImage && (
+              <HoverControlledGif
+                src={closeImage}
+                alt="close"
+                className="w-14 h-14 -mt-4 cursor-pointer"
+                duration={3000}
+                loopCount={Infinity}
+              />
+            )}
+          </button>
         </DialogClose>
         <DialogHeader className="p-4 border-b">
           <DialogTitle

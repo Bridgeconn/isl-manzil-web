@@ -28,7 +28,7 @@ const ButtonHide: React.FC<ButtonHideProps> = ({
         onClick={toggle}
         title={`${
           alwaysShowImage
-            ? "Show AboutUs"
+            ? "Show AboutUs Text"
             : isVisible
               ? "Hide Text"
               : "Show Text"

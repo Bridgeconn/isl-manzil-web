@@ -31,7 +31,9 @@ const Landing = () => {
               size="w-16 h-16"
             />
           </div>
-          <CleanVimeoPlayer videoId={1105756880} />
+          <div className="-mt-4">
+            <CleanVimeoPlayer videoId={1105756880} />
+          </div>
         </div>
       </div>
 
