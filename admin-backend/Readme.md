@@ -16,7 +16,7 @@
 ### Set up locally for development 
 
 We follow a fork-and-merge Git workflow:
-- Fork the repo: [vachan-admin Backend Repository](https://github.com/Bridgeconn/isl-manzil-web.git) to your Github account.
+- Fork the repo: [isl mazil web Repository](https://github.com/Bridgeconn/isl-manzil-web.git) to your Github account.
 
 
 #### Clone the Git Repository
