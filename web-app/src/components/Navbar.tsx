@@ -77,19 +77,28 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
   }, [isMenuOpen]);
 
   return (
-    <nav className="relative w-full bg-[#000063] min-h-14 flex  items-center">
+    <nav className="relative w-full bg-[#000063] min-h-16 flex  items-center">
       <div className="w-full  flex items-center relative">
-        <div className="ml-4 cursor-pointer text-white" ref={menuButtonRef}>
-          <MenuIcon
-            strokeWidth={2.5}
-            size={28}
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-          />
+        <div className="ml-4  cursor-pointer text-white" ref={menuButtonRef}>
+          <button type="button" title="Menu" className="cursor-pointer">
+            <MenuIcon
+              strokeWidth={2.5}
+              size={30}
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+            />
+          </button>
+          <div className="absolute w-full h-auto shadow-md mt-4 left-0 ">
+            {isMenuOpen && (
+              <div ref={menuRef}>
+                <Menu onClose={() => setIsMenuOpen(false)} />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Left Logo */}
         <Link to="/" className="ml-4 flex items-center gap-4">
-          <div className=" z-10 h-12 w-12 bg-white rounded-full p-1 overflow-hidden">
+          <div className=" z-10 h-14 w-14 bg-white rounded-full p-1 overflow-hidden">
             <img
               src={Logo}
               className=" w-auto h-auto "
@@ -114,11 +123,12 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
         </div>
       )}
       <div
-        className=" h-12 w-12 bg-white rounded-full flex-shrink-0"
+        className=" h-14 w-14 bg-white rounded-full flex-shrink-0"
         ref={settingsRef}
       >
         <img
           src={SettingGif}
+          title="Settings"
           alt="Settings"
           className="w-auto h-auto object-contain cursor-pointer"
           onClick={(e) => {
@@ -127,15 +137,8 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
           }}
         />
         {isSettingsOpen && (
-          <div className="absolute top-full right-0 z-50">
+          <div className="absolute top-full right-0 z-50 ">
             <Settings />
-          </div>
-        )}
-      </div>
-      <div className="absolute w-full mt-14 left-0 z-50">
-        {isMenuOpen && (
-          <div ref={menuRef}>
-            <Menu onClose={() => setIsMenuOpen(false)} />
           </div>
         )}
       </div>
