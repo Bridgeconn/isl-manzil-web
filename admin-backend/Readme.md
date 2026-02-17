@@ -1,4 +1,4 @@
-# vachan-admin Backend Readme
+# ISL-Admin Backend Readme
 
 ## Objective
 
@@ -138,87 +138,339 @@ uvicorn main:app --port=7000 --debug
 
 ## For Running the App using docker
 
-## Services Overview
+Alright — I’ve cleaned this up and upgraded it into a proper, production-ready README your team can actually follow without guessing things.
+This version reflects your **current docker-compose (with SuperTokens + external isl-network + healthchecks)** and includes all required env variables.
 
-### Main Application Stack
+You can replace your existing README section with this 👇
 
-1. **isl-admin-db** - PostgreSQL database for the main application
+---
 
-   - Image: `postgres:15.2`
-   - Internal port: `5432`
-   - Database: Configured via environment variables
+# ISL Admin Backend – Docker Setup Guide
 
-2. **isl_admin_app** - Main FastAPI backend application
-   - Built from: `../../admin-backend` directory
-   - Port: `8000:8000`
-   - Depends on: `isl-admin-db`
+This guide explains how to run the **ISL Admin Backend** using Docker.
 
-## Prerequisites
+The backend stack includes:
 
-Before you begin, make sure you have the following installed on your system:
+* FastAPI Application (`isl_admin_app`)
+* PostgreSQL (Application DB)
+* SuperTokens Core
+* PostgreSQL (SuperTokens DB)
 
-- [Docker](https://docs.docker.com/get-docker/) (version 20.10 or higher)
-- [Docker Compose](https://docs.docker.com/compose/install/) (version 2.0 or higher)
-- A terminal/command prompt
-- A text editor (for creating the .env file)
+All services communicate over a shared Docker network: `isl-network`.
 
-## Quick Setup
+---
 
-### Step 1: Create Environment File
+# Architecture Overview
 
-1. Navigate to the directory containing your `docker-compose.yml` file
-2. Create a new file named `.env` in the same directory
-3. Add the following configuration to the `.env` file:
+### Services
 
-```env
+### 1.isl-admin-db
 
-#----ISL Admin DB Config----
-ISL_ADMIN_POSTGRES_PORT=5432
-ISL_ADMIN_POSTGRES_USER=user
-ISL_ADMIN_POSTGRES_PASSWORD=secret
-ISL_ADMIN_POSTGRES_DATABASE=db
+PostgreSQL database for the main application.
 
-LOG_LEVEL=<LOG_LEVEL>
+* Image: `postgres:15.2`
+* Internal Port: `5432`
+* Persistent Volume: `isl-admin-db-vol`
+* Network: `isl-network`
 
-SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
-SUPERTOKENS_API_KEY=Akjnv3iunvsoi8=-sackjij3ncisds
-API_DOMAIN=http://localhost:8000
-WEBSITE_DOMAIN=http://localhost:5173
-VALID_API_KEYS=your api key
-SMTP_HOST=localhost
-SMTP_PORT=1025
+---
 
+### 2. supertokens-db
+
+PostgreSQL database used by SuperTokens.
+
+* Image: `postgres:15.2`
+* Internal Port: `5432`
+* Persistent Volume: `supertokens-db-vol`
+* Network: `isl-network`
+
+---
+
+### 3. supertokens_core
+
+SuperTokens authentication core service.
+
+* Image: `registry.supertokens.io/supertokens/supertokens-postgresql`
+* Port: `3567:3567`
+* Depends on: `supertokens-db`
+* Network: `isl-network`
+
+---
+
+### 4. isl_admin_app
+
+Main FastAPI backend application.
+
+* Built from: `../../admin-backend`
+* Port: `8000:8000`
+* Depends on:
+
+  * `isl-admin-db`
+  * `supertokens_core`
+* Network: `isl-network`
+
+---
+
+# Prerequisites
+
+Make sure the following are installed:
+
+* Docker (20.10+)
+* Docker Compose (v2+)
+* Terminal access
+
+Verify:
+
+```bash
+docker --version
+docker compose version
 ```
 
-## Network & Volumes
+---
 
-- **Network**: `va-network` - Internal network for service communication
-- **Volumes**:
-  - `isl-admin-db-vol` - Persistent storage for main database
-  - `isl-logs-vol` - Application logs storage
+# Step 0: Create Docker Network (IMPORTANT)
 
-### Step 2: Build and Start the Application
+This project uses an **external Docker network**.
 
-Open your terminal/command prompt and run this from the docker/docker_backend folder:
+Check if it exists:
+
+```bash
+docker network ls
+```
+
+If `isl-network` does not exist, create it:
+
+```bash
+docker network create isl-network
+```
+
+This only needs to be done once.
+
+---
+
+# Step 1: Create .env File
+
+Navigate to:
+
+```
+isl-manzil-web/docker/docker_backend/
+```
+
+Create a file named:
+
+```
+.env
+```
+
+Add the following required variables:
+
+```env
+# =========================
+# ISL ADMIN DATABASE
+# =========================
+ISL_ADMIN_POSTGRES_PORT=5432
+ISL_ADMIN_POSTGRES_USER=postgres
+ISL_ADMIN_POSTGRES_PASSWORD=postgres
+ISL_ADMIN_POSTGRES_DATABASE=isl_admin_db
+
+# =========================
+# SUPERTOKENS DATABASE
+# =========================
+SUPERTOKENS_DB_PASSWORD=postgres
+
+# =========================
+# SUPERTOKENS CONFIG
+# =========================
+SUPERTOKENS_API_KEY=your_supertokens_api_key
+SUPERTOKENS_API_DOMAIN=http://localhost:8000
+SUPERTOKENS_WEBSITE_DOMAIN=http://localhost:5173
+SUPERTOKENS_ANTI_CSRF=false
+SUPERTOKENS_COOKIE_DOMAIN=localhost
+SUPERTOKENS_COOKIE_SECURE=false
+SUPERTOKENS_COOKIE_SAME_SITE=lax
+
+# =========================
+# SMTP CONFIG
+# =========================
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_NAME=ISL Admin
+SMTP_EMAIL=test@example.com
+SMTP_PASSWORD=password
+SMTP_SECURE=false
+
+# =========================
+# OTHER
+# =========================
+VALID_API_KEYS=your_valid_api_key
+LOG_LEVEL=INFO
+```
+
+All these variables are required for proper startup.
+
+---
+
+# Step 2: Build and Start Services
+
+From:
+
+```
+isl-manzil-web/docker/docker_backend/
+```
+
+Run:
 
 ```bash
 docker compose up --build
 ```
 
+Or in detached mode:
 
-This command will:
+```bash
+docker compose up --build -d
+```
 
-- Build all the necessary Docker images
-- Start all services (databases and the main application)
-- Show logs from all running containers
+This will:
 
-**Note:** The first build may take several minutes as Docker downloads and builds all the required images.
+* Build backend image
+* Start both PostgreSQL databases
+* Start SuperTokens
+* Start FastAPI app
 
-### Step 3: Verify Services are Running
+---
 
-Once all services are up and running, verify they're working correctly:
+# Step 3: Verify Services
 
-1. **Check Main Application**: Go to `http://localhost:8000`
-   - You should see the FastAPI application running
-   - Go to `http://localhost:8000/docs` to see the API documentation (Swagger UI)
+Check running containers:
 
+```bash
+docker ps
+```
+
+You should see:
+
+```
+isl_admin_app
+isl_admin_db
+supertokens_core
+supertokens_db
+```
+
+---
+
+# Step 4: Access Application
+
+Backend API:
+
+```
+http://localhost:8000
+```
+
+Swagger Docs:
+
+```
+http://localhost:8000/docs
+```
+
+SuperTokens Core:
+
+```
+http://localhost:3567/hello
+```
+
+---
+
+# Volumes
+
+* `isl-admin-db-vol` → Application DB data
+* `supertokens-db-vol` → SuperTokens DB data
+* `isl-logs-vol` → Application logs
+
+To remove volumes (WARNING: deletes DB data):
+
+```bash
+docker compose down -v
+```
+
+---
+
+# Useful Commands
+
+Stop services:
+
+```bash
+docker compose down
+```
+
+Restart services:
+
+```bash
+docker compose restart
+```
+
+View logs:
+
+```bash
+docker logs isl_admin_app
+docker logs supertokens_core
+```
+
+Rebuild after code changes:
+
+```bash
+docker compose up --build
+```
+
+---
+
+# Network Information
+
+All services run on:
+
+```
+isl-network
+```
+
+To verify:
+
+```bash
+docker inspect isl_admin_app | grep NetworkMode
+```
+
+Expected:
+
+```
+"NetworkMode": "isl-network"
+```
+
+---
+
+### Backend cannot connect to DB
+
+Check DB health:
+
+```bash
+docker ps
+```
+
+`isl_admin_db` must be healthy.
+
+---
+
+### Frontend cannot connect to backend
+
+Make sure:
+
+```
+VITE_FASTAPI_BASE_URL=http://isl_admin_app:8000
+```
+
+And both containers are on `isl-network`.
+
+---
+
+Backend URL:
+
+```
+http://localhost:8000
+```
