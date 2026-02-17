@@ -16,12 +16,11 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
   const [showAbout, setShowAbout] = useState(false);
   const {
     currentTheme,
-    themes,
+
     fontType,
     fontSize,
     setFontType,
     setFontSize,
-    setTheme,
   } = useThemeStore();
   const { textPosition, canTogglePosition, toggleTextPosition } =
     useLayoutControl();
@@ -48,50 +47,6 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
           onMouseDown={handleContainerClick}
           onTouchStart={handleContainerClick}
         >
-          <div className="space-y-2 sm:space-y-4">
-            <h4
-              className="text-base font-semibold text-gray-700 mb-3"
-              style={{ color: currentTheme?.textColor }}
-            >
-              Theme
-            </h4>
-
-            <div className="grid grid-cols-3 gap-2">
-              {themes.map((theme) => (
-                <button
-                  key={theme.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setTheme(theme);
-                  }}
-                  className={`
-                relative p-1 border-2 transition-all duration-200
-                ${
-                  currentTheme?.id === theme.id
-                    ? "border-blue-500 ring-2 ring-blue-200"
-                    : "border-gray-200 hover:border-gray-300"
-                }
-              `}
-                >
-                  <div className="space-y-2">
-                    <div className="flex flex-row w-full border rounder-border">
-                      <div
-                        className="flex-1 h-6"
-                        style={{ backgroundColor: theme.backgroundColor }}
-                      />
-                      <div
-                        className="flex-1 h-6"
-                        style={{ backgroundColor: theme.textColor }}
-                      />
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className="pt-4 border-t border-gray-200"></div>
-          </div>
-
           {/* Font Type Toggle */}
           <div>
             <h4
@@ -137,12 +92,19 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
 
           {/* Font Size Slider */}
           <div className="mt-4">
-            <h4 className="text-base font-semibold text-gray-700 mb-3"
-            style={{ color: currentTheme?.textColor }}>
+            <h4
+              className="text-base font-semibold text-gray-700 mb-3"
+              style={{ color: currentTheme?.textColor }}
+            >
               Font Size
             </h4>
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-black-600" style={{ color: currentTheme?.textColor }}>A-</span>
+              <span
+                className="text-xs font-bold text-black-600"
+                style={{ color: currentTheme?.textColor }}
+              >
+                A-
+              </span>
               <input
                 type="range"
                 min={12}
@@ -161,14 +123,21 @@ const Settings: React.FC<SettingsProps> = ({ onCloseDrawer }) => {
                 }}
               />
 
-              <span className="text-lg font-bold text-black-600" style={{ color: currentTheme?.textColor }}>A+</span>
+              <span
+                className="text-lg font-bold text-black-600"
+                style={{ color: currentTheme?.textColor }}
+              >
+                A+
+              </span>
             </div>
           </div>
           {/* Toggle text position */}
           {!isLowHeightDesktop && !shouldUseMobileBottomBar && (
             <div className="mt-4 flex items-center gap-4">
-              <h4 className="text-base font-semibold text-gray-700"
-              style={{ color: currentTheme?.textColor }}>
+              <h4
+                className="text-base font-semibold text-gray-700"
+                style={{ color: currentTheme?.textColor }}
+              >
                 Text position
               </h4>
 
