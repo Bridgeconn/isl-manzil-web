@@ -45,7 +45,7 @@ const AboutUsPopUp: React.FC<{
             }}
           /> */}
 
-          <button title="Hide AboutUs Text" onClick={onClose}>
+          <button title="Hide About Us Text" onClick={onClose}>
             {closeImage && (
               <HoverControlledGif
                 src={closeImage}
