@@ -138,13 +138,6 @@ uvicorn main:app --port=7000 --debug
 
 ## For Running the App using docker
 
-Alright — I’ve cleaned this up and upgraded it into a proper, production-ready README your team can actually follow without guessing things.
-This version reflects your **current docker-compose (with SuperTokens + external isl-network + healthchecks)** and includes all required env variables.
-
-You can replace your existing README section with this 👇
-
----
-
 # ISL Admin Backend – Docker Setup Guide
 
 This guide explains how to run the **ISL Admin Backend** using Docker.
@@ -228,7 +221,7 @@ docker compose version
 
 ---
 
-# Step 0: Create Docker Network (IMPORTANT)
+# Step 0: Create Docker Network
 
 This project uses an **external Docker network**.
 
