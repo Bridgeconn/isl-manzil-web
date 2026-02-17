@@ -1,0 +1,10 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*/__pycache__/
+*/**/__pycache__/
+*.pyc
+.env
