@@ -11,4 +11,15 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    host: true, // listen on 0.0.0.0 (needed when accessed via domain / reverse proxy)
+    port: 5173, // change if your UI uses a different port
+    strictPort: true,
+    allowedHosts: [
+      "dev-isladmin.vachanengine.org",
+      "api.dev-isladmin.vachanengine.org",
+      "localhost",
+      "127.0.0.1",
+    ],
+  },
 })
