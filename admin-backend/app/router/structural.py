@@ -156,7 +156,7 @@ async def get_languages(
     db_session: Session = Depends(get_db)
 ):
     """Get languages with pagination and optional filtering."""
-    validate_all_roles(session)
+    validate_admin_only(session)
     _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("GET Languages API")
 
@@ -413,7 +413,7 @@ async def list_resources_route(
     db: Session = Depends(get_db)
 ):
     """Get resources with pagination and optional filtering."""
-    validate_all_roles(session)
+    validate_admin_only(session)
     _, _ = await ensure_user_from_session_async(db, session)
     logger.info("GET Resource API")
 

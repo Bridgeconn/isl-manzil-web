@@ -66,11 +66,12 @@ services:
     networks:
       - isl-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${ISL_ADMIN_POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${ISL_ADMIN_POSTGRES_USER} -d ${ISL_ADMIN_POSTGRES_DATABASE}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+  
 
 
   # === ISL ADMIN APP ===
