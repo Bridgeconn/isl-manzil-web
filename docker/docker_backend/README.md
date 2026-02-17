@@ -1,0 +1,89 @@
+### Option 1: Run backend locally using Uvicorn
+
+### Option 2: Run backend using Docker
+
+### option 1: SuperTokens Core and its database must be running before starting the backend.
+Navigate to the Docker backend directory:
+cd docker/docker_backend
+## Start SuperTokens Core and its database:
+
+```docker compose up supertokens supertokens-db```
+This will start:
+SuperTokens Core on port 3567
+
+SuperTokens Database inside Docker
+
+Verify containers are running:
+
+docker ps
+
+Option 1: Run Backend Using Uvicorn
+
+Navigate to backend directory:
+
+```cd backend```
+Activate virtual environment:
+source venv/bin/activate
+Run backend:
+``` uvicorn main:app --reload ```
+
+Backend will be available at:
+
+http://localhost:8000
+
+
+Ensure your .env file contains:
+``` SUPERTOKENS_DB_PASSWORD=supertokens_dev_password_123 ```
+``` LOG_LEVEL=INFO```
+
+This allows the local backend to connect to SuperTokens running in Docker.
+
+Option 2: Run Backend Using Docker
+
+Navigate to Docker backend directory:
+
+```cd docker/docker_backend```
+
+
+Run all services including backend:
+
+``` docker compose up ```
+
+
+This will start:
+
+FastAPI Backend
+
+SuperTokens Core
+
+SuperTokens Database
+
+Backend will be available at:
+
+http://localhost:8000
+
+## env file should contain
+```
+SUPERTOKENS_CONNECTION_URI=http://supertokens:3567
+SUPERTOKENS_API_KEY=Akjnv3iunvsoi8=-sackjij3ncisds
+SUPERTOKENS_DB_PASSWORD=supertokens_dev_password_123
+ISL_ADMIN_POSTGRES_USER=postgres
+ISL_ADMIN_POSTGRES_PASSWORD=password
+ISL_ADMIN_POSTGRES_DATABASE=isl_admin
+ISL_ADMIN_POSTGRES_PORT=5432
+SUPERTOKENS_API_DOMAIN=http://localhost:8000/
+SUPERTOKENS_WEBSITE_DOMAIN=http://localhost:5173/
+SUPERTOKENS_ANTI_CSRF=NONE
+SUPERTOKENS_COOKIE_SAME_SITE=lax
+SUPERTOKENS_EMAIL_VERIFICATION_MODE=OPTIONAL
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_NAME=ISL Admin
+SMTP_EMAIL=noreply@islapp.com
+SMTP_PASSWORD=
+SMTP_SECURE=false
+LOG_LEVEL=INFO
+VALID_API_KEYS=your api key
+SUPERTOKENS_COOKIE_SECURE=true
+SUPERTOKENS_COOKIE_DOMAIN=http://localhost:8000
+```

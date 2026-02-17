@@ -5,7 +5,7 @@ import Settings from "./Settings";
 import SearchboxBCV from "./SearchboxBCV";
 import { MenuIcon } from "lucide-react";
 import Menu from "./Menu";
-
+import { useLocation } from "react-router-dom";
 import Logo from "../assets/images/ISLV_Logo.svg";
 import { Link } from "react-router-dom";
 
@@ -19,13 +19,13 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLDivElement>(null);
-
+  const location = useLocation();
+  const isLandingPage = location.pathname === "/";
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
 
       if (target.closest('[role="dialog"]')) {
-        // setIsSettingsOpen(false)
         return;
       }
       if (
@@ -65,10 +65,19 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
       document.body.classList.remove("settings-open");
     };
   }, [isSettingsOpen]);
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.classList.add("menu-open");
+    } else {
+      document.body.classList.remove("menu-open");
+    }
+    return () => {
+      document.body.classList.remove("menu-open");
+    };
+  }, [isMenuOpen]);
 
   return (
     <nav className="relative w-full bg-[#000063] min-h-14 flex  items-center">
-      {/* <div className="relative w-full mx-auto flex flex-1 gap-8 justify-between"> */}
       <div className="w-full  flex items-center relative">
         <div className="ml-4 cursor-pointer text-white" ref={menuButtonRef}>
           <MenuIcon
@@ -99,10 +108,11 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
           ))}
         </Link>
       </div>
-      {/* <div className="flex items-center justify-between gap-8 flex-1"> */}
-      <div className="absolute  left-1/2 transform -translate-x-1/2">
-        <SearchboxBCV />
-      </div>
+      {!isLandingPage && (
+        <div className="absolute  left-1/2 transform -translate-x-1/2">
+          <SearchboxBCV />
+        </div>
+      )}
       <div
         className=" h-12 w-12 bg-white rounded-full flex-shrink-0"
         ref={settingsRef}

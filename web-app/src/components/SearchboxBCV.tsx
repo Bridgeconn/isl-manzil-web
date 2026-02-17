@@ -8,7 +8,6 @@ import SearchboxTooltip from "./SearchboxToolTip";
 import { useLocation } from "react-router-dom";
 
 interface SearchboxBCVProps {
-  placeholder?: string;
   className?: string;
 }
 
@@ -53,10 +52,7 @@ const verseUtils = {
   },
 };
 
-function SearchboxBCV({
-  placeholder = "Search ",
-  className = "",
-}: SearchboxBCVProps) {
+function SearchboxBCV({ className = "" }: SearchboxBCVProps) {
   const [inputValue, setInputValue] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -69,6 +65,17 @@ function SearchboxBCV({
 
   const location = useLocation();
   const isHomepage = location.pathname === "/HomePage";
+
+  const getPlaceholder = () => {
+    if (location.pathname === "/HomePage") {
+      return "Search Bible Reference";
+    } else if (location.pathname === "/dictionary") {
+      return "Search Dictionary";
+    } else if (location.pathname === "/projects") {
+      return "Search The Bible Project";
+    }
+    return "Search Bible Reference";
+  };
 
   const errorMsg =
     "Invalid search format\nPlease try the following:\nJohn 3:16 or psa 1";
@@ -541,7 +548,7 @@ function SearchboxBCV({
             onKeyDown={handleKeyPress}
             onFocus={handleFocus}
             onBlur={handleBlur}
-            placeholder={placeholder}
+            placeholder={getPlaceholder()}
             className="flex-1 outline-none bg-transparent min-w-0 overflow-hidden text-ellipsis"
             disabled={isSearching}
           />

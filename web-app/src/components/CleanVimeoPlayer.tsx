@@ -268,7 +268,7 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
     <div className="w-full">
       <div
         ref={containerRef}
-        className={`relative w-full max-w-5xl mt-4 lg:mt-6 overflow-hidden rounded-3xl ${
+        className={`relative w-full h-120 max-w-5xl mt-4 lg:mt-6 overflow-hidden rounded-3xl ${
           isFullscreenMode
             ? "h-screen flex flex-col justify-center bg-black"
             : "aspect-video bg-black"
@@ -335,9 +335,9 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
 
           <div
             ref={cleanVimeoPlayerRef}
-            className="w-full h-full cursor-pointer"
-            onClick={togglePlay}
+            className="w-full h-full pointer-events-none"
           />
+          <div className="absolute inset-0 z-10" onClick={togglePlay} />
 
           {(cleanVimeoIsEnded || cleanVimeoIsReplaying) && (
             <div className="absolute inset-0 bg-black flex items-center justify-center z-30">
