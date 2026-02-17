@@ -139,6 +139,7 @@ services:
 
 networks:
   isl-network:
+    external: true
 
 
 volumes:
