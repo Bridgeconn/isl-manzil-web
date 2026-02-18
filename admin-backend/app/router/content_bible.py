@@ -22,10 +22,8 @@ from custom_exceptions import (
 )
 from auth import (
     verify_session_with_approval,
-    validate_admin_editor,
-    validate_all_roles,
-    ensure_user_from_session_async,
-    AuthContext
+    validate_admin_only,
+    ensure_user_from_session_async
 )
 router = APIRouter()
 
@@ -48,8 +46,8 @@ async def upload_bible_book(
     # Get user ID from session
     # Validate USFM file before processing
     logger.info("POST Bible  API")
-    validate_admin_editor(session)
-    _, _ = await ensure_user_from_session_async(db_session, session)
+    validate_admin_only(session)
+    actor_id, _ = await ensure_user_from_session_async(db_session, session)
     resource = content_bible.get_resource(db_session, resource_id)
 
     if resource.content_type.lower() != "bible":
@@ -75,6 +73,7 @@ async def upload_bible_book(
         db_session=db_session,
         resource_id=resource_id,
         usfm_file=usfm,
+        actor_user_id=actor_id,
         pre_parsed_usj_data=validation_result.get("usj_data"),
         usfm_content=validation_result.get("usfm_content"),
     )
@@ -93,8 +92,8 @@ async def update_bible_book(
     """Update an existing bible book"""
 
     logger.info("PUT Bible Books API")
-    validate_admin_editor(session)
-    _, _ = await ensure_user_from_session_async(db_session, session)
+    validate_admin_only(session)
+    actor_id, _ = await ensure_user_from_session_async(db_session, session)
     # Validate USFM file AND get parsed data
     validation_result = await remote_filecheck_crud.validate_usfm_file_internal(usfm)
     if not validation_result["valid"]:
@@ -107,6 +106,7 @@ async def update_bible_book(
         db_session=db_session,
         bible_book_id=bible_book_id,
         usfm_file=usfm,
+        actor_user_id=actor_id,
         pre_parsed_usj_data=validation_result.get("usj_data"),
         usfm_content=validation_result.get("usfm_content"),
     )
@@ -126,7 +126,7 @@ async def delete_bible_books_endpoint(
     """Bulk delete Bible books by book codes"""
 
     logger.info("DELETE Bible Books API")
-    validate_admin_editor(session)
+    validate_admin_only(session)
     _, _ = await ensure_user_from_session_async(db_session, session)
     result = content_bible.delete_bible_books(
         db_session=db_session,
@@ -153,7 +153,7 @@ async def get_bible_books(
 ):
     """Get list of books for a bible resource"""
     logger.info("GET Bible Books API")
-    validate_all_roles(session)
+    validate_admin_only(session)
     _, _ = await ensure_user_from_session_async(db_session, session)
     return content_bible.get_bible_books(db_session, resource_id)
 
@@ -239,7 +239,7 @@ async def get_clean_bible_chapter(
 ):
     """Get cleaned chapter content from clean_bible table"""
     logger.info("GET Cleaned Bible chapter API")
-    validate_all_roles(session)
+    validate_admin_only(session)
     _, _ = await ensure_user_from_session_async(db_session, session)
     return content_bible.get_clean_bible_chapter(
         db_session=db_session,
@@ -274,7 +274,7 @@ async def get_bible_verse(
     """Get specific verse content"""
 
     logger.info("GET Bible verse API")
-    validate_all_roles(session)
+    validate_admin_only(session)
     _, _ = await ensure_user_from_session_async(db_session, session)
     return content_bible.get_bible_verse(
         db_session=db_session,

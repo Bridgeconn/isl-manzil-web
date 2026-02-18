@@ -18,7 +18,7 @@ from crud.utils import (
     _parse_usfm_to_usj,
     _count_chapters,
     parse_usfm_to_clean_verses,
-    # touch_resource,
+    touch_resource,
     _clean_build_navigation,
     _compute_previous_verse,
     _compute_next_verse,
@@ -59,7 +59,7 @@ def upload_bible_book(
     db_session: Session,
     resource_id: int,
     usfm_file: UploadFile,
-    # actor_user_id: int,
+    actor_user_id: int,
     pre_parsed_usj_data: Dict[str, Any] = None,
     usfm_content: str = None
 ) -> Dict[str, str]:
@@ -117,7 +117,7 @@ def upload_bible_book(
         usj_data=usj_data
     )
     logger.info("save clean verses function end")
-    # touch_resource(db_session, resource_id=bible_record.resource_id, actor_user_id=actor_user_id)
+    touch_resource(db_session, resource_id=bible_record.resource_id, actor_user_id=actor_user_id)
     db_session.commit()
     logger.info("POST Bible Books END")
     return {
@@ -188,7 +188,7 @@ def update_bible_book(
     db_session: Session,
     bible_book_id: int,
     usfm_file: UploadFile,
-    # actor_user_id: int,
+    actor_user_id: int,
     pre_parsed_usj_data: Dict[str, Any] = None,
     usfm_content: str = None
 ) -> Dict[str, str]:
@@ -228,7 +228,7 @@ def update_bible_book(
         usj_data=usj_data
     )
 
-    # touch_resource(db_session, resource_id=bible_record.resource_id, actor_user_id=actor_user_id)
+    touch_resource(db_session, resource_id=bible_record.resource_id, actor_user_id=actor_user_id)
     db_session.commit()
 
     return {"message": "Bible book updated successfully"}

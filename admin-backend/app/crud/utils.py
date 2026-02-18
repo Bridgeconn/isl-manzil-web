@@ -1,6 +1,6 @@
 """Utilities for CRUD operations."""
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List,Optional
 from datetime import datetime, timezone
 import json
 from sqlalchemy.orm import Session
@@ -439,3 +439,16 @@ def _compute_next_verse(payload: schema.CleanNextVerseInput):
         }
 
     return None
+
+def touch_resource(db: Session, resource_id: int, actor_user_id: Optional[int]) -> None:
+    """
+    Update only the resource row's updated_by/updated_at.
+    Call this from child-table CRUD whenever they modify rows.
+    """
+    res = db.query(db_models.Resource).filter_by(resource_id=resource_id).first()
+    if not res:
+        # If this is ever hit, caller already verified resource existence; keep consistent
+        raise NotAvailableException(detail=f"Resource {resource_id} not found")
+    res.updated_by = actor_user_id
+    res.updated_at = utcnow()
+    db.add(res)
