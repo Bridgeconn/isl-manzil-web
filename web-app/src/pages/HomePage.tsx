@@ -73,7 +73,7 @@ const HomePage: React.FC = () => {
         }
       }
     },
-    [constraints, size.height, handleResize]
+    [constraints, size.height, handleResize],
   );
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
@@ -120,7 +120,7 @@ const HomePage: React.FC = () => {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [size.width, size.height, constraints, handleResize]
+    [size.width, size.height, constraints, handleResize],
   );
 
   const getLayoutClasses = () => {
@@ -254,7 +254,7 @@ const HomePage: React.FC = () => {
     return (
       <div className="relative h-full w-full">
         <div
-          className={`absolute top-0 h-full z-10 pointer-events-none ${
+          className={`absolute top-0 h-full pointer-events-none ${
             showText ? "fade-right" : "fade-left"
           }`}
         />
@@ -487,16 +487,16 @@ const HomePage: React.FC = () => {
                 {renderFadeWrapper(
                   <div className="h-full w-full">
                     {renderRightSideContent()}
-                  </div>
+                  </div>,
                 )}
               </Resizable>
             ) : showText ? (
               renderFadeWrapper(
-                <div className="h-full w-full">{renderRightSideContent()}</div>
+                <div className="h-full w-full">{renderRightSideContent()}</div>,
               )
             ) : (
               renderFadeWrapper(
-                <div className="h-full w-full">{renderRightSideContent()}</div>
+                <div className="h-full w-full">{renderRightSideContent()}</div>,
               )
             )}
           </div>

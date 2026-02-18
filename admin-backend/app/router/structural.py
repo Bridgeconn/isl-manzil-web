@@ -1,17 +1,29 @@
 """Structural Endpoints."""
-from typing import Optional, Union, List
+# pylint: disable=unused-argument
+from typing import Optional, Union, List,Dict, Any
 from fastapi import (
     APIRouter,
     Depends,
     Query,
 )
 from fastapi.responses import JSONResponse
+from supertokens_python.recipe.session import SessionContainer
 from sqlalchemy.orm import Session
 import schema
+import db_models
 from crud import structural_crud
 from dependencies import get_db, logger
 from custom_exceptions import (
     NotAvailableException,
+)
+from auth import (
+    verify_session_with_approval,
+    validate_admin_editor,
+    validate_all_roles,
+    ensure_user_from_session_async,
+    validate_admin_only,
+    verify_session_or_api_key,
+    AuthContext
 )
 
 router = APIRouter()
@@ -23,29 +35,39 @@ router = APIRouter()
     response_model=Union[schema.VersionResponse, List[schema.VersionResponse]],
     tags=["Version"]
 )
-
 async def get_versions(
     version_id: Optional[int] = Query(None),
     abbreviation: Optional[str] = Query(None),
+    auth: Dict[str, Any] = Depends(verify_session_or_api_key),
     db_session: Session = Depends(get_db),
 ):
     """Get all versions or a single version by ID."""
+    
+    if auth["auth_type"] == "session":
+        session = auth["session"]
+        validate_admin_only(session)
+        _, _ = await ensure_user_from_session_async(db_session, session)
+    
     logger.info("GET Version API")
+    
     if version_id is not None or abbreviation is not None:
-        db_obj = structural_crud.get_version(db_session, version_id,abbreviation)
+        db_obj = structural_crud.get_version(db_session, version_id, abbreviation)
         if not db_obj:
             logger.error("Version not found")
             raise NotAvailableException(detail="Version not found")
         return db_obj
+    
     return structural_crud.get_all_versions(db_session)
-
 
 @router.post("/versions", response_model=schema.VersionResponse,tags=["Version"])
 async def create_version(
     version: schema.VersionCreate,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Create a new version."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("POST Version API")
     db_obj = structural_crud.create_version(db_session, version)
     return db_obj
@@ -55,9 +77,12 @@ async def create_version(
 async def update_version(
     version_id: int,
     version: schema.VersionUpdate,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Update an existing version by ID."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("PUT Version API")
     db_obj = structural_crud.update_version(db_session,version_id, version)
     return db_obj
@@ -69,11 +94,13 @@ async def update_version(
 )
 async def delete_versions_bulk(
     request: schema.VersionBulkDelete,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Delete versions by ID."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("DELETE BULK Version API")
-    # ---- Auth & role checks ----
 
     # ---- Business logic ----
     result = structural_crud.delete_versions_bulk(db_session, request.version_ids)
@@ -125,9 +152,12 @@ async def delete_versions_bulk(
 )
 async def get_languages(
     params: schema.LanguageQueryParams = Depends(),
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Get languages with pagination and optional filtering."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("GET Languages API")
 
 
@@ -166,9 +196,12 @@ async def get_languages(
 )
 async def create_language(
     lang: schema.LanguageCreate,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Create a new language."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("POST Languages API")
     db_obj = structural_crud.create_language(db_session, lang)
 
@@ -187,9 +220,12 @@ async def create_language(
 async def update_language(
     language_id: int,
     lang: schema.LanguageUpdate,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Update an existing language."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("PUT Languages API")
     # Check if language exists before attempting to update
     language_obj = structural_crud.get_language(db_session, language_id)
@@ -213,9 +249,12 @@ async def update_language(
 )
 async def delete_languages_bulk(
     request: schema.LanguageBulkDelete,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Delete multiple languages."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("DELETE BULK Language API")
 
 
@@ -257,9 +296,12 @@ async def delete_languages_bulk(
 async def get_licenses(
     license_id: Optional[int] = Query(None, description="Filter by license ID"),
     name: Optional[str] = Query(None, description="Filter by license name (partial match)"),
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Get licenses with optional filtering."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("GET License API")
     licenses = structural_crud.get_licenses_with_filters(
         db_session=db_session,
@@ -277,9 +319,12 @@ async def get_licenses(
 )
 async def create_license(
     license_: schema.LicenseCreate,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Create a new license."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("POST License API")
     db_obj = structural_crud.create_license(db_session, license_)
 
@@ -293,9 +338,12 @@ async def create_license(
 async def update_license(
     license_id: int,
     license_: schema.LicenseUpdate,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Update an existing license."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("PUT License API")
     # Check if license exists before attempting to update
     license_obj = structural_crud.get_license(db_session, license_id)
@@ -314,9 +362,12 @@ async def update_license(
 )
 async def delete_licenses_bulk(
     request: schema.LicenseBulkDelete,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Delete multiple licenses."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     logger.info("DELETE BULK License API")
 
 
@@ -358,9 +409,12 @@ async def delete_licenses_bulk(
 )
 async def list_resources_route(
     params: schema.ResourceQueryParams = Depends(),
+    session: SessionContainer = Depends(verify_session_with_approval),
     db: Session = Depends(get_db)
 ):
     """Get resources with pagination and optional filtering."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db, session)
     logger.info("GET Resource API")
 
     filters = schema.ResourceFilter(
@@ -376,9 +430,12 @@ async def list_resources_route(
 @router.post("/resources", response_model=schema.ResourceResponse, tags=["Resource"])
 async def create_resource_route(
     payload: schema.ResourceCreate,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db: Session = Depends(get_db)
 ):
     """ API endpoint to create a new resource."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db, session)
     logger.info("POST Resource API")
     return structural_crud.create_resource(db, payload)
 
@@ -387,9 +444,12 @@ async def create_resource_route(
 @router.put("/resources", response_model=schema.ResourceResponse, tags=["Resource"])
 async def update_resource_route(
     payload: schema.ResourceUpdate,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db: Session = Depends(get_db)
 ):
     """ API endpoint to update a resource."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db, session)
     logger.info("PUT Resource API")
     return structural_crud.update_resource(db, payload)
 
@@ -400,9 +460,12 @@ async def update_resource_route(
 )
 async def delete_resources_bulk(
     request: schema.ResourceBulkDelete,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db: Session = Depends(get_db)
 ):
     """Delete multiple resources."""
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db, session)
     logger.info("DELETE BULK Resource API")
 
 

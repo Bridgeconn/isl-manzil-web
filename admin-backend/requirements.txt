@@ -5,3 +5,4 @@ pylint==4.0.3
 usfm-grammar==3.1.2
 beautifulsoup4==4.12.3
 requests==2.32.5
+supertokens-python==0.30.3

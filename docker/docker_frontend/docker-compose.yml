@@ -1,0 +1,19 @@
+services:
+  isl-admin-frontend:
+    build:
+      context: ../../admin-ui
+      dockerfile: ../docker/docker_frontend/Dockerfile
+    container_name: isl-admin-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_FASTAPI_BASE_URL=${VITE_FASTAPI_BASE_URL}
+      - VITE_SUPERTOKENS_API_DOMAIN=${VITE_SUPERTOKENS_API_DOMAIN}
+      - VITE_SUPERTOKENS_WEBSITE_DOMAIN=${VITE_SUPERTOKENS_WEBSITE_DOMAIN}
+    restart: always
+    networks:
+      - isl-network
+
+networks:
+  isl-network:
+    external: true
