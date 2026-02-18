@@ -9,6 +9,7 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 from fastapi.concurrency import run_in_threadpool
+from supertokens_python.recipe.session import SessionContainer
 from sqlalchemy.orm import Session
 import schema
 from schema import BibleVersePathParams
@@ -19,7 +20,13 @@ from custom_exceptions import (
     BadRequestException,
     UnprocessableException,
 )
-
+from auth import (
+    verify_session_with_approval,
+    validate_admin_editor,
+    validate_all_roles,
+    ensure_user_from_session_async,
+    AuthContext
+)
 router = APIRouter()
 
 
@@ -33,6 +40,7 @@ router = APIRouter()
 async def upload_bible_book(
     resource_id: int = Form(...),
     usfm: UploadFile = File(...),
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Upload a new bible book USFM file"""
@@ -40,6 +48,8 @@ async def upload_bible_book(
     # Get user ID from session
     # Validate USFM file before processing
     logger.info("POST Bible  API")
+    validate_admin_editor(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     resource = content_bible.get_resource(db_session, resource_id)
 
     if resource.content_type.lower() != "bible":
@@ -77,11 +87,14 @@ async def upload_bible_book(
 async def update_bible_book(
     bible_book_id: int = Form(...),
     usfm: UploadFile = File(...),
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Update an existing bible book"""
 
     logger.info("PUT Bible Books API")
+    validate_admin_editor(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     # Validate USFM file AND get parsed data
     validation_result = await remote_filecheck_crud.validate_usfm_file_internal(usfm)
     if not validation_result["valid"]:
@@ -107,11 +120,14 @@ async def update_bible_book(
 async def delete_bible_books_endpoint(
     resource_id: int,
     delete_request: schema.BulkDeleteRequest,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Bulk delete Bible books by book codes"""
 
     logger.info("DELETE Bible Books API")
+    validate_admin_editor(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     result = content_bible.delete_bible_books(
         db_session=db_session,
         resource_id=resource_id,
@@ -132,10 +148,13 @@ async def delete_bible_books_endpoint(
 )
 async def get_bible_books(
     resource_id: Optional[int] = None,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Get list of books for a bible resource"""
     logger.info("GET Bible Books API")
+    validate_all_roles(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     return content_bible.get_bible_books(db_session, resource_id)
 
 
@@ -215,10 +234,13 @@ async def get_clean_bible_chapter(
     resource_id: int,
     book_code: str,
     chapter: int,
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db),
 ):
     """Get cleaned chapter content from clean_bible table"""
     logger.info("GET Cleaned Bible chapter API")
+    validate_all_roles(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     return content_bible.get_clean_bible_chapter(
         db_session=db_session,
         resource_id=resource_id,
@@ -246,11 +268,14 @@ async def get_bible_verse_params(
 )
 async def get_bible_verse(
     params: schema.BibleVersePathParams = Depends(get_bible_verse_params),
+    session: SessionContainer = Depends(verify_session_with_approval),
     db_session: Session = Depends(get_db)
 ):
     """Get specific verse content"""
 
     logger.info("GET Bible verse API")
+    validate_all_roles(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
     return content_bible.get_bible_verse(
         db_session=db_session,
         resource_id=params.resource_id,
