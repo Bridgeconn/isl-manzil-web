@@ -133,7 +133,7 @@ def validate_all_roles(session: SessionContainer):
     payload = session.get_access_token_payload()
     roles = payload.get("st-role", {}).get("v", [])
 
-    if not any(role in roles for role in ["admin", "editor"]):
+    if not any(role in roles for role in ["admin", "editor","reporter"]):
         logger.error("Access denied: You dont have permission to access the API")
         raise PermissionException(
             detail="Access denied: You dont have permission to access the API"
