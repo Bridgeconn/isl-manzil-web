@@ -13,14 +13,14 @@ export default function Menu({ onClose }: { onClose: () => void }) {
   const isProjects = location.pathname === "/projects";
 
   return (
-    <div className="absolute w-40 left-0 bg-white border border-gray-200">
+    <div className="absolute w-40 left-0 bg-white text-black border border-gray-200 shadow-lg z-50">
       {/* Bible */}
       <div
         onClick={() => !isBible && go("/HomePage")}
         className={`px-2 py-2 transition ${
           isBible
             ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
-            : "cursor-pointer hover:bg-gray-200"
+            : "cursor-pointer hover:bg-gray-200 border-b border-gray-200"
         }`}
       >
         Bible
@@ -32,7 +32,7 @@ export default function Menu({ onClose }: { onClose: () => void }) {
         className={`px-2 py-2 transition ${
           isDictionary
             ? "text-gray-400 cursor-default bg-gray-50 pointer-events-none"
-            : "cursor-pointer hover:bg-gray-200"
+            : "cursor-pointer hover:bg-gray-200 border-b border-gray-200"
         }`}
       >
         Dictionary

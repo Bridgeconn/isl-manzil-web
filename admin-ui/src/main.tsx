@@ -12,8 +12,10 @@ import { SuperTokensWrapper } from "supertokens-auth-react";
 SuperTokens.init({
   appInfo: {
     appName: "Admin UI",
-    apiDomain: "http://localhost:8000",   // your FastAPI
-    websiteDomain: "http://localhost:5173", // Vite
+    apiDomain: 
+      import.meta.env.VITE_SUPERTOKENS_API_DOMAIN || "http://localhost:8000",
+    websiteDomain: 
+      import.meta.env.VITE_SUPERTOKENS_WEBSITE_DOMAIN || "http://localhost:5173", 
     apiBasePath: "/auth",
     websiteBasePath: "/auth"
   },
