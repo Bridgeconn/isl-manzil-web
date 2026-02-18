@@ -5,6 +5,7 @@ from typing import Dict, Any
 from usfm_grammar import USFMParser
 from fastapi import HTTPException,UploadFile
 from fastapi.concurrency import run_in_threadpool
+from dependencies import logger
 from custom_exceptions import (
     UnprocessableException
 )
@@ -97,6 +98,7 @@ async def validate_usfm_file_internal(file: UploadFile) -> Dict[str, Any]:
         'usfm_content': '\\id PSA...' ← Raw USFM string
     }
     """
+    logger.info("validate usfm file internal start")
     try:
         _validate_filename(file)
 

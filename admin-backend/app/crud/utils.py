@@ -1,4 +1,5 @@
 """Utilities for CRUD operations."""
+import os
 from typing import Any, Dict, List
 from datetime import datetime, timezone
 import json
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 from usfm_grammar import USFMParser
 import db_models
 import schema
-# from dependencies import logger
+from dependencies import logger
 from custom_exceptions import (
     AlreadyExistsException,
     NotAvailableException,
@@ -15,6 +16,12 @@ from custom_exceptions import (
 )
 
 
+if os.environ.get("DOCKER_RUN")=='True':
+    LOG_DIR = "/app/logs" # will be mounted to docker volume
+else:
+    LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
+
+os.makedirs(LOG_DIR, exist_ok=True)
 
 def utcnow():
     """Returns current UTC datetime"""
@@ -156,12 +163,9 @@ def _build_response(db_obj, version, language, license_):
 
 # Utility functions for API operations bible
 
-def extract_book_code_from_usfm(usfm_content: str) -> str:
+def extract_book_code_from_usfm(usj_data: Dict[str, Any]) -> str:
     """Extract book code from USFM content using usfm-grammar"""
     try:
-        parser = USFMParser(usfm_content)
-        usj_data = parser.to_usj()
-
         for item in usj_data.get("content", []):
             if item.get("type") == "book" and item.get("marker") == "id":
                 return item.get("code")
@@ -169,9 +173,7 @@ def extract_book_code_from_usfm(usfm_content: str) -> str:
         raise UnprocessableException("No book code found in USFM content")
 
     except Exception as e:
-        raise UnprocessableException(
-            f"USFM parsing error: {str(e)}"
-        ) from e
+        raise UnprocessableException(detail=str(e)) from e
 def parse_verse_number(verse_str: str) -> List[int]:
     """
     Parse verse number strings that might contain ranges.
@@ -284,6 +286,7 @@ def _expand_and_add_verses(
     except ValueError as e:
         print(f"Warning: Could not parse verse '{verse_str}' in chapter {chapter}: {e}")
 def _parse_usfm_to_usj(usfm_content: str) -> Dict[str, Any]:
+    logger.info("parse usfm to usj start")
     try:
         return USFMParser(usfm_content).to_usj()
     except Exception as e:

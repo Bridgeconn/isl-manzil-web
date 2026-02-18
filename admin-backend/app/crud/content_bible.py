@@ -12,6 +12,7 @@ from custom_exceptions import (
     BadRequestException,
     TypeException,
 )
+from dependencies import logger
 from crud.utils import (
     extract_book_code_from_usfm,
     _parse_usfm_to_usj,
@@ -24,9 +25,12 @@ from crud.utils import (
 
 )
 
+
+
 def validate_chapter_count(db_session: Session,
     book_code: str, chapter_count: int):
     """Validate chapter count against DB table"""
+    logger.info("validate chapter count start")
     book = (
         db_session.query(db_models.BookLookup)
         .filter(db_models.BookLookup.book_code == book_code.lower())
@@ -34,15 +38,22 @@ def validate_chapter_count(db_session: Session,
     )
 
     if not book:
+        logger.error("Book %s not found", book_code)
         raise NotAvailableException(detail=f"Book {book_code} not found")
 
     if chapter_count > book.chapter_count:
+        logger.error("Invalid chapter count %s for book %s. Max allowed: %s",
+            chapter_count,
+            book_code,
+            book.chapter_count,
+        )
         raise BadRequestException(
             detail=(
             f"Invalid chapter count {chapter_count} for book {book_code}. "
             f"Max allowed: {book.chapter_count}"
             )
         )
+    logger.info("validate chapter count end")
 
 def upload_bible_book(
     db_session: Session,
@@ -53,34 +64,38 @@ def upload_bible_book(
     usfm_content: str = None
 ) -> Dict[str, str]:
     """Upload and process a new bible book"""
-
+    logger.info("POST Bible Books START")
     # Check if resource exists and validate content type
-    resource = _get_resource(db_session, resource_id)
+    # resource = _get_resource(db_session, resource_id)
 
-    if resource.content_type.lower() != "bible":
-        raise BadRequestException(
-            detail=(
-                f"Resource {resource_id} is not of type 'bible' "
-                f"(found '{resource.content_type}')"
-            )
-        )
+    # if resource.content_type.lower() != "bible":
+    #     logger.error(f"Resource {resource_id} is not of type 'bible' "
+    #             f"(found '{resource.content_type}')"
+    #         )
+    #     raise BadRequestException(
+    #         detail=(
+    #             f"Resource {resource_id} is not of type 'bible' "
+    #             f"(found '{resource.content_type}')"
+    #         )
+    #     )
 
     # Read file if not already provided
     if usfm_content is None:
         usfm_content = _read_usfm_file(usfm_file)
+        logger.info("reading usfm file end")
 
-    # Extract book code
-    book_code = extract_book_code_from_usfm(usfm_content)
-    book = _lookup_book_or_404(db_session, book_code)
-
-    _check_book_not_exists(db_session, resource_id, book.book_id)
 
     # Parse USFM if not already parsed
     if pre_parsed_usj_data is not None:
         usj_data = pre_parsed_usj_data
     else:
         usj_data = _parse_usfm_to_usj(usfm_content)
+        logger.info("parse usfm to usj end")
+    # Extract book code
+    book_code = extract_book_code_from_usfm(usj_data)
+    book = _lookup_book_or_404(db_session, book_code)
 
+    _check_book_not_exists(db_session, resource_id, book.book_id)
     content_items = usj_data.get("content", [])
     chapter_count = _count_chapters(content_items)
     validate_chapter_count(db_session, book_code, chapter_count)
@@ -101,27 +116,16 @@ def upload_bible_book(
         book_id=book.book_id,
         usj_data=usj_data
     )
-
+    logger.info("save clean verses function end")
     # touch_resource(db_session, resource_id=bible_record.resource_id, actor_user_id=actor_user_id)
     db_session.commit()
-
+    logger.info("POST Bible Books END")
     return {
         "message": "Bible book uploaded successfully",
         "bible_book_id": bible_record.bible_book_id
     }
-def _get_resource(db_session: Session, resource_id: int):
-    resource = db_session.query(db_models.Resource).filter_by(resource_id=resource_id).first()
-    if not resource:
-        raise NotAvailableException(detail="Resource not found")
-    if resource.content_type.lower() != "bible":
-        raise BadRequestException(
-            detail=(
-                f"Resource {resource_id} is not of type 'bible' "
-                f"(found '{resource.content_type}')"
-            )
-        )
-    return resource
 def _read_usfm_file(usfm_file: UploadFile) -> str:
+    logger.info("reading usfm file start")
     return usfm_file.file.read().decode("utf-8")
 
 
@@ -130,6 +134,7 @@ def _lookup_book_or_404(db_session: Session, book_code: str):
         func.lower(db_models.BookLookup.book_code) == book_code.lower()
     ).first()
     if not book:
+        logger.error("Book %s not found", book_code)
         raise NotAvailableException(detail=f"Book {book_code} not found")
     return book
 
@@ -140,11 +145,13 @@ def _check_book_not_exists(db_session: Session, resource_id: int, book_id: int):
         book_id=book_id
     ).first()
     if existing:
+        logger.error("Book already exists for resource %s",resource_id)
         raise AlreadyExistsException(
             detail=f"Book already exists for resource {resource_id}"
         )
 
 def _create_bible_entry(db_session: Session, data: BibleEntrySchema):
+    logger.info("_create_bible_entry start")
     bible_record = db_models.Bible(
         resource_id=data.resource_id,
         book_id=data.book_id,
@@ -154,6 +161,7 @@ def _create_bible_entry(db_session: Session, data: BibleEntrySchema):
     )
     db_session.add(bible_record)
     db_session.flush()
+    logger.info("_create_bible_entry end")
     return bible_record
 
 def _save_clean_verses(
@@ -162,6 +170,7 @@ def _save_clean_verses(
     book_id: int,
     usj_data: Dict[str, Any]
 ):
+    logger.info("save clean verses function start")
     verses = parse_usfm_to_clean_verses(usj_data)
     for verse in verses:
         db_session.add(
@@ -191,14 +200,15 @@ def update_bible_book(
     if usfm_content is None:
         usfm_content = _read_usfm_file(usfm_file)
 
-    book_code = extract_book_code_from_usfm(usfm_content)
-    _validate_book_code_matches(db_session, bible_record.book_id, book_code)
 
     # Parse USFM if not already parsed
     if pre_parsed_usj_data is not None:
         usj_data = pre_parsed_usj_data
     else:
         usj_data = _parse_usfm_to_usj(usfm_content)
+    # Extract book code
+    book_code = extract_book_code_from_usfm(usj_data)
+    _validate_book_code_matches(db_session, bible_record.book_id, book_code)
 
     content_items = usj_data.get("content", [])
     chapter_count = _count_chapters(content_items)
@@ -230,6 +240,9 @@ def _get_bible_record_or_404(db_session: Session, bible_book_id: int):
 def _validate_book_code_matches(db_session: Session, book_id: int, new_code: str):
     book = db_session.query(db_models.BookLookup).filter_by(book_id=book_id).first()
     if book.book_code.lower() != new_code.lower():
+        logger.error(
+        "Book code mismatch: %s != %s",
+        new_code,book.book_code)
         raise BadRequestException(
             detail=f"Book code mismatch: {new_code} != {book.book_code}"
         )
@@ -278,8 +291,13 @@ def delete_bible_books(
         .first()
     )
     if not resource:
+        logger.error("Resource %s not found",resource_id)
         raise NotAvailableException(detail=f"Resource {resource_id} not found")
     if resource.content_type.lower() != "bible":
+        logger.error(
+        "Resource %s is not of type 'bible' (found '%s')",
+        resource_id,
+        resource.content_type)
         raise BadRequestException(
             detail=(
                 f"Resource {resource_id} is not of type 'bible' "
@@ -295,6 +313,7 @@ def delete_bible_books(
 
         # Duplicate check
         if code_lower in processed:
+            logger.error("Duplicate book code: %s",code)
             errors.append(f"Duplicate book code: {code}")
             continue
 
@@ -308,6 +327,7 @@ def delete_bible_books(
         )
 
         if not book:
+            logger.error("Book code '%s' not found in lookup",code)
             errors.append(f"Book code '{code}' not found in lookup")
             continue
 
@@ -319,6 +339,7 @@ def delete_bible_books(
         )
 
         if not bible_row:
+            logger.error("Book '%s' not found for resource %s",code,resource_id)
             errors.append(f"Book '{code}' not found for resource {resource_id}")
             continue
 
@@ -396,10 +417,15 @@ def get_bible_books(
             .first()
         )
         if not resource:
+            logger.error("Resource %s not found",resource_id)
             raise NotAvailableException(
                 detail=f"Resource {resource_id} not found"
             )
         if resource.content_type.lower() != "bible":
+            logger.error(
+            "Resource %s is not of type 'bible' (found '%s')",
+            resource_id,
+            resource.content_type)
             raise BadRequestException(
                 detail=(
                     f"Resource {resource_id} is not of type 'bible' "
@@ -458,8 +484,13 @@ def get_full_bible_content(
     # Find resource
     resource = db_session.query(db_models.Resource).filter_by(resource_id=resource_id).first()
     if not resource:
+        logger.error("Resource %s not found",resource_id)
         raise NotAvailableException(detail=f"Resource {resource_id} not found")
     if resource.content_type.lower() != "bible":
+        logger.error(
+            "Resource %s is not of type 'bible' (found '%s')",
+            resource_id,
+            resource.content_type)
         raise BadRequestException(
             detail=(
                 f"Resource {resource_id} is not of type 'bible' "
@@ -474,6 +505,7 @@ def get_full_bible_content(
     ).order_by(db_models.BookLookup.book_id).all()
 
     if not bible_records:
+        logger.error("No bible records found for resource %s",resource_id)
         raise NotAvailableException(detail=f"No bible records found for resource {resource_id}")
 
     # Prepare books data
@@ -518,8 +550,13 @@ def get_bible_book_content(
     # Find resource
     resource = db_session.query(db_models.Resource).filter_by(resource_id=resource_id).first()
     if not resource:
+        logger.error("Resource %s not found",resource_id)
         raise NotAvailableException(detail=f"Resource {resource_id} not found")
     if resource.content_type.lower() != "bible":
+        logger.error(
+            "Resource %s is not of type 'bible' (found '%s')",
+            resource_id,
+            resource.content_type)
         raise BadRequestException(
             detail=(
                 f"Resource {resource_id} is not of type 'bible' "
@@ -532,6 +569,7 @@ def get_bible_book_content(
     ).first()
 
     if not book:
+        logger.error("Resource %s not found",resource_id)
         raise NotAvailableException(detail=f"Book {book_code} not found")
 
     # Find bible record
@@ -541,6 +579,8 @@ def get_bible_book_content(
     ).first()
 
     if not bible_record:
+        logger.error("Book %s not found for resource %s",
+                     book_code,resource_id)
         raise NotAvailableException(
             detail=f"Book {book_code} not found for resource {resource_id}"
         )
@@ -579,6 +619,27 @@ def get_available_clean_books(db_session: Session, resource_id: int):
         db_models.CleanBible.resource_id == resource_id
     ).distinct().order_by(db_models.BookLookup.book_id).all()
 
+# Helper: Resource
+def get_resource(db_session: Session, resource_id: int):
+    """bible Resource checker"""
+    res = db_session.query(db_models.Resource).filter_by(resource_id=resource_id).first()
+    if not res:
+        logger.error("Resource %s not found",resource_id)
+        raise NotAvailableException(detail=f"Resource {resource_id} not found")
+    if res.content_type.lower() != "bible":
+        logger.error(
+        "Resource %s is not of type 'bible' (found '%s')",
+        resource_id,
+        res.content_type)
+        raise BadRequestException(
+            detail=(
+                f"Resource {resource_id} is not of type 'bible' "
+                f"(found '{res.content_type}')"
+            )
+        )
+    return res
+
+
 def get_bible_chapter(
     db_session: Session,
     resource_id: int,
@@ -587,26 +648,13 @@ def get_bible_chapter(
 ) -> schema.BibleChapterResponse:
     """Get chapter content from bible table with cross-book navigation"""
 
-    # Helper: Resource
-    def get_resource():
-        res = db_session.query(db_models.Resource).filter_by(resource_id=resource_id).first()
-        if not res:
-            raise NotAvailableException(detail=f"Resource {resource_id} not found")
-        if res.content_type.lower() != "bible":
-            raise BadRequestException(
-                detail=(
-                    f"Resource {resource_id} is not of type 'bible' "
-                    f"(found '{res.content_type}')"
-                )
-            )
-        return res
-
     # Helper: Book
     def get_book():
         book_obj = db_session.query(db_models.BookLookup).filter(
             func.lower(db_models.BookLookup.book_code) == book_code.lower()
         ).first()
         if not book_obj:
+            logger.error("Book %s not found",book_code)
             raise NotAvailableException(detail=f"Book {book_code} not found")
         return book_obj
 
@@ -617,6 +665,8 @@ def get_bible_chapter(
             book_id=book_id
         ).first()
         if not record:
+            logger.error("Book %s not found for resource %s",
+                     book_code,resource_id)
             raise NotAvailableException(
                 detail=f"Book {book_code} not found for resource {resource_id}"
             )
@@ -690,7 +740,8 @@ def get_bible_chapter(
         return previous, nxt
 
     # Main logic
-    get_resource()
+    get_resource(db_session,resource_id)
+
     book = get_book()
     bible_record = get_bible_record(book.book_id)
 
@@ -710,8 +761,13 @@ def get_bible_chapter(
 def _clean_get_resource(db_session, resource_id):
     resource = db_session.query(db_models.Resource).filter_by(resource_id=resource_id).first()
     if not resource:
+        logger.error("Resource %s not found",resource_id)
         raise NotAvailableException(detail=f"Resource {resource_id} not found")
     if resource.content_type.lower() != "bible":
+        logger.error(
+            "Resource %s is not of type 'bible' (found '%s')",
+            resource_id,
+            resource.content_type)
         raise BadRequestException(
             detail=(
                 f"Resource {resource_id} is not of type 'bible' "
@@ -726,6 +782,7 @@ def _clean_get_book(db_session, book_code):
         func.lower(db_models.BookLookup.book_code) == book_code.lower()
     ).first()
     if not book:
+        logger.error("Book %s not found",book_code)
         raise NotAvailableException(detail=f"Book {book_code} not found")
     return book
 
@@ -738,6 +795,7 @@ def _clean_get_verses(db_session, resource_id, book_id, chapter, book_code):
     ).order_by(db_models.CleanBible.verse).all()
 
     if not verses:
+        logger.error("Chapter %s not found for book %s", chapter, book_code)
         raise NotAvailableException(
             detail=f"Chapter {chapter} not found for book {book_code}"
         )
@@ -808,7 +866,7 @@ def get_bible_verse(
 ) -> schema.BibleVerseResponse:
     """Get specific verse content with enhanced navigation"""
 
-    _get_resource(db_session, resource_id)
+    get_resource(db_session, resource_id)
     book = _get_book_or_404(db_session, book_code)
     verse_record = _get_clean_verse_or_404(db_session, resource_id, book.book_id, chapter, verse)
     bible_record = _get_bible_record(db_session, resource_id, book.book_id)
@@ -858,6 +916,7 @@ def _get_book_or_404(db_session: Session, book_code: str):
         func.lower(db_models.BookLookup.book_code) == book_code.lower()
     ).first()
     if not book:
+        logger.error("Book %s not found",book_code)
         raise NotAvailableException(detail=f"Book {book_code} not found")
     return book
 
@@ -877,6 +936,12 @@ def _get_clean_verse_or_404(
     ).first()
 
     if not verse_record:
+        logger.error(
+            "Verse %s.%s.%s not found",
+            book_id,
+            chapter,
+            verse,
+        )
         raise NotAvailableException(
             detail=f"Verse {book_id}.{chapter}.{verse} not found"
         )

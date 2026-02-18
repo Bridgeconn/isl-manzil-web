@@ -14,7 +14,7 @@ import schema
 from schema import BibleVersePathParams
 from crud import content_bible
 from crud import remote_filecheck_crud
-from dependencies import get_db
+from dependencies import get_db, logger
 from custom_exceptions import (
     BadRequestException,
     UnprocessableException,
@@ -39,8 +39,24 @@ async def upload_bible_book(
 
     # Get user ID from session
     # Validate USFM file before processing
+    logger.info("POST Bible  API")
+    resource = content_bible.get_resource(db_session, resource_id)
+
+    if resource.content_type.lower() != "bible":
+        logger.error(
+        "Resource %s is not of type 'bible' (found '%s')",
+        resource_id,
+        resource.content_type)
+        raise BadRequestException(
+            detail=(
+                f"Resource {resource_id} is not of type 'bible' "
+                f"(found '{resource.content_type}')"
+            )
+        )
     validation_result = await remote_filecheck_crud.validate_usfm_file_internal(usfm)
+    logger.info("validate usfm file internal end")
     if not validation_result["valid"]:
+        logger.error(validation_result.get("error"))
         raise UnprocessableException(detail=validation_result.get("error"))
 
     # Pass pre-parsed data to avoid re-parsing
@@ -65,10 +81,11 @@ async def update_bible_book(
 ):
     """Update an existing bible book"""
 
-
+    logger.info("PUT Bible Books API")
     # Validate USFM file AND get parsed data
     validation_result = await remote_filecheck_crud.validate_usfm_file_internal(usfm)
     if not validation_result["valid"]:
+        logger.error(validation_result.get("error"))
         raise UnprocessableException(detail=validation_result.get("error"))
 
     # Pass pre-parsed data to avoid re-parsing
@@ -94,7 +111,7 @@ async def delete_bible_books_endpoint(
 ):
     """Bulk delete Bible books by book codes"""
 
-
+    logger.info("DELETE Bible Books API")
     result = content_bible.delete_bible_books(
         db_session=db_session,
         resource_id=resource_id,
@@ -118,76 +135,76 @@ async def get_bible_books(
     db_session: Session = Depends(get_db)
 ):
     """Get list of books for a bible resource"""
-
+    logger.info("GET Bible Books API")
     return content_bible.get_bible_books(db_session, resource_id)
 
 
 
-@router.get(
-    "/bible/{resource_id}/content/{output_format}",
-    response_model=schema.BibleFullContentResponse,
-    tags=["Bible"]
-)
-async def get_full_bible_content(
-    resource_id: int,
-    output_format: str,
-    db_session: Session = Depends(get_db)
-):
-    """Get full content of all books in a resource in specified format (json/usfm)"""
+# @router.get(
+#     "/bible/{resource_id}/content/{output_format}",
+#     response_model=schema.BibleFullContentResponse,
+#     tags=["Bible"]
+# )
+# async def get_full_bible_content(
+#     resource_id: int,
+#     output_format: str,
+#     db_session: Session = Depends(get_db)
+# ):
+#     """Get full content of all books in a resource in specified format (json/usfm)"""
 
-    if output_format.lower() not in ["json", "usfm"]:
-        raise BadRequestException("Format must be 'json' or 'usfm'")
+#     if output_format.lower() not in ["json", "usfm"]:
+#         raise BadRequestException("Format must be 'json' or 'usfm'")
 
-    return content_bible.get_full_bible_content(
-        db_session=db_session,
-        resource_id=resource_id,
-        output_format=output_format
-    )
+#     return content_bible.get_full_bible_content(
+#         db_session=db_session,
+#         resource_id=resource_id,
+#         output_format=output_format
+#     )
 
 
 
-@router.get(
-    "/bible/{resource_id}/book/{book_code}/{output_format}",
-    response_model=schema.BibleBookContentResponse,
-    tags=["Bible"]
-)
-async def get_bible_book_content(
-    resource_id: int,
-    book_code: str,
-    output_format: str,
-    db_session: Session = Depends(get_db)
-):
-    """Get full content of a book in specified format (json/usfm)"""
+# @router.get(
+#     "/bible/{resource_id}/book/{book_code}/{output_format}",
+#     response_model=schema.BibleBookContentResponse,
+#     tags=["Bible"]
+# )
+# async def get_bible_book_content(
+#     resource_id: int,
+#     book_code: str,
+#     output_format: str,
+#     db_session: Session = Depends(get_db)
+# ):
+#     """Get full content of a book in specified format (json/usfm)"""
 
-    if output_format.lower() not in ["json", "usfm"]:
-        raise BadRequestException("Format must be 'json' or 'usfm'")
+#     if output_format.lower() not in ["json", "usfm"]:
+#         raise BadRequestException("Format must be 'json' or 'usfm'")
 
-    return content_bible.get_bible_book_content(
-        db_session=db_session,
-        resource_id=resource_id,
-        book_code=book_code,
-        output_format=output_format
-    )
+#     return content_bible.get_bible_book_content(
+#         db_session=db_session,
+#         resource_id=resource_id,
+#         book_code=book_code,
+#         output_format=output_format
+#     )
 
-@router.get(
-    "/bible/{resource_id}/chapter/{book_code}.{chapter}",
-    response_model=schema.BibleChapterResponse,
-    tags=["Bible"]
-)
-async def get_bible_chapter(
-    resource_id: int,
-    book_code: str,
-    chapter: int,
-    db_session: Session = Depends(get_db)
-):
-    """Get chapter content from bible table"""
+# @router.get(
+#     "/bible/{resource_id}/chapter/{book_code}.{chapter}",
+#     response_model=schema.BibleChapterResponse,
+#     tags=["Bible"]
+# )
+# async def get_bible_chapter(
+#     resource_id: int,
+#     book_code: str,
+#     chapter: int,
+#     db_session: Session = Depends(get_db)
+# ):
+#     """Get chapter content from bible table"""
 
-    return content_bible.get_bible_chapter(
-        db_session=db_session,
-        resource_id=resource_id,
-        book_code=book_code,
-        chapter=chapter
-    )
+#     return content_bible.get_bible_chapter(
+#         db_session=db_session,
+#         resource_id=resource_id,
+#         book_code=book_code,
+#         chapter=chapter
+#     )
 
 @router.get(
     "/bible/{resource_id}/cleaned/chapter/{book_code}.{chapter}",
@@ -201,7 +218,7 @@ async def get_clean_bible_chapter(
     db_session: Session = Depends(get_db),
 ):
     """Get cleaned chapter content from clean_bible table"""
-
+    logger.info("GET Cleaned Bible chapter API")
     return content_bible.get_clean_bible_chapter(
         db_session=db_session,
         resource_id=resource_id,
@@ -233,7 +250,7 @@ async def get_bible_verse(
 ):
     """Get specific verse content"""
 
-
+    logger.info("GET Bible verse API")
     return content_bible.get_bible_verse(
         db_session=db_session,
         resource_id=params.resource_id,
