@@ -146,15 +146,15 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
       .ready()
 
       .then(() => {
-        player.on("play", handlePlay);
+      player.on("play", handlePlay);
 
-        player.on("pause", handlePause);
+      player.on("pause", handlePause);
 
-        player.on("ended", handleEnded);
+      player.on("ended", handleEnded);
 
-        player.on("timeupdate", handleTimeUpdate);
+      player.on("timeupdate", handleTimeUpdate);
 
-        return player.getDuration();
+      return player.getDuration();
       })
 
       .then(setCleanVimeoDuration)
@@ -224,9 +224,9 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
 
   const handleSeek = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (!cleanVimeoInstanceRef.current) return;
+    if (!cleanVimeoInstanceRef.current) return;
 
-      const time = parseFloat(e.target.value);
+    const time = parseFloat(e.target.value);
 
       try {
         await cleanVimeoInstanceRef.current.setCurrentTime(time);
@@ -265,21 +265,18 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
     (deviceType === "mobile" || deviceType === "tablet");
 
   return (
-    <div className="w-full">
+    // ← CHANGED: removed w-full wrapper, now just renders the container directly
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full overflow-hidden rounded-3xl ${
+        isFullscreenMode ? "flex flex-col justify-center bg-black" : "aspect-video bg-black"
+      }`}
+      style={{
+        maxHeight: isFullscreenMode ? "100vh" : undefined,
+        touchAction: "manipulation",
+      }}
+    >
       <div
-        ref={containerRef}
-        className={`relative w-full h-119 max-w-5xl mt-4 lg:mt-6 overflow-hidden rounded-3xl ${
-          isFullscreenMode
-            ? "h-screen flex flex-col justify-center bg-black"
-            : "aspect-video bg-black"
-        }`}
-        style={{
-          maxHeight: isFullscreenMode ? "100vh" : "80vh",
-
-          touchAction: "manipulation",
-        }}
-      >
-        <div
           className={`relative ${
             isFullscreenMode
               ? "mx-auto bg-black overflow-hidden"
@@ -290,8 +287,8 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
               ? { aspectRatio: "16/9", maxHeight: "100vh", width: "100%" }
               : undefined
           }
-        >
-          <style>{`
+      >
+        <style>{`
 
             .slider::-webkit-slider-thumb {
 
@@ -331,53 +328,53 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
 
             }
 
-          `}</style>
+        `}</style>
 
           <div
             ref={cleanVimeoPlayerRef}
             className="w-full h-full pointer-events-none"
           />
-          <div className="absolute inset-0 z-10" onClick={togglePlay} />
+        <div className="absolute inset-0 z-10" onClick={togglePlay} />
 
-          {(cleanVimeoIsEnded || cleanVimeoIsReplaying) && (
-            <div className="absolute inset-0 bg-black flex items-center justify-center z-30">
-              <button
+        {(cleanVimeoIsEnded || cleanVimeoIsReplaying) && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center z-30">
+            <button
                 onClick={(e) => {
                   e.stopPropagation();
 
                   if (!cleanVimeoIsReplaying) replayVideo();
                 }}
-                disabled={cleanVimeoIsReplaying}
-                className="bg-blue-600 hover:bg-blue-700 text-sm text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2 transition-all duration-200 shadow-md disabled:opacity-70"
-                style={{ pointerEvents: "auto" }}
-              >
+              disabled={cleanVimeoIsReplaying}
+              className="bg-blue-600 hover:bg-blue-700 text-sm text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2 transition-all duration-200 shadow-md disabled:opacity-70"
+              style={{ pointerEvents: "auto" }}
+            >
                 <RefreshCw
                   size={24}
                   className={cleanVimeoIsReplaying ? "animate-spin" : ""}
                 />
-                <span>{cleanVimeoIsReplaying ? "Loading..." : "Replay"}</span>
-              </button>
-            </div>
-          )}
+              <span>{cleanVimeoIsReplaying ? "Loading..." : "Replay"}</span>
+            </button>
+          </div>
+        )}
 
-          {cleanVimeoShowBezel && !cleanVimeoIsEnded && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <div className="bg-black/60 backdrop-blur-sm rounded-full p-6">
+        {cleanVimeoShowBezel && !cleanVimeoIsEnded && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <div className="bg-black/60 backdrop-blur-sm rounded-full p-6">
                 {cleanVimeoIsPlaying ? (
                   <Pause className="text-white w-6 h-6 sm:w-12 sm:h-12" />
                 ) : (
                   <Play className="text-white w-6 h-6 sm:w-12 sm:h-12 ml-1" />
                 )}
-              </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {!cleanVimeoIsEnded && !cleanVimeoIsReplaying && (
+        {!cleanVimeoIsEnded && !cleanVimeoIsReplaying && (
             <div
               className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 z-10"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-2 text-white">
+            <div className="flex items-center gap-2 text-white">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -391,9 +388,9 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
                   ) : (
                     <Play size={18} />
                   )}
-                </button>
+              </button>
 
-                <div className="flex-1 flex items-center mx-1">
+              <div className="flex-1 flex items-center mx-1">
                   <input
                     type="range"
                     min={0}
@@ -402,7 +399,7 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
                     value={cleanVimeoCurrentTime}
                     onChange={handleSeek}
                     onClick={(e) => e.stopPropagation()}
-                    className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
+                  className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
                     style={{
                       background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
                         (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) *
@@ -412,10 +409,10 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
                         100
                       }%, rgba(255,255,255,0.3) 100%)`,
                     }}
-                  />
-                </div>
+                />
+              </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-xs font-mono whitespace-nowrap">
                     {formatTime(cleanVimeoCurrentTime)} /{" "}
                     {formatTime(cleanVimeoDuration)}
@@ -434,12 +431,11 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
                     ) : (
                       <Maximize size={18} />
                     )}
-                  </button>
-                </div>
+                </button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

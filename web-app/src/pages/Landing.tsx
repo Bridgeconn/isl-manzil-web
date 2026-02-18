@@ -13,92 +13,145 @@ const Landing = () => {
   const navigate = useNavigate();
   const [isAboutOpen, setIsAboutOpen] = useState(false);
 
-  const toggleAbout = () => {
-    setIsAboutOpen(!isAboutOpen);
-  };
+  const toggleAbout = () => setIsAboutOpen(!isAboutOpen);
   const closeAbout = () => setIsAboutOpen(false);
-  return (
-    <div className="bg-white h-screen flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6 px-4 lg:px-6 py-4 lg:py-0 overflow-hidden">
-      {/* Video Section */}
 
-      <div className="w-full  lg:w-[80%] xl:w-[100%] flex items-center justify-center">
-        <div className="aspect-video w-full  max-w-[1100px] max-h-[50vh] lg:max-h-[85vh]">
-          <div className="ml-220">
-            <ButtonHide
-              isVisible={isAboutOpen}
-              toggle={toggleAbout}
-              alwaysShowImage={true}
-              size="w-16 h-16"
-            />
-          </div>
-          <div className="-mt-4">
+  return (
+    <div className="bg-white w-full flex flex-col md:flex-row md:h-full md:overflow-hidden">
+
+      {/* VIDEO SECTION — hidden below 768px */}
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center p-4 min-w-0 min-h-0 overflow-hidden">
+        <div className="w-full flex justify-end mb-1 flex-shrink-0">
+          <ButtonHide
+            isVisible={isAboutOpen}
+            toggle={toggleAbout}
+            alwaysShowImage={true}
+            size="w-10 h-10 lg:w-14 lg:h-14"
+          />
+        </div>
+        <div className="w-full flex-1 min-h-0 overflow-hidden flex items-center">
+          <div className="w-full" style={{ maxHeight: '100%', aspectRatio: '16/9' }}>
             <CleanVimeoPlayer videoId={1105756880} />
           </div>
         </div>
       </div>
 
-      {/* Tiles Section */}
-      <div className="w-full h-[87vh] lg:w-[200px] xl:w-[340px] bg-[#d7e5f0] rounded-3xl p-4 lg:p-6 shadow-md overflow-hidden">
-        <div className="flex flex-row lg:flex-col gap-4 lg:gap-6 justify-between">
-          {/* Tile 1 */}
+      {/* TILES SIDEBAR */}
+      <div className="
+        flex-shrink-0
+        w-full py-4 px-4
+        md:w-[200px] md:h-full md:py-3 md:px-2 md:overflow-hidden
+        lg:w-[240px] lg:px-3 lg:py-3
+        xl:w-[290px] xl:px-4 xl:py-4
+        2xl:w-[330px]
+      ">
+        <div
+          className="
+            w-full rounded-3xl shadow-md flex flex-col
+            gap-4 p-4
+            md:h-full md:p-3 md:gap-2
+            lg:p-4 lg:gap-3
+            xl:p-5 xl:gap-4
+          "
+          style={{ backgroundColor: "rgba(215, 229, 240, 0.6)" }}
+        >
+
+          {/* Tile 1 — Bible */}
           <div
             onClick={() => navigate("/HomePage")}
-            className="text-center cursor-pointer group flex-1"
+            className="text-center cursor-pointer group
+              flex flex-col
+              md:flex-1 md:min-h-0"
           >
-            <div className="aspect-[16/10] overflow-hidden rounded-2xl shadow-sm group-hover:shadow-lg transition">
+            {/*
+              Mobile  → h-auto so image shows at natural ratio
+              md+     → flex-1 min-h-0 makes the wrapper take equal share
+                        of sidebar height; object-contain shows FULL image
+                        inside that space, no cropping, no overflow
+            */}
+            <div className="
+              overflow-hidden rounded-2xl shadow-sm group-hover:shadow-lg transition
+              md:flex-1 md:min-h-0
+            ">
               <img
                 src={BibleImg}
                 alt="Bible"
-                className="w-full h-full object-cover"
+                className="w-full block
+                  h-full
+                  md:h-full md:object-fill"
               />
             </div>
-            <p className="text-black font-semibold text-base lg:text-lg">
+            <p className="text-black font-semibold mt-1 flex-shrink-0
+              text-sm md:text-[10px] lg:text-xs xl:text-sm 2xl:text-base">
               Bible
             </p>
           </div>
 
-          {/* Tile 2 */}
+          {/* Tile 2 — Dictionary */}
           <div
             onClick={() => navigate("/dictionary")}
-            className="text-center cursor-pointer group flex-1"
+            className="text-center cursor-pointer group
+              flex flex-col
+              md:flex-1 md:min-h-0"
           >
-            <div className="aspect-[16/10] overflow-hidden rounded-2xl shadow-sm group-hover:shadow-lg transition">
+            <div className="
+              overflow-hidden rounded-2xl shadow-sm group-hover:shadow-lg transition
+              md:flex-1 md:min-h-0
+            ">
               <img
                 src={DictionaryImg}
                 alt="Dictionary"
-                className="w-full h-full object-cover"
+                className="w-full block
+                  h-full
+                  md:h-full md:object-fill"
               />
             </div>
-            <p className=" text-black font-semibold text-base lg:text-lg">
+            <p className="text-black font-semibold mt-1 flex-shrink-0
+              text-sm md:text-[10px] lg:text-xs xl:text-sm 2xl:text-base">
               Dictionary
             </p>
           </div>
 
-          {/* Tile 3 */}
+          {/* Tile 3 — The Bible Project */}
           <div
             onClick={() => navigate("/projects")}
-            className="text-center cursor-pointer group flex-1"
+            className="text-center cursor-pointer group
+              flex flex-col
+              md:flex-1 md:min-h-0"
           >
-            <div className="aspect-[16/10] overflow-hidden rounded-2xl shadow-sm group-hover:shadow-lg transition">
+            <div className="
+              overflow-hidden rounded-2xl shadow-sm group-hover:shadow-lg transition
+              md:flex-1 md:min-h-0
+            ">
               <img
                 src={ProjectImg}
                 alt="The Bible Projects"
-                className="w-full h-full object-cover"
+                className="w-full block
+                  h-full
+                  md:h-full md:object-fill"
               />
             </div>
-            <p className=" text-black font-semibold text-base lg:text-lg">
+            <p className="text-black font-semibold mt-1 flex-shrink-0
+              text-sm md:text-[10px] lg:text-xs xl:text-sm 2xl:text-base">
               The Bible Project
             </p>
           </div>
+
         </div>
       </div>
-      <AboutUsPopUp
-        showAbout={isAboutOpen}
-        onClose={closeAbout}
-        hideVideoSection={true}
-        closeImage={HideTextImage}
-      />
+
+      {/* ABOUT US POPUP — md and above only */}
+      <div className="hidden md:block">
+        <AboutUsPopUp
+          showAbout={isAboutOpen}
+          onClose={closeAbout}
+          hideVideoSection={true}
+          closeImage={HideTextImage}
+        />
+      </div>
+
     </div>
   );
 };
+
 export default Landing;
