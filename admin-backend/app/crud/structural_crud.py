@@ -1,7 +1,6 @@
 """This module contains the functions for version,language,license,resource crud operations."""
 from datetime import datetime, timezone
 import json
-import os
 from typing import List, Optional, Tuple
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -26,12 +25,6 @@ def utcnow():
     """Returns current UTC datetime"""
     return datetime.now(timezone.utc)
 
-if os.environ.get("DOCKER_RUN")=='True':
-    LOG_DIR = "/app/logs" # will be mounted to docker volume
-else:
-    LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
-
-os.makedirs(LOG_DIR, exist_ok=True)
 # --- Version CRUD ---
 def get_all_versions(db_session: Session):
     """Retrieve all versions from the database."""

@@ -1,17 +1,27 @@
 """Utilities for CRUD operations."""
-from typing import Any, Dict, List
+import os
+from typing import Any, Dict, List,Optional
 from datetime import datetime, timezone
 import json
 from sqlalchemy.orm import Session
+from usfm_grammar import USFMParser
 import db_models
 import schema
-# from dependencies import logger
+from dependencies import logger
 from custom_exceptions import (
     AlreadyExistsException,
-    NotAvailableException
+    NotAvailableException,
+    UnprocessableException,
+
 )
 
 
+if os.environ.get("DOCKER_RUN")=='True':
+    LOG_DIR = "/app/logs" # will be mounted to docker volume
+else:
+    LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
+
+os.makedirs(LOG_DIR, exist_ok=True)
 
 def utcnow():
     """Returns current UTC datetime"""
@@ -150,3 +160,295 @@ def _build_response(db_obj, version, language, license_):
         updatedBy=db_obj.updated_by,
         updatedTime=db_obj.updated_at,
     )
+
+# Utility functions for API operations bible
+
+def extract_book_code_from_usfm(usj_data: Dict[str, Any]) -> str:
+    """Extract book code from USFM content using usfm-grammar"""
+    try:
+        for item in usj_data.get("content", []):
+            if item.get("type") == "book" and item.get("marker") == "id":
+                return item.get("code")
+
+        raise UnprocessableException("No book code found in USFM content")
+
+    except Exception as e:
+        raise UnprocessableException(detail=str(e)) from e
+def parse_verse_number(verse_str: str) -> List[int]:
+    """
+    Parse verse number strings that might contain ranges.
+
+    Examples:
+    - "1" -> [1]
+    - "23-24" -> [23, 24]
+    """
+    verses = []
+
+    if not verse_str:
+        return verses
+
+    verse_str = str(verse_str).strip()
+
+    try:
+        # Split by comma for multiple groups
+        groups = verse_str.split(',')
+
+        for group in groups:
+            group = group.strip()
+
+            if '-' in group:
+                # Handle ranges like "23-24"
+                parts = group.split('-')
+                if len(parts) == 2:
+                    try:
+                        start = int(parts[0].strip())
+                        end = int(parts[1].strip())
+                        verses.extend(range(start, end + 1))
+                    except ValueError:
+                        # Fallback: treat as single verse
+                        verses.append(int(group))
+                else:
+                    verses.append(int(group))
+            else:
+                # Single verse
+                verses.append(int(group))
+
+        return sorted(set(verses))  # Remove duplicates and sort
+
+    except (ValueError, AttributeError) as e:
+        raise ValueError(f"Could not parse verse number: {verse_str}") from e
+
+
+def parse_usfm_to_clean_verses(usj_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Parse USJ data to extract clean verse-by-verse content, handling verse ranges"""
+    verses = []
+    chapter = None
+
+    for item in usj_data.get("content", []):
+        item_type = item.get("type")
+
+        if item_type == "chapter":
+            chapter = item.get("number")
+            continue
+
+        if item_type == "para":
+            _process_paragraph(item.get("content", []), chapter, verses)
+
+    return verses
+
+def _process_paragraph(para_content: List[Any], chapter: int, verses: List[Dict[str, Any]]) -> None:
+    """Process paragraph and extract individual verses."""
+    i = 0
+    length = len(para_content)
+
+    while i < length:
+        element = para_content[i]
+
+        if not _is_verse_marker(element):
+            i += 1
+            continue
+
+        verse_str = element.get("number")
+        i += 1
+
+        verse_text, i = _collect_verse_text(para_content, i)
+
+        if verse_text:
+            _expand_and_add_verses(verse_str, verse_text, chapter, verses)
+
+def _is_verse_marker(element: Any) -> bool:
+    return isinstance(element, dict) and element.get("type") == "verse"
+
+def _collect_verse_text(para_content: List[Any], index: int) -> tuple[str, int]:
+    parts = []
+    length = len(para_content)
+
+    while index < length and isinstance(para_content[index], str):
+        parts.append(para_content[index])
+        index += 1
+
+    return " ".join(parts).strip(), index
+
+def _expand_and_add_verses(
+    verse_str: str,
+    verse_text: str,
+    chapter: int,
+    verses: List[Dict[str, Any]]
+):
+    try:
+        verse_numbers = parse_verse_number(verse_str)
+        for number in verse_numbers:
+            verses.append({
+                "chapter": chapter,
+                "verse": number,
+                "text": verse_text,
+            })
+    except ValueError as e:
+        print(f"Warning: Could not parse verse '{verse_str}' in chapter {chapter}: {e}")
+def _parse_usfm_to_usj(usfm_content: str) -> Dict[str, Any]:
+    logger.info("parse usfm to usj start")
+    try:
+        return USFMParser(usfm_content).to_usj()
+    except Exception as e:
+        raise UnprocessableException(detail=f"Error parsing USFM: {str(e)}") from e
+
+
+def _count_chapters(content_items: List[Dict[str, Any]]) -> int:
+    return len([item for item in content_items if item.get("type") == "chapter"])
+
+def _clean_build_navigation(data: schema.CleanNavigationInput):
+    """Build navigation links"""
+    resource_id = data.resource_id
+    book_code = data.book_code
+    chapter = data.chapter
+    bible_record = data.bible_record
+    available_books = data.available_books
+    idx = data.idx
+
+    previous = None
+    next_chapter = None
+
+
+    # Previous
+    if chapter > 1:
+        previous = {
+            "resourceId": str(resource_id),
+        "bibleBookCode": book_code,"chapterId": chapter - 1
+        }
+    elif idx is not None and idx > 0:
+        prev_book = available_books[idx - 1]
+        previous = {
+            "resourceId": str(resource_id),
+            "bibleBookCode": prev_book.book_code,
+            "chapterId": prev_book.chapter_count
+        }
+
+    # Next
+    if bible_record and chapter < bible_record.chapters:
+        next_chapter = {
+            "resourceId": str(resource_id),
+            "bibleBookCode": book_code,
+            "chapterId": chapter + 1
+        }
+    elif idx is not None and idx < len(available_books) - 1:
+        next_book = available_books[idx + 1]
+        next_chapter = {
+            "resourceId": str(resource_id),
+            "bibleBookCode": next_book.book_code,
+            "chapterId": 1
+        }
+
+    return previous, next_chapter
+def _compute_previous_verse(payload: schema.CleanPreviousVerseInput):
+    db_session = payload.db_session
+    resource_id = payload.resource_id
+    book = payload.book
+    chapter = payload.chapter
+    verse = payload.verse
+    available_books = payload.available_books
+    book_index = payload.book_index
+
+    # Case 1: Previous verse in same chapter
+    if verse > 1:
+        return {
+            "resourceId": str(resource_id),
+            "bibleBookCode": book.book_code,
+            "chapterId": chapter,
+            "verse": verse - 1
+        }
+
+    # Case 2: Last verse of previous chapter
+    if chapter > 1:
+        prev_chap_last = db_session.query(db_models.CleanBible).filter_by(
+            resource_id=resource_id,
+            book_id=book.book_id,
+            chapter=chapter - 1
+        ).order_by(db_models.CleanBible.verse.desc()).first()
+
+        if prev_chap_last:
+            return {
+                "resourceId": str(resource_id),
+                "bibleBookCode": book.book_code,
+                "chapterId": chapter - 1,
+                "verse": prev_chap_last.verse
+            }
+
+    # Case 3: Last verse of previous book
+    if book_index is not None and book_index > 0:
+        prev_book = available_books[book_index - 1]
+        last_verse = db_session.query(db_models.CleanBible).filter_by(
+            resource_id=resource_id,
+            book_id=prev_book.book_id,
+            chapter=prev_book.chapter_count
+        ).order_by(db_models.CleanBible.verse.desc()).first()
+
+        if last_verse:
+            return {
+                "resourceId": str(resource_id),
+                "bibleBookCode": prev_book.book_code,
+                "chapterId": prev_book.chapter_count,
+                "verse": last_verse.verse
+            }
+
+    return None
+
+
+def _compute_next_verse(payload: schema.CleanNextVerseInput):
+    db_session = payload.db_session
+    resource_id = payload.resource_id
+    book = payload.book
+    chapter = payload.chapter
+    verse = payload.verse
+    available_books = payload.available_books
+    book_index = payload.book_index
+    bible_record = payload.bible_record
+
+    # CASE 1: Next verse exists in same chapter
+    next_verse_record = db_session.query(db_models.CleanBible).filter_by(
+        resource_id=resource_id,
+        book_id=book.book_id,
+        chapter=chapter,
+        verse=verse + 1
+    ).first()
+
+    if next_verse_record:
+        return {
+            "resourceId": str(resource_id),
+            "bibleBookCode": book.book_code,
+            "chapterId": chapter,
+            "verse": verse + 1
+        }
+
+    # CASE 2: Next chapter exists in same book
+    if bible_record and chapter < bible_record.chapters:
+        return {
+            "resourceId": str(resource_id),
+            "bibleBookCode": book.book_code,
+            "chapterId": chapter + 1,
+            "verse": 1
+        }
+
+    # CASE 3: Next book exists
+    if book_index is not None and book_index < len(available_books) - 1:
+        next_book = available_books[book_index + 1]
+        return {
+            "resourceId": str(resource_id),
+            "bibleBookCode": next_book.book_code,
+            "chapterId": 1,
+            "verse": 1
+        }
+
+    return None
+
+def touch_resource(db: Session, resource_id: int, actor_user_id: Optional[int]) -> None:
+    """
+    Update only the resource row's updated_by/updated_at.
+    Call this from child-table CRUD whenever they modify rows.
+    """
+    res = db.query(db_models.Resource).filter_by(resource_id=resource_id).first()
+    if not res:
+        # If this is ever hit, caller already verified resource existence; keep consistent
+        raise NotAvailableException(detail=f"Resource {resource_id} not found")
+    res.updated_by = actor_user_id
+    res.updated_at = utcnow()
+    db.add(res)
