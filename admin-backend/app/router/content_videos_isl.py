@@ -8,7 +8,6 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 from supertokens_python.recipe.session import SessionContainer
-from supertokens_python.recipe.session.framework.fastapi import verify_session
 from sqlalchemy.orm import Session
 import schema
 from crud import content_videos

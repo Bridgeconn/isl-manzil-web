@@ -159,71 +159,80 @@ async def get_bible_books(
 
 
 
-# @router.get(
-#     "/bible/{resource_id}/content/{output_format}",
-#     response_model=schema.BibleFullContentResponse,
-#     tags=["Bible"]
-# )
-# async def get_full_bible_content(
-#     resource_id: int,
-#     output_format: str,
-#     db_session: Session = Depends(get_db)
-# ):
-#     """Get full content of all books in a resource in specified format (json/usfm)"""
+@router.get(
+    "/bible/{resource_id}/content/{output_format}",
+    response_model=schema.BibleFullContentResponse,
+    tags=["Bible"]
+)
+async def get_full_bible_content(
+    resource_id: int,
+    output_format: str,
+    session: SessionContainer = Depends(verify_session_with_approval),
+    db_session: Session = Depends(get_db)
+):
+    """Get full content of all books in a resource in specified format (json/usfm)"""
+    logger.info("GET Full Bible Content API")
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
+    if output_format.lower() not in ["json", "usfm"]:
+        raise BadRequestException("Format must be 'json' or 'usfm'")
 
-#     if output_format.lower() not in ["json", "usfm"]:
-#         raise BadRequestException("Format must be 'json' or 'usfm'")
-
-#     return content_bible.get_full_bible_content(
-#         db_session=db_session,
-#         resource_id=resource_id,
-#         output_format=output_format
-#     )
+    return content_bible.get_full_bible_content(
+        db_session=db_session,
+        resource_id=resource_id,
+        output_format=output_format
+    )
 
 
 
-# @router.get(
-#     "/bible/{resource_id}/book/{book_code}/{output_format}",
-#     response_model=schema.BibleBookContentResponse,
-#     tags=["Bible"]
-# )
-# async def get_bible_book_content(
-#     resource_id: int,
-#     book_code: str,
-#     output_format: str,
-#     db_session: Session = Depends(get_db)
-# ):
-#     """Get full content of a book in specified format (json/usfm)"""
+@router.get(
+    "/bible/{resource_id}/book/{book_code}/{output_format}",
+    response_model=schema.BibleBookContentResponse,
+    tags=["Bible"]
+)
+async def get_bible_book_content(
+    resource_id: int,
+    book_code: str,
+    output_format: str,
+    session: SessionContainer = Depends(verify_session_with_approval),
+    db_session: Session = Depends(get_db)
+):
+    """Get full content of a book in specified format (json/usfm)"""
+    logger.info("GET  Bible Book Content API")
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
+    if output_format.lower() not in ["json", "usfm"]:
+        raise BadRequestException("Format must be 'json' or 'usfm'")
 
-#     if output_format.lower() not in ["json", "usfm"]:
-#         raise BadRequestException("Format must be 'json' or 'usfm'")
+    return content_bible.get_bible_book_content(
+        db_session=db_session,
+        resource_id=resource_id,
+        book_code=book_code,
+        output_format=output_format
+    )
 
-#     return content_bible.get_bible_book_content(
-#         db_session=db_session,
-#         resource_id=resource_id,
-#         book_code=book_code,
-#         output_format=output_format
-#     )
-
-# @router.get(
-#     "/bible/{resource_id}/chapter/{book_code}.{chapter}",
-#     response_model=schema.BibleChapterResponse,
-#     tags=["Bible"]
-# )
-# async def get_bible_chapter(
-#     resource_id: int,
-#     book_code: str,
-#     chapter: int,
-#     db_session: Session = Depends(get_db)
-# ):
-#     """Get chapter content from bible table"""
-
-#     return content_bible.get_bible_chapter(
-#         db_session=db_session,
-#         resource_id=resource_id,
-#         book_code=book_code,
-#         chapter=chapter
-#     )
+@router.get(
+    "/bible/{resource_id}/chapter/{book_code}.{chapter}",
+    response_model=schema.BibleChapterResponse,
+    tags=["Bible"]
+)
+async def get_bible_chapter(
+    resource_id: int,
+    book_code: str,
+    chapter: int,
+    session: SessionContainer = Depends(verify_session_with_approval),
+    db_session: Session = Depends(get_db)
+):
+    """Get chapter content from bible table"""
+    logger.info("GET Bible chapter API")
+    validate_admin_only(session)
+    _, _ = await ensure_user_from_session_async(db_session, session)
+    return content_bible.get_bible_chapter(
+        db_session=db_session,
+        resource_id=resource_id,
+        book_code=book_code,
+        chapter=chapter
+    )
 
 @router.get(
     "/bible/{resource_id}/cleaned/chapter/{book_code}.{chapter}",
