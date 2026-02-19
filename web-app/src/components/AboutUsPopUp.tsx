@@ -32,20 +32,19 @@ const AboutUsPopUp: React.FC<{
 
   return (
     <Dialog open={showAbout} onOpenChange={onClose}>
-      <DialogContent className="w-full !max-w-4xl max-h-[90vh] bg-white rounded shadow-xl flex flex-col overflow-hidden z-[9999] p-0 gap-0 [&>button.absolute.right-4.top-4]:hidden themed-bg">
+      <DialogContent
+        className="flex flex-col mt-4 
+   max-h-[90vh] p-0 gap-0  translate-x-[-60%]  [&>button.absolute:not(.my-gif-close)]:hidden"
+      >
         <DialogClose
           className="absolute right-5 top-5 rounded-md cursor-pointer focus:outline-none"
           asChild
         >
-          {/* <X
-            style={{
-              color: currentTheme?.textColor,
-              width: "20px",
-              height: "20px",
-            }}
-          /> */}
-
-          <button title="Hide About Us Text" onClick={onClose}>
+          <button
+            title="Hide About Us Text"
+            className="my-gif-close"
+            onClick={onClose}
+          >
             {closeImage && (
               <HoverControlledGif
                 src={closeImage}
@@ -64,7 +63,6 @@ const AboutUsPopUp: React.FC<{
             } `}
             style={{
               fontSize: `${fontSize}px`,
-              color: currentTheme?.textColor,
             }}
           >
             <p style={{ fontSize: "1.4em" }}>About Us</p>
@@ -78,7 +76,6 @@ const AboutUsPopUp: React.FC<{
           style={{
             WebkitOverflowScrolling: "touch",
             fontSize: `${fontSize}px`,
-            color: currentTheme?.textColor,
           }}
         >
           {!hideVideoSection && (

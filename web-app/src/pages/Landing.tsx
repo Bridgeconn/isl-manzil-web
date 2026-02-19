@@ -30,10 +30,22 @@ const Landing = () => {
         </div>
         <div className="w-full flex-1 min-h-0 overflow-hidden flex items-center">
           <div
-            className="w-full"
+            className="w-full  mt-2"
             style={{ maxHeight: "100%", aspectRatio: "16/9" }}
           >
             <CleanVimeoPlayer videoId={1105756880} />
+            {isAboutOpen && (
+              <div>
+                {" "}
+                {/* <div className="absolute top-20 left-s0 z-[9999]"> <div className=" max-h-[90vh] overflow-hidden bg-white rounded shadow-xl"> */}{" "}
+                <AboutUsPopUp
+                  showAbout={isAboutOpen}
+                  onClose={closeAbout}
+                  hideVideoSection={true}
+                  closeImage={HideTextImage}
+                />{" "}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -149,14 +161,6 @@ const Landing = () => {
       </div>
 
       {/* ABOUT US POPUP — md and above only */}
-      <div className="hidden md:block">
-        <AboutUsPopUp
-          showAbout={isAboutOpen}
-          onClose={closeAbout}
-          hideVideoSection={true}
-          closeImage={HideTextImage}
-        />
-      </div>
     </div>
   );
 };
