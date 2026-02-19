@@ -255,16 +255,10 @@ export const updateBibleBook = async (data: {
 };
 
 
-export const deleteBibleBooks = async (data: {
-  resource_id: number;
-  bookIds: string[];
-}) => {
-  const { resource_id, bookIds } = data;
-  const res = await API.delete(`/bible/${resource_id}/books`, {
-    data: { bookIds },
-  });
-  return res.data;
-};
+export const deleteBibleBooks = (data: { resource_id: number; bookCode: string[] }) =>
+  API.delete(`/bible/${data.resource_id}/books`, {
+    data: { bookCode: data.bookCode },
+  }).then((res) => res.data);
 
 export const fetchVideos = async (resourceId: number) => {
   if (!resourceId) throw new Error("resourceId is required");

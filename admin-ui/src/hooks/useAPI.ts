@@ -333,7 +333,7 @@ export const useDeleteBibleBooks = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { resource_id: number; bookIds: string[] }) =>
+    mutationFn: (data: { resource_id: number; bookCode: string[] }) =>
       deleteBibleBooks(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
