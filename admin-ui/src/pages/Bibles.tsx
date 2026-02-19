@@ -44,7 +44,7 @@ interface BibleRow {
 function BibleTextAction({ resource }: { resource: Resource }) {
   const resourceId = resource.resourceId;
   const { data, isLoading } = useGetBibleBooks(resourceId);
-  const hasAnyBooks = (data?.books ?? []).length > 0;
+  const hasAnyBooks = !!data?.length;
   const { isAdmin, isEditor } = useUserRole();
 
   const [open, setOpen] = useState(false);
@@ -174,7 +174,7 @@ function usePublishState(resource: Resource | null) {
 //   const { data: audioData, isLoading: audioLoading } =
 //     useGetAudioBible(resourceId)
 
-  const hasText = !!resource && (bookData?.books ?? []).length > 0
+  const hasText = !!resource && (bookData ?? []).length > 0;
 
 //   const audioBundle =
 //     !!resource &&
@@ -497,13 +497,13 @@ const Bibles = () => {
           );
         },
       }),
-      columnHelper.display({
-        id: "audio",
-        header: "Audio",
-        // cell: ({ row }) => (
-        //  // <BibleAudioAction resource={row.original.fullResource} />
-        // ),
-      }),
+      // columnHelper.display({
+      //   id: "audio",
+      //   header: "Audio",
+      //   // cell: ({ row }) => (
+      //   //  // <BibleAudioAction resource={row.original.fullResource} />
+      //   // ),
+      // }),
 
       columnHelper.display({
         id: "books",

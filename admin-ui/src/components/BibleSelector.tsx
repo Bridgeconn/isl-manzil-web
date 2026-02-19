@@ -22,7 +22,7 @@ import {
     useDeleteBibleBooks,
     useDownloadBibleContent,
   } from "@/hooks/useAPI";
-  import type { BibleBook } from "@/utils/types";
+  import type { BibleBook,BibleBookResponse } from "@/utils/types";
   import { Button } from "./ui/button";
   import type {
     BibleBookSelectorProps,
@@ -346,13 +346,13 @@ import {
     const { isAdmin, isEditor } = useUserRole();
     const queryClient = useQueryClient();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { data: bibleBooksResp } = useGetBibleBooks(resourceId ?? undefined);
+    const { data: bibleBooksResp = [], isLoading: isBooksLoading } = useGetBibleBooks(resourceId ?? undefined);
     const uploadBible = useUploadBibleBook();
     const updateBibleBook = useUpdateBibleBook();
     const deleteBibleBooks = useDeleteBibleBooks();
     const isDeleting = deleteBibleBooks.isPending;
-    const resourceBibles = bibleBooksResp?.books ?? [];
-    const hasUploadedBooks = (bibleBooksResp?.books?.length ?? 0) > 0;
+    const resourceBibles: BibleBookResponse[] = bibleBooksResp[0]?.books ?? [];
+    const hasUploadedBooks = resourceBibles.length > 0;
   
     const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
     const [uploadStatus, setUploadStatus] = useState<UploadStatus>({});
@@ -694,31 +694,26 @@ import {
     useEffect(() => {
       if (!isOpen) return;
       if (!isAdmin && !isEditor) return;
-  
-      const empty = (bibleBooksResp?.books ?? []).length === 0;
+      if (isBooksLoading) return;  // ← wait for data
+    
+      const empty = resourceBibles.length === 0;
       if (!openFileInsteadOfDialog || !empty) return;
-  
+    
       const t = setTimeout(() => {
         fileInputRef.current?.click();
         onClose();
       }, 0);
-  
+    
       return () => clearTimeout(t);
-    }, [
-      isOpen,
-      isAdmin,
-      isEditor,
-      bibleBooksResp,
-      openFileInsteadOfDialog,
-      onClose,
-    ]);
+    }, [isOpen, isAdmin, isEditor, isBooksLoading, bibleBooksResp, openFileInsteadOfDialog, onClose]);
   
     const shouldBypassDialog =
-      isOpen &&
-      (isAdmin || isEditor) &&
-      openFileInsteadOfDialog &&
-      (bibleBooksResp?.books ?? []).length === 0;
-  
+    isOpen &&
+    (isAdmin || isEditor) &&
+    openFileInsteadOfDialog &&
+    !isBooksLoading &&
+    resourceBibles.length === 0;
+
     return (
       <div>
         {/* single hidden file input used everywhere */}
