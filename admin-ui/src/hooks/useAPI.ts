@@ -44,6 +44,7 @@ import type {
   ISLBiblePutPayload,
   VideoBulkCreate,
   VideoBulkUpdate,
+  BibleBooksListResponse,
 } from "@/utils/types";
 
 export const useLanguages = (filters?: {
@@ -287,9 +288,9 @@ export const useDeleteVersion = () => {
 };
 
 export const useGetBibleBooks = (resourceId?: number) =>
-  useQuery({
+  useQuery<BibleBooksListResponse[]>({ // ← Explicit array type
     queryKey: ["bible-books", resourceId],
-    queryFn: () => getBibleBooks(resourceId as number),
+    queryFn: () => getBibleBooks(resourceId),
     enabled: !!resourceId,
   });
 

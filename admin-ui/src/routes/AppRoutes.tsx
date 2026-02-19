@@ -10,6 +10,8 @@ import Languages from "@/pages/Languages";
 import Versions from "@/pages/Versions";
 import Licenses from "@/pages/Licenses";
 import PendingApproval from "@/pages/pendingapprovalpage";
+import Bibles from "@/pages/Bibles";
+import ISL from "@/pages/ISL";
 
 import RoleGuard from "@/components/RoleGuard";
 
@@ -39,6 +41,9 @@ export default function AppRoutes() {
           <Route path="/languages" element={<Languages />} />
           <Route path="/versions" element={<Versions />} />
           <Route path="/licenses" element={<Licenses />} />
+          <Route path="/bibles" element={<Bibles />} />
+          <Route path="isl-bible" element={<ISL />} />
+
         </Route>
 
       </Route>

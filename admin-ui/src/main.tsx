@@ -11,19 +11,36 @@ import { SuperTokensWrapper } from "supertokens-auth-react";
 
 SuperTokens.init({
   appInfo: {
-    appName: "Admin UI",
-    apiDomain: 
+    appName: "Vachan-Admin",
+    apiDomain:
       import.meta.env.VITE_SUPERTOKENS_API_DOMAIN || "http://localhost:8000",
-    websiteDomain: 
-      import.meta.env.VITE_SUPERTOKENS_WEBSITE_DOMAIN || "http://localhost:5173", 
+    websiteDomain:
+      import.meta.env.VITE_SUPERTOKENS_WEBSITE_DOMAIN ||
+      "http://localhost:5173",
     apiBasePath: "/auth",
-    websiteBasePath: "/auth"
+    websiteBasePath: "/auth",
   },
   recipeList: [
-    EmailPassword.init(),
-    Session.init()
-  ]
+    EmailPassword.init({
+      onHandleEvent: async (context) => {
+        if (context.action === "SUCCESS") {
+          if (context.user.emails && context.user.emails.length > 0) {
+            const email = context.user.emails[0];
+
+            const sessionExists = await Session.doesSessionExist();
+
+            if (sessionExists && email) {
+              localStorage.setItem("userEmail", email);
+              console.log("Email stored:", email);
+            }
+          }
+        }
+      },
+    }),
+    Session.init(),
+  ],
 });
+
 
 const queryClient = new QueryClient();
 

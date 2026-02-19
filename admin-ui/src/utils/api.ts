@@ -202,12 +202,10 @@ export const deleteVersion = async (version_id: number) => {
 
 // ============== Bible Books ==============
 
-export const getBibleBooks = async (resourceId: number) => {
-  if (resourceId == null) throw new Error("resourceId is required");
-  const res = await API.get<BibleBooksListResponse>(
-    `/bible/${resourceId}/books`,
-  );
-
+export const getBibleBooks = async (resourceId?: number) => {
+  const res = await API.get<BibleBooksListResponse[]>("/bible/books", { // ← Array type
+    params: { resource_id: resourceId },
+  });
   return res.data;
 };
 
