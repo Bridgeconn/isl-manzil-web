@@ -265,33 +265,31 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
     (deviceType === "mobile" || deviceType === "tablet");
 
   return (
-    <div className="w-full">
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full overflow-hidden rounded-3xl ${
+        isFullscreenMode
+          ? "flex flex-col justify-center bg-black"
+          : "aspect-video bg-black"
+      }`}
+      style={{
+        maxHeight: isFullscreenMode ? "100vh" : undefined,
+        touchAction: "manipulation",
+      }}
+    >
       <div
-        ref={containerRef}
-        className={`relative w-full h-119 max-w-5xl mt-4 lg:mt-6 overflow-hidden rounded-3xl ${
+        className={`relative ${
           isFullscreenMode
-            ? "h-screen flex flex-col justify-center bg-black"
-            : "aspect-video bg-black"
+            ? "mx-auto bg-black overflow-hidden"
+            : "w-full h-full"
         }`}
-        style={{
-          maxHeight: isFullscreenMode ? "100vh" : "80vh",
-
-          touchAction: "manipulation",
-        }}
+        style={
+          isFullscreenMode
+            ? { aspectRatio: "16/9", maxHeight: "100vh", width: "100%" }
+            : undefined
+        }
       >
-        <div
-          className={`relative ${
-            isFullscreenMode
-              ? "mx-auto bg-black overflow-hidden"
-              : "w-full h-full"
-          }`}
-          style={
-            isFullscreenMode
-              ? { aspectRatio: "16/9", maxHeight: "100vh", width: "100%" }
-              : undefined
-          }
-        >
-          <style>{`
+        <style>{`
 
             .slider::-webkit-slider-thumb {
 
@@ -331,115 +329,108 @@ const CleanVimeoPlayer: React.FC<CleanVimeoPlayerProps> = ({ videoId }) => {
 
             }
 
-          `}</style>
+        `}</style>
 
+        <div
+          ref={cleanVimeoPlayerRef}
+          className="w-full h-full pointer-events-none"
+        />
+        <div className="absolute inset-0 z-10" onClick={togglePlay} />
+
+        {(cleanVimeoIsEnded || cleanVimeoIsReplaying) && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center z-30">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+
+                if (!cleanVimeoIsReplaying) replayVideo();
+              }}
+              disabled={cleanVimeoIsReplaying}
+              className="bg-blue-600 hover:bg-blue-700 text-sm text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2 transition-all duration-200 shadow-md disabled:opacity-70"
+              style={{ pointerEvents: "auto" }}
+            >
+              <RefreshCw
+                size={24}
+                className={cleanVimeoIsReplaying ? "animate-spin" : ""}
+              />
+              <span>{cleanVimeoIsReplaying ? "Loading..." : "Replay"}</span>
+            </button>
+          </div>
+        )}
+
+        {cleanVimeoShowBezel && !cleanVimeoIsEnded && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <div className="bg-black/60 backdrop-blur-sm rounded-full p-6">
+              {cleanVimeoIsPlaying ? (
+                <Pause className="text-white w-6 h-6 sm:w-12 sm:h-12" />
+              ) : (
+                <Play className="text-white w-6 h-6 sm:w-12 sm:h-12 ml-1" />
+              )}
+            </div>
+          </div>
+        )}
+
+        {!cleanVimeoIsEnded && !cleanVimeoIsReplaying && (
           <div
-            ref={cleanVimeoPlayerRef}
-            className="w-full h-full pointer-events-none"
-          />
-          <div className="absolute inset-0 z-10" onClick={togglePlay} />
-
-          {(cleanVimeoIsEnded || cleanVimeoIsReplaying) && (
-            <div className="absolute inset-0 bg-black flex items-center justify-center z-30">
+            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 text-white">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
 
-                  if (!cleanVimeoIsReplaying) replayVideo();
+                  togglePlay();
                 }}
-                disabled={cleanVimeoIsReplaying}
-                className="bg-blue-600 hover:bg-blue-700 text-sm text-white font-semibold py-3 px-6 rounded-full flex items-center gap-2 transition-all duration-200 shadow-md disabled:opacity-70"
-                style={{ pointerEvents: "auto" }}
+                className="flex items-center justify-center w-8 h-8 cursor-pointer hover:bg-white/20 rounded transition-colors flex-shrink-0"
               >
-                <RefreshCw
-                  size={24}
-                  className={cleanVimeoIsReplaying ? "animate-spin" : ""}
-                />
-                <span>{cleanVimeoIsReplaying ? "Loading..." : "Replay"}</span>
+                {cleanVimeoIsPlaying ? <Pause size={18} /> : <Play size={18} />}
               </button>
-            </div>
-          )}
 
-          {cleanVimeoShowBezel && !cleanVimeoIsEnded && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <div className="bg-black/60 backdrop-blur-sm rounded-full p-6">
-                {cleanVimeoIsPlaying ? (
-                  <Pause className="text-white w-6 h-6 sm:w-12 sm:h-12" />
-                ) : (
-                  <Play className="text-white w-6 h-6 sm:w-12 sm:h-12 ml-1" />
-                )}
+              <div className="flex-1 flex items-center mx-1">
+                <input
+                  type="range"
+                  min={0}
+                  max={cleanVimeoDuration || 0}
+                  step={0.1}
+                  value={cleanVimeoCurrentTime}
+                  onChange={handleSeek}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
+                  style={{
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
+                      (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) * 100
+                    }%, rgba(255,255,255,0.3) ${
+                      (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) * 100
+                    }%, rgba(255,255,255,0.3) 100%)`,
+                  }}
+                />
               </div>
-            </div>
-          )}
 
-          {!cleanVimeoIsEnded && !cleanVimeoIsReplaying && (
-            <div
-              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-2 text-white">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs font-mono whitespace-nowrap">
+                  {formatTime(cleanVimeoCurrentTime)} /{" "}
+                  {formatTime(cleanVimeoDuration)}
+                </span>
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
 
-                    togglePlay();
+                    toggleFullscreen();
                   }}
-                  className="flex items-center justify-center w-8 h-8 cursor-pointer hover:bg-white/20 rounded transition-colors flex-shrink-0"
+                  className="flex items-center justify-center w-8 h-8 cursor-pointer hover:bg-white/20 rounded transition-colors mb-0.5"
                 >
-                  {cleanVimeoIsPlaying ? (
-                    <Pause size={18} />
+                  {cleanVimeoIsFullscreen ? (
+                    <Minimize size={18} />
                   ) : (
-                    <Play size={18} />
+                    <Maximize size={18} />
                   )}
                 </button>
-
-                <div className="flex-1 flex items-center mx-1">
-                  <input
-                    type="range"
-                    min={0}
-                    max={cleanVimeoDuration || 0}
-                    step={0.1}
-                    value={cleanVimeoCurrentTime}
-                    onChange={handleSeek}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
-                    style={{
-                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                        (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) *
-                        100
-                      }%, rgba(255,255,255,0.3) ${
-                        (cleanVimeoCurrentTime / (cleanVimeoDuration || 1)) *
-                        100
-                      }%, rgba(255,255,255,0.3) 100%)`,
-                    }}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-xs font-mono whitespace-nowrap">
-                    {formatTime(cleanVimeoCurrentTime)} /{" "}
-                    {formatTime(cleanVimeoDuration)}
-                  </span>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-
-                      toggleFullscreen();
-                    }}
-                    className="flex items-center justify-center w-8 h-8 cursor-pointer hover:bg-white/20 rounded transition-colors mb-0.5"
-                  >
-                    {cleanVimeoIsFullscreen ? (
-                      <Minimize size={18} />
-                    ) : (
-                      <Maximize size={18} />
-                    )}
-                  </button>
-                </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

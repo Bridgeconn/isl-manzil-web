@@ -494,3 +494,161 @@ class IslVideoDeleteResponse(BaseModel):
     deletedIds: List[int]
     invalidIds: Optional[List[int]] = None
     message: Optional[str] = None
+# Bible schemas
+class BibleEntrySchema(BaseModel):
+    """Schema for bible entry"""
+    resource_id: int
+    book_id: int
+    usfm_content: str
+    usj_data: Dict[str, Any]
+    chapter_count: int
+class CleanNavigationInput(BaseModel):
+    """Schema for bible entry"""
+    resource_id: int
+    book_code: str
+    chapter: int
+    bible_record: Optional[object]  # keep type flexible
+    available_books: list
+    idx: Optional[int]
+class CleanPreviousVerseInput(BaseModel):
+    """Schema for previous verse"""
+    db_session: Any
+    resource_id: int
+    book: Any
+    chapter: int
+    verse: int
+    available_books: list
+    book_index: int | None = None
+class CleanNextVerseInput(BaseModel):
+    """Schema for next verse"""
+    db_session: Any
+    resource_id: int
+    book: Any
+    chapter: int
+    verse: int
+    available_books: list
+    book_index: int | None
+    bible_record: Any
+class BibleVersePathParams(BaseModel):
+    """Schema for bible entry"""
+    resource_id: int
+    book_code: str
+    chapter: int
+    verse: int
+
+
+class BibleUpload(BaseModel):
+    """Schema for bible upload"""
+    usfm_content: str
+    resource_id: int
+
+class BibleUpdate(BaseModel):
+    """Schema for bible update"""
+    bible_book_id: int
+
+class BibleBookResponse(BaseModel):
+    """Schema for bible book response"""
+    bible_book_id: int
+    book_code: str
+    book_id: int
+    short: str
+    long: str
+    abbr: str
+
+class BibleBooksListResponse(BaseModel):
+    """Schema for bible books list response"""
+    resource_id: int
+    books: List[BibleBookResponse]
+
+class BibleBookContentResponse(BaseModel):
+    """Schema for bible book content response"""
+    resource_id: int
+    book_id: int
+    book_code: str
+    book_content: Any  # Can be USFM string or USJ JSON
+
+class BibleChapterResponse(BaseModel):
+    """Schema for bible chapter response"""
+    resource_id: int
+    bible_book_code: str
+    chapter: int
+    previous: Optional[Dict[str, Any]] = None
+    next: Optional[Dict[str, Any]] = None
+    chapter_content: Any
+
+class CleanVerseContent(BaseModel):
+    """Schema for clean verse content"""
+    verse: int
+    text: str
+
+class CleanBibleChapterResponse(BaseModel):
+    """Schema for clean bible chapter response"""
+    resource_id: int
+    bible_book_code: str
+    chapter: int
+    previous: Optional[Dict[str, Any]] = None
+    next: Optional[Dict[str, Any]] = None
+    chapter_content: List[CleanVerseContent]
+
+class BibleVerseResponse(BaseModel):
+    """Schema for bible verse response"""
+    resource_id: int
+    bible_book_code: str
+    chapter: int
+    verse_number: int
+    previous: Optional[Dict[str, Any]] = None
+    next: Optional[Dict[str, Any]] = None
+    verse_content: str
+
+# Response wrapper
+class BibleResponse(BaseModel):
+    """Schema for bible response"""
+    total_items: int
+    current_page: int
+    items: List[Dict[str, Any]]
+
+class BibleBookData(BaseModel):
+    """Schema for bible book data"""
+    bible_book_id: int
+    book_id: int
+    book_code: str
+    book_name: str
+    chapters: int
+    content: Union[dict, str]  # JSON object or USFM string
+
+class BibleFullContentResponse(BaseModel):
+    """Schema for bible full content response"""
+    resource_id: int
+    total_books: int
+    books: List[BibleBookData]
+
+class BulkDeleteRequest(BaseModel):
+    """Schema for bulk delete request"""
+    bookIds: List[str]  # List of book codes like ["GEN", "EXO", "LEV"]
+
+    class Config:
+        """Config for BulkDeleteRequest"""
+        json_schema_extra = {
+            "example": {
+                "bookIds": ["GEN", "EXO", "LEV"]
+            }
+        }
+
+class DeleteResult(BaseModel):
+    """Schema for delete result"""
+    id: str
+    status: str  # "deleted" or "error"
+    error: Optional[str] = None
+
+class DeleteSummary(BaseModel):
+    """Schema for delete summary"""
+    requested: int
+    deleted: int
+    errors: int
+
+class BulkDeleteResponse(BaseModel):
+    """Schema for bulk delete response"""
+    resource_id: str
+    requested: List[str]
+    results: List[DeleteResult]
+    summary: DeleteSummary

@@ -77,7 +77,7 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
   }, [isMenuOpen]);
 
   return (
-    <nav className="relative w-full bg-[#000063] min-h-16 flex  items-center">
+    <nav className="relative w-full bg-[#000063] h-16 flex  items-center">
       <div className="w-full  flex items-center relative">
         <div className="ml-4  cursor-pointer text-white" ref={menuButtonRef}>
           <button type="button" title="Menu" className="cursor-pointer">
@@ -110,7 +110,7 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
           {items.map((item) => (
             <div
               key={item.name}
-              className="py-1 sm:py-2 cursor-pointer font-bold whitespace-nowrap text-white"
+              className=" cursor-pointer font-bold whitespace-nowrap text-white leading-none"
             >
               {item.name}
             </div>
@@ -123,7 +123,7 @@ const Navbar: React.FC<NavbarProps> = ({ items }) => {
         </div>
       )}
       <div
-        className=" h-14 w-14 bg-white rounded-full flex-shrink-0"
+        className=" h-14 w-14 items-center justify-center bg-white rounded-full flex-shrink-0"
         ref={settingsRef}
       >
         <img
