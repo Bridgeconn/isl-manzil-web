@@ -131,7 +131,7 @@ async def delete_bible_books_endpoint(
     result = content_bible.delete_bible_books(
         db_session=db_session,
         resource_id=resource_id,
-        book_codes=delete_request.bookIds,
+        book_codes=delete_request.bookCode,
     )
     status_code, response_data = content_bible.build_bulk_delete_response(result)
 

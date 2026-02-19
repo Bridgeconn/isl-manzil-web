@@ -624,13 +624,13 @@ class BibleFullContentResponse(BaseModel):
 
 class BulkDeleteRequest(BaseModel):
     """Schema for bulk delete request"""
-    bookIds: List[str]  # List of book codes like ["GEN", "EXO", "LEV"]
+    bookCode: List[str]  # List of book codes like ["GEN", "EXO", "LEV"]
 
     class Config:
         """Config for BulkDeleteRequest"""
         json_schema_extra = {
             "example": {
-                "bookIds": ["GEN", "EXO", "LEV"]
+                "bookCode": ["GEN", "EXO", "LEV"]
             }
         }
 
