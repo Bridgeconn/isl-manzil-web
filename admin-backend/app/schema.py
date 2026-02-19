@@ -390,3 +390,107 @@ class LanguageGroupOut(BaseModel):
     """Schema for response to GET request"""
     language: LanguageBrief
     versions: List[ResourceRowResponse]
+
+#ISL bible videos schema
+
+class IslVideoTestItem(BaseModel):
+    """Single ISL Video test result row"""
+    islvideoId: int
+    book: int
+    chapter: int
+    url: str
+    public: bool
+
+class IslVideoCreateItem(BaseModel):
+    """ISL Video create item"""
+    book: str            # book code e.g. "gen"
+    chapter: Optional[int] = None         # 0 allowed for whole book
+    url: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v):
+        """Validate url"""
+        if not v or not v.strip():
+            raise ValueError("URL is required and cannot be empty")
+        if not v.startswith(("http://", "https://")):
+            raise ValueError("URL must start with http:// or https://")
+        return v
+    @field_validator("chapter")
+    @classmethod
+    def chapter_required(cls, v):
+        """Validate chapter"""
+        if v is None:
+            raise ValueError("chapter is required")
+        return v
+class IslVideoCreateRequest(BaseModel):
+    """ISL Video POST API request schema"""
+    resourceId: int
+    videos: List[IslVideoCreateItem]
+
+class IslVideoUpdateItem(BaseModel):
+    """ISL Video update item"""
+    id: int
+    book: str
+    chapter: Optional[int] = None
+    url: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v):
+        """Validate url"""
+        if not v or not v.strip():
+            raise ValueError("URL is required and cannot be empty")
+        if not v.startswith(("http://", "https://")):
+            raise ValueError("URL must start with http:// or https://")
+        return v
+    @field_validator("chapter")
+    @classmethod
+    def chapter_required(cls, v):
+        """Validate chapter"""
+        if v is None:
+            raise ValueError("chapter is required")
+        return v
+class IslVideoUpdateRequest(BaseModel):
+    """ISL Video POST API request schema"""
+    resourceId: int
+    videos: List[IslVideoUpdateItem]
+
+class IslVideoResponseItem(BaseModel):
+    """ISL Video response item"""
+    video_id: int
+    book: str
+    chapter: int
+    url: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+class IslVideoListResponse(BaseModel):
+    """ISL Video list response schema"""
+    resource_id: int
+    videos: List[IslVideoResponseItem]
+
+class IslVideoGetItem(BaseModel):
+    """ISL Video get item"""
+    video_id: int
+    chapter: int
+    title: Optional[str] = None
+    description: Optional[str] = None
+    url: str
+class IslVideoGetResponse(BaseModel):
+    """ISL Video get response"""
+    books: Dict[str, List[IslVideoGetItem]]
+
+class IslVideoDeleteRequest(BaseModel):
+    """ISL Video delete request"""
+    videoIds: List[int]
+
+
+class IslVideoDeleteResponse(BaseModel):
+    """ISL Video delete response"""
+    deletedCount: int
+    deletedIds: List[int]
+    invalidIds: Optional[List[int]] = None
+    message: Optional[str] = None

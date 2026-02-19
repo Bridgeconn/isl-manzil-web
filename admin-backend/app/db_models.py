@@ -79,7 +79,7 @@ class Resource(Base):
     created_at  = Column(DateTime(timezone=True), nullable=False, default=utcnow)
     updated_by  = Column(Integer, ForeignKey("user.id"), nullable=True)
     updated_at  = Column(DateTime(timezone=True), nullable=True, onupdate=utcnow)
-   
+
 class Bible(Base):
     """Main bible table storing book content"""
     __tablename__ = "bible"
@@ -118,6 +118,14 @@ class Dictionary(Base):
     ref = Column(String, nullable=False)
     examples = Column(String, nullable=False)
 
+class IslBible(Base):
+    """Corresponds to table isl_bible in isl DB(postgres)"""
+    __tablename__ = "isl_bible"
 
-
-
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    resource_id = Column(Integer, ForeignKey("resource.resource_id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("book_lookup.book_id"), nullable=False)
+    chapter = Column(Integer, nullable=False)
+    url = Column(Text, nullable=False)
+    title = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)

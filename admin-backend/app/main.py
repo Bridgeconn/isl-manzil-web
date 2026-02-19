@@ -16,6 +16,8 @@ import supertokens_config  # noqa: F401
 from database import init_db
 from load_data import load_initial_data
 from router.structural import router as structural_router
+from router.content_videos_isl import router as content_videos_router
+
 from custom_exceptions import BaseCustomException
 from schema import StandardErrorResponse
 
@@ -39,10 +41,10 @@ app.add_middleware(get_middleware())
 
 # Configure CORS
 allowed_origins = [
-    os.getenv("WEBSITE_DOMAIN", "http://localhost:5173"),
-    # Keep localhost for local dev
-    "http://localhost:5173",
-    "http://localhost:5174",
+     # Keep localhost for local dev
+     "http://localhost:5173",
+     "http://localhost:5174",
+    "https://dev-isladmin.vachanengine.org"
 ]
 
 app.add_middleware(
@@ -92,4 +94,4 @@ async def root():
 
 load_initial_data()
 app.include_router(structural_router)
-
+app.include_router(content_videos_router)
