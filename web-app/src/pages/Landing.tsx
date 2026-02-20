@@ -54,7 +54,7 @@ const Landing = () => {
             lg:p-4 lg:gap-3
             xl:p-5 xl:gap-4
           "
-          style={{ backgroundColor: "rgba(215, 229, 240, 0.6)" }}
+          style={{ backgroundColor: "rgba(215, 229, 240, 1)" }}
         >
 
           <div
