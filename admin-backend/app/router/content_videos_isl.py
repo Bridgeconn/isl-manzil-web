@@ -11,6 +11,7 @@ from supertokens_python.recipe.session import SessionContainer
 from sqlalchemy.orm import Session
 import schema
 from crud import content_videos
+from custom_exceptions import BadRequestException
 from dependencies import get_db, logger
 from auth import (
     verify_session_with_approval,
@@ -80,7 +81,15 @@ async def api_delete_isl_videos(
     validate_admin_only(session)
     _, _ = await ensure_user_from_session_async(db, session)
 
-    result = content_videos.delete_isl_videos(db, resource_id, payload.videoIds)
+    if not payload.videoIds:
+        raise BadRequestException(
+            detail="No video_ids provided"
+        )
+    result = content_videos.delete_isl_videos(
+        db,
+        resource_id,
+        payload.videoIds
+    )
 
     deleted = result["deleted_count"]
     deleted_ids = result["deleted_ids"]

@@ -128,6 +128,10 @@ async def delete_bible_books_endpoint(
     logger.info("DELETE Bible Books API")
     validate_admin_only(session)
     _, _ = await ensure_user_from_session_async(db_session, session)
+
+    if not delete_request.bookCode:
+        raise BadRequestException(
+            detail="No bookCode provided")
     result = content_bible.delete_bible_books(
         db_session=db_session,
         resource_id=resource_id,
