@@ -7,6 +7,7 @@ import MobileBookDrawer from "../MobileBookDrawer";
 import MobileMenuDrawer from "../MobileMenuDrawer";
 import useThemeStore from "@/store/useThemeStore";
 import BibleBookImg from "../../assets/images/bibleIcon.png";
+import { Link } from "react-router-dom";
 
 interface MobileBottomBarProps {
   className?: string;
@@ -60,14 +61,14 @@ const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
       ${className}
     `}
       >
-        <div className="flex items-center">
+         <Link to="/" className="flex items-center">
           <img
             src={Logo}
             className="w-auto h-12"
             aria-placeholder="logo"
             alt="logo"
           />
-        </div>
+        </Link>
 
         <div
           className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full p-1 shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-gray-200/60 ring-1 ring-white/50"

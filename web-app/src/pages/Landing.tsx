@@ -90,8 +90,6 @@ const Landing = () => {
               Dictionary
             </p>
           </div>
-
-          {/* Tile 3 — The Bible Project */}
           <div
             onClick={() => navigate("/projects")}
             className="text-center cursor-pointer group flex flex-col flex-1 min-h-0"
