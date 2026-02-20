@@ -652,3 +652,32 @@ class BulkDeleteResponse(BaseModel):
     requested: List[str]
     results: List[DeleteResult]
     summary: DeleteSummary
+
+# --- ISL Verse Markers Schemas ---
+
+class VerseMarkerItem(BaseModel):
+    """Schema for verse marker item"""
+    verse: int
+    time: str
+
+class VerseMarkersCreateRequest(BaseModel):
+    """Schema for create and update isl marker request"""
+    markers: List[VerseMarkerItem]
+
+
+class VerseMarkersResponse(BaseModel):
+    """Schema for bulk delete isl marker response"""
+    id: int
+    isl_bible_id: int
+    markers: List[VerseMarkerItem]
+    message: str
+
+class IslVerseMarkersBulkDelete(BaseModel):
+    """Schema for bulk delete isl marker response"""
+    isl_bible_ids: List[int]
+
+class IslVerseMarkersBulkDeleteResponse(BaseModel):
+    """bulk delete isl marker item"""
+    deletedCount: int
+    deletedIds: List[int]
+    errors: Optional[List[str]]

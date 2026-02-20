@@ -129,3 +129,11 @@ class IslBible(Base):
     url = Column(Text, nullable=False)
     title = Column(Text, nullable=True)
     description = Column(Text, nullable=True)
+
+class IslVerseMarkers(Base):
+    """Corresponds to table isl_verse_markers in isl DB(postgres)"""
+    __tablename__ = "isl_verse_markers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    isl_id = Column(Integer, ForeignKey("isl_bible.id"), nullable=False, unique=True)
+    verse_markers_json = Column(JSONB, nullable=False)

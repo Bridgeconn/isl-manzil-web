@@ -19,6 +19,8 @@ from router.structural import router as structural_router
 from router.content_videos_isl import router as content_videos_router
 
 from router.content_bible import router as content_bible_router
+from router.isl_verse_markers import router as isl_verse_markers_router
+
 from custom_exceptions import BaseCustomException
 from schema import StandardErrorResponse
 
@@ -97,3 +99,4 @@ load_initial_data()
 app.include_router(structural_router)
 app.include_router(content_videos_router)
 app.include_router(content_bible_router)
+app.include_router(isl_verse_markers_router)
