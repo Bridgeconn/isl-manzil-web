@@ -13,37 +13,6 @@ def _ensure_verse_zero(markers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         markers.insert(0, {"verse": 0, "time": "00:00:00:00"})
     return markers
 
-
-# def add_verse_markers(
-#     db_session: Session,
-#     isl_bible_id: int,
-#     markers: List[Dict[str, Any]],
-# ):
-#     logger.info("Adding ISL verse markers")
-
-#     existing = db_session.query(db_models.IslVerseMarkers).filter_by(
-#         isl_id=isl_bible_id
-#     ).first()
-
-#     if existing:
-#         logger.error("Verse markers already exist for ISL Bible %s",isl_bible_id)
-#         raise AlreadyExistsException(
-#             detail=f"Verse markers already exist for ISL Bible {isl_bible_id}"
-#         )
-
-#     markers = _ensure_verse_zero(markers)
-
-#     record = db_models.IslVerseMarkers(
-#         isl_id=isl_bible_id,
-#         verse_markers_json=markers
-#     )
-
-#     db_session.add(record)
-#     db_session.commit()
-#     db_session.refresh(record)
-
-#     return record
-
 def add_verse_markers(
     db_session: Session,
     isl_bible_id: int,

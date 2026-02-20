@@ -132,7 +132,7 @@ class IslBible(Base):
 
 class IslVerseMarkers(Base):
     """Corresponds to table isl_verse_markers in isl DB(postgres)"""
-    __tablename__ = "isl_verse_markers"
+    __tablename__ = "isl_verse_marker"
 
     id = Column(Integer, primary_key=True, index=True)
     isl_id = Column(Integer, ForeignKey("isl_bible.id"), nullable=False, unique=True)
