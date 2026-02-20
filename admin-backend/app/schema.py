@@ -657,9 +657,8 @@ class BulkDeleteResponse(BaseModel):
 
 class VerseMarkerItem(BaseModel):
     """Schema for verse marker item"""
-    verse: int
-    time: str
-
+    verse: int = Field(..., example=0)
+    time: str = Field(..., example="00:00:00:00")
 class VerseMarkersCreateRequest(BaseModel):
     """Schema for create and update isl marker request"""
     markers: List[VerseMarkerItem]
@@ -670,7 +669,7 @@ class VerseMarkersResponse(BaseModel):
     id: int
     isl_bible_id: int
     markers: List[VerseMarkerItem]
-    message: str
+    message: Optional[str] = None
 
 class IslVerseMarkersBulkDelete(BaseModel):
     """Schema for bulk delete isl marker response"""
