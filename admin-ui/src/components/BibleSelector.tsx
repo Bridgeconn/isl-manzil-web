@@ -416,7 +416,7 @@ import {
       try {
         const response = await deleteBibleBooks.mutateAsync({
           resource_id: resourceId!,
-          bookIds: selectedBooks,
+          bookCode: selectedBooks,
         });
   
         const deletedIds: string[] = response?.deletedIds ?? [];
