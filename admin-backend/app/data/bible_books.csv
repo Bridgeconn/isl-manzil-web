@@ -38,30 +38,30 @@ book_id,book_name,book_code,chapter_count
 37,haggai,hag,2
 38,zechariah,zec,14
 39,malachi,mal,4
-41,matthew,mat,28
-42,mark,mrk,16
-43,luke,luk,24
-44,john,jhn,21
-45,acts,act,28
-46,romans,rom,16
-47,1 corinthians,1co,16
-48,2 corinthians,2co,13
-49,galatians,gal,6
-50,ephesians,eph,6
-51,philippians,php,4
-52,colossians,col,4
-53,1 thessalonians,1th,5
-54,2 thessalonians,2th,3
-55,1 timothy,1ti,6
-56,2 timothy,2ti,4
-57,titus,tit,3
-58,philemon,phm,1
-59,hebrews,heb,13
-60,james,jas,5
-61,1 peter,1pe,5
-62,2 peter,2pe,3
-63,1 john,1jn,5
-64,2 john,2jn,1
-65,3 john,3jn,1
-66,jude,jud,1
-67,revelation,rev,22
+40,matthew,mat,28
+41,mark,mrk,16
+42,luke,luk,24
+43,john,jhn,21
+44,acts,act,28
+45,romans,rom,16
+46,1 corinthians,1co,16
+47,2 corinthians,2co,13
+48,galatians,gal,6
+49,ephesians,eph,6
+50,philippians,php,4
+51,colossians,col,4
+52,1 thessalonians,1th,5
+53,2 thessalonians,2th,3
+54,1 timothy,1ti,6
+55,2 timothy,2ti,4
+56,titus,tit,3
+57,philemon,phm,1
+58,hebrews,heb,13
+59,james,jas,5
+60,1 peter,1pe,5
+61,2 peter,2pe,3
+62,1 john,1jn,5
+63,2 john,2jn,1
+64,3 john,3jn,1
+65,jude,jud,1
+66,revelation,rev,22
